@@ -17,7 +17,7 @@ Les exemples affichés avant connexion sont fictifs. Aucun accusé de lecture ou
 
 ## Limites actuelles
 
-Les appels audio/vidéo, messages vocaux, statuts, notifications push, chiffrement de bout en bout, connexion par téléphone, import du carnet d’adresses, blocage/signalement, administration des groupes, suppression/modification des messages, sauvegardes et pagination au-delà des 200 derniers messages restent à développer. La synchronisation utilise des requêtes périodiques et ne constitue pas encore une infrastructure à grande échelle.
+Les appels audio/vidéo, messages vocaux, statuts, notifications push, chiffrement de bout en bout, connexion par téléphone, import du carnet d’adresses, blocage/signalement, suppression des messages, sauvegardes et administration avancée des groupes restent à développer. La synchronisation utilise des requêtes périodiques et ne constitue pas encore une infrastructure à grande échelle.
 
 Le site est publié en accès privé pour son propriétaire. Les invitations internes ne donnent pas accès au site lui-même. Une décision de partage et une validation de l’authentification grand public sont nécessaires avant utilisation avec d’autres personnes.
 
@@ -57,10 +57,11 @@ Les scripts `dist:win`, `dist:mac` et `dist:linux` produisent les formats de dis
 ## Priorités pour une version publique
 
 1. Valider les échanges multiutilisateurs sur l’hébergement choisi et la connexion sur appareils réels.
-2. Ajouter idempotence des envois, pagination, gestion des erreurs et limites de débit robustes.
+2. Ajouter idempotence des envois, gestion des erreurs et limites de débit robustes.
 3. Définir une authentification mobile adaptée, la suppression de compte et la politique de conservation.
 4. Intégrer appels/WebRTC, notifications APNs/FCM et messages vocaux avec tests réels.
 5. Intégrer un protocole de chiffrement de bout en bout éprouvé, puis faire auditer le produit.
 6. Préparer les signatures, fiches et exigences de publication des stores.
 
 Références utilisées : [Expo SDK 55](https://docs.expo.dev/versions/v55.0.0/), [sécurité Electron](https://www.electronjs.org/docs/latest/tutorial/security).
+
