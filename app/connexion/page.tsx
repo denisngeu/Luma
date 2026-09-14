@@ -36,7 +36,7 @@ async function ConnectionContent({ returnTo }: { returnTo: string }) {
         {user ? <a className="login-switch" href={chatGPTSignOutPath('/connexion?returnTo=' + encodeURIComponent(returnTo))} target="_top">Se déconnecter</a> : <p className="login-method">Un seul compte. Aucun mot de passe supplémentaire à créer pour Luma.</p>}
         <div className="login-help"><h2>Besoin d’aide pour vous connecter ?</h2><p>Utilisez le compte ChatGPT autorisé à accéder à ce site. Si l’accès est refusé, demandez au propriétaire de vous inviter.</p><p>Un code de communauté ne remplace pas cette autorisation.</p></div>
       </div>
-      <footer className="login-footer"><LockKeyhole size={14} aria-hidden="true" /> Connexion gérée par ChatGPT<span>Luma</span></footer>
+      <footer className="login-footer"><a href="/confidentialite">Confidentialité</a> · <LockKeyhole size={14} aria-hidden="true" /> Connexion gérée par ChatGPT<span>Luma</span></footer>
     </section>
   </main>;
 }

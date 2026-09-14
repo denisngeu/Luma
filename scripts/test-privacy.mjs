@@ -1,0 +1,36 @@
+import assert from 'node:assert/strict';
+const base='http://127.0.0.1:8787';
+const headers=who=>who?{'oai-authenticated-user-id':'privacy-'+who,'oai-authenticated-user-email':who+'@example.test'}:{};
+async function post(who,path,action,data={},status=200){const r=await fetch(base+'/api/'+path,{method:'POST',headers:{...headers(who),'Content-Type':'application/json'},body:JSON.stringify({action,...data})});const d=await r.json();assert.equal(r.status,status,JSON.stringify(d));return d;}
+async function get(who,section='profile',after=''){const r=await fetch(base+'/api/privacy?section='+section+'&after='+after,{headers:headers(who)});assert.equal(r.status,200);assert.match(r.headers.get('cache-control'),/no-store/);return r.json();}
+await post(null,'privacy','rename',{name:'No'},401);
+const c=await post('alice','chat','create',{name:'Groupe',kind:'group'});
+const list=await post('alice','chat','list');await post('bob','chat','join',{code:list.chats[0].invite});
+for(let i=0;i<105;i++)await post('alice','chat','send',{chat:c.id,body:'Mon message '+i});
+await post('bob','chat','send',{chat:c.id,body:'Autre personne'});
+await post('alice','privacy','rename',{name:'Nouveau nom'});
+assert.equal((await post('alice','chat','list')).user.name,'Nouveau nom');
+const page=await get('alice','messages');assert.equal(page.items.length,100);assert.equal((await get('alice','messages',page.next)).items.length,5);assert.ok(page.items.every(x=>x.body!=='Autre personne'));assert.ok(!JSON.stringify(page).includes('invite'));
+const form=new FormData();form.set('chat',c.id);form.set('file',new File(['private'],'secret.txt'));
+assert.equal((await fetch(base+'/api/files',{method:'POST',headers:headers('alice'),body:form})).status,200);
+const files=(await post('alice','chat','messages',{chat:c.id})).messages.filter(x=>x.file);
+await post('alice','privacy','close',{confirmation:'wrong'},400);
+const cross=await fetch(base+'/api/privacy',{method:'POST',headers:{...headers('alice'),'Content-Type':'application/json',Origin:'https://evil.test'},body:JSON.stringify({action:'close',confirmation:'SUPPRIMER'})});assert.equal(cross.status,403);
+await post('alice','privacy','close',{confirmation:'SUPPRIMER'});
+await post('alice','chat','send',{chat:c.id,body:'Forbidden'},403);
+const profile=await get('alice');assert.equal(profile.profile.closed,1);assert.equal(profile.profile.name,'Compte supprimé');assert.equal(profile.pendingFiles,1);
+assert.equal((await get('alice','messages')).items.length,0);
+assert.equal((await post('bob','chat','messages',{chat:c.id})).messages.length,1);
+assert.equal((await fetch(base+'/api/files?id='+files[0].file,{headers:headers('bob')})).status,404);
+assert.equal((await post('alice','privacy','cleanup')).remaining,0);assert.equal((await post('alice','privacy','cleanup')).remaining,0);
+assert.equal((await get('alice')).pendingFiles,0);
+const space=await post('owner','community','create_space',{name:'À transférer',description:'Test'});
+await post('owner','privacy','close',{confirmation:'SUPPRIMER'},409);
+const detail=await post('owner','community','space',{space:space.id});
+await post('successor','community','join_space',{code:detail.space.invite});
+await post('owner','privacy','transfer',{space:space.id,target:'privacy-intruder'},403);
+const candidates=await post('owner','privacy','candidates',{space:space.id});assert.equal(candidates.candidates[0].id,'privacy-successor');
+await post('owner','privacy','transfer',{space:space.id,target:'privacy-successor'});
+assert.equal((await post('successor','community','space',{space:space.id})).role,'owner');
+await post('owner','privacy','close',{confirmation:'SUPPRIMER'});
+console.log('Privacy: export pagination/isolation, rectification, CSRF, closure, file cleanup, idempotence, ownership transfer and preservation of other users passed.');
