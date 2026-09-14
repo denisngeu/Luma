@@ -51,3 +51,4 @@ next-env.d.ts
 /.codex/
 /outputs/
 /work/
+!native/mobile/.env.example
