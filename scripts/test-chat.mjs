@@ -1,0 +1,27 @@
+import assert from 'node:assert/strict';
+const base='http://127.0.0.1:8787';
+const run=Date.now();
+const headers=(who)=>who?{'oai-authenticated-user-id':`test-${run}-${who}`,'oai-authenticated-user-email':`${who}@example.test`}:{};
+async function api(who,action,data={},status=200){const r=await fetch(base+'/api/chat',{method:'POST',headers:{'Content-Type':'application/json',...headers(who)},body:JSON.stringify({action,...data})});const d=await r.json();assert.equal(r.status,status,JSON.stringify(d));return d;}
+await api(null,'list',{},401);
+const c=await api('alice','create',{name:'Test privé',kind:'direct'});
+const list=await api('alice','list');const invite=list.chats.find(x=>x.id===c.id).invite;
+await api('eve','messages',{chat:c.id},404);
+await api('bob','join',{code:invite});
+await api('eve','join',{code:invite},404);
+await api('alice','send',{chat:c.id,body:'Bonjour Bob'});
+let m=await api('bob','messages',{chat:c.id});assert.equal(m.messages[0].body,'Bonjour Bob');
+await api('alice','send',{chat:c.id,body:'Dans une heure',scheduled:Date.now()+3600000});
+assert.equal((await api('bob','messages',{chat:c.id})).messages.length,1);
+assert.equal((await api('alice','messages',{chat:c.id})).messages.length,2);
+await api('bob','star',{message:m.messages[0].id});
+assert.equal((await api('bob','messages',{chat:c.id})).messages[0].starred,1);
+assert.equal((await api('alice','messages',{chat:c.id})).messages[0].starred,0);
+await api('eve','send',{chat:c.id,body:'Intrusion'},404);
+const form=new FormData();form.set('chat',c.id);form.set('file',new File(['Pièce jointe de test'],'test.txt',{type:'text/plain'}));
+const upload=await fetch(base+'/api/files',{method:'POST',headers:headers('alice'),body:form});assert.equal(upload.status,200,await upload.text());
+m=await api('bob','messages',{chat:c.id});const attachment=m.messages.find(x=>x.file);
+const download=await fetch(base+'/api/files?id='+attachment.file,{headers:headers('bob')});assert.equal(download.status,200);assert.equal(await download.text(),'Pièce jointe de test');
+const denied=await fetch(base+'/api/files?id='+attachment.file,{headers:headers('eve')});assert.equal(denied.status,404);
+const csrf=await fetch(base+'/api/chat',{method:'POST',headers:{...headers('alice'),'Content-Type':'application/json',Origin:'https://untrusted.example'},body:JSON.stringify({action:'list'})});assert.equal(csrf.status,403);
+console.log('PASS: authentication, private membership, two-person capacity, persistence, scheduling visibility, private stars, file round-trip, denied access, origin validation.');

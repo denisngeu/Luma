@@ -1,0 +1,6 @@
+import {sqliteTable,text,integer,index,primaryKey,uniqueIndex} from 'drizzle-orm/sqlite-core';
+export const users=sqliteTable('users',{id:text('id').primaryKey(),name:text('name').notNull()});
+export const chats=sqliteTable('chats',{id:text('id').primaryKey(),name:text('name').notNull(),kind:text('kind').notNull(),owner:text('owner').notNull().references(()=>users.id),invite:text('invite').notNull(),created:integer('created').notNull()},t=>[uniqueIndex('chats_invite').on(t.invite)]);
+export const members=sqliteTable('members',{chat:text('chat').notNull().references(()=>chats.id),user:text('user').notNull().references(()=>users.id)},t=>[primaryKey({columns:[t.chat,t.user]}),index('members_user').on(t.user)]);
+export const messages=sqliteTable('messages',{id:text('id').primaryKey(),chat:text('chat').notNull().references(()=>chats.id),author:text('author').notNull().references(()=>users.id),body:text('body').notNull(),created:integer('created').notNull(),scheduled:integer('scheduled').notNull().default(0),reply:text('reply'),file:text('file'),filename:text('filename')},t=>[index('messages_chat_time').on(t.chat,t.created)]);
+export const stars=sqliteTable('stars',{message:text('message').notNull().references(()=>messages.id),user:text('user').notNull().references(()=>users.id)},t=>[primaryKey({columns:[t.message,t.user]})]);

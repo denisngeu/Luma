@@ -1,0 +1,4 @@
+'use client';
+import {useEffect} from 'react';
+export default function Bridge(){useEffect(()=>{const w=window as unknown as {ReactNativeWebView?:{postMessage:(s:string)=>void};lumaCall?:(p:{id:string;action:string;data?:object})=>void};if(!w.ReactNativeWebView)return;w.lumaCall=async p=>{try{if(!['list','messages','send','create','join','star'].includes(p.action))throw Error('Action refusée');const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...p.data,action:p.action})});const data=await r.json() as {error?:string};w.ReactNativeWebView?.postMessage(JSON.stringify({id:p.id,data,error:r.ok?null:data.error}));}catch(e){w.ReactNativeWebView?.postMessage(JSON.stringify({id:p.id,error:(e as Error).message}));}};w.ReactNativeWebView.postMessage(JSON.stringify({ready:true}));return()=>{delete w.lumaCall;};},[]);return <p style={{padding:30}}>Connexion à Luma établie. Retour à vos discussions…</p>;}
+
