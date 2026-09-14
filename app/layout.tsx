@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import './themes.css';
+import ThemeProvider from './theme-provider';
 
 export const metadata: Metadata = {
   title: "Luma — Vos conversations",
@@ -17,7 +19,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="fr">
-      <body className="antialiased">{children}</body>
+      <body className="antialiased"><ThemeProvider/>{children}</body>
     </html>
   );
 }
