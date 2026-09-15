@@ -19,7 +19,7 @@ async function ConnectionContent({ returnTo }: { returnTo: string }) {
   const user = await getChatGPTUser();
   return <main className="login-page">
     <aside className="login-story">
-      <a className="login-brand" href="/" aria-label="Luma, accueil"><img src="/favicon.svg" alt="" width="44" height="44" />luma<span>MESSENGER</span></a>
+      <a className="login-brand" href="/" aria-label="Luma, accueil"><img src="/favicon.svg" alt="" width="44" height="44" />luma<span>VOTRE CERCLE</span></a>
       <div className="login-story-copy"><span className="login-kicker">LE LIEN COMMENCE ICI</span><h2>Un espace.<br />Tous vos<br /><em>univers.</em></h2><p>Vos proches, vos groupes et vos communautés se retrouvent sur Luma.</p>
       <div className="login-features"><span><MessageSquare size={19} aria-hidden="true" /> Conversations personnelles</span><span><Users size={19} aria-hidden="true" /> Communautés et salons</span></div></div>
       <p className="login-story-footer">À chaque conversation, sa place.</p>

@@ -1,0 +1,4 @@
+'use client';
+import {usePathname} from 'next/navigation';
+import {House,MessageCircle,Users,Hash,Settings} from 'lucide-react';
+export default function SocialNav(){const path=usePathname();return <nav className="social-nav" aria-label="Navigation principale"><a className="social-logo" href="/fil">Luma<span>●</span></a>{[[House,'/fil','Fil'],[MessageCircle,'/messages','Messages'],[Users,'/amis','Amis'],[Hash,'/communities','Communautés'],[Settings,'/parametres','Paramètres']].map(([Icon,href,label])=>{const I=Icon as typeof House;return <a key={String(href)} href={String(href)} aria-current={path===href?'page':undefined}><I size={19}/><span>{String(label)}</span></a>;})}</nav>;}
