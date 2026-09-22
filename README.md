@@ -1,4 +1,16 @@
-# vinext-starter
+# Luma
+
+Messagerie et réseau social privé : fil entre amis, profils, publications, commentaires, demandes par e-mail ou QR code, communautés et appels à deux.
+
+- `app/` : site et API, hébergés sur Sites avec Cloudflare D1/R2.
+- `native/desktop/` : application Windows, macOS et Linux fondée sur Electron.
+- `native/mobile/` : application Android/iOS fondée sur React Native et Expo.
+- [Applications 0.3.0](NATIVE-0.3.0.md) : état des fichiers installables et compilation.
+- [Réseau social](RESEAU-SOCIAL.md), [appels](APPELS-ET-AMIS.md) et [prérequis RGPD](PRODUCTION-RGPD.md).
+
+Les fichiers `.env`, clés de signature, bases locales, dépendances et archives générées ne doivent pas être ajoutés au dépôt. Les fichiers installables Windows et Android ne sont pas équivalents aux sources ; voir leur état dans la documentation. GitHub Pages ne remplace pas le backend Sites.
+
+## Documentation de la base technique
 
 A clean full-stack starter running on [vinext](https://github.com/cloudflare/vinext), with optional Cloudflare D1 and Drizzle support.
 
