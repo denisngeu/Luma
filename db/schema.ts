@@ -1,5 +1,8 @@
 import {sqliteTable,text,integer,index,primaryKey,uniqueIndex} from 'drizzle-orm/sqlite-core';
 export const users=sqliteTable('users',{id:text('id').primaryKey(),name:text('name').notNull(),closed:integer('closed').notNull().default(0)});
+export const authAccounts=sqliteTable('auth_accounts',{user:text('user').primaryKey().references(()=>users.id,{onDelete:'cascade'}),email:text('email').notNull(),passwordSalt:text('password_salt').notNull(),passwordHash:text('password_hash').notNull(),created:integer('created').notNull()},t=>[uniqueIndex('auth_accounts_email').on(t.email)]);
+export const authSessions=sqliteTable('auth_sessions',{tokenHash:text('token_hash').primaryKey(),user:text('user').notNull().references(()=>users.id,{onDelete:'cascade'}),created:integer('created').notNull(),expires:integer('expires').notNull()},t=>[index('auth_sessions_user').on(t.user),index('auth_sessions_expiry').on(t.expires)]);
+export const authRateLimits=sqliteTable('auth_rate_limits',{key:text('key').primaryKey(),attempts:integer('attempts').notNull().default(0),reset:integer('reset').notNull()});
 export const socialProfiles=sqliteTable('social_profiles',{user:text('user').primaryKey().references(()=>users.id),bio:text('bio').notNull().default('')});
 export const posts=sqliteTable('posts',{id:text('id').primaryKey(),author:text('author').notNull().references(()=>users.id),body:text('body').notNull(),created:integer('created').notNull(),edited:integer('edited').notNull().default(0)},t=>[index('posts_author').on(t.author,t.created)]);
 export const postLikes=sqliteTable('post_likes',{post:text('post').notNull().references(()=>posts.id),user:text('user').notNull().references(()=>users.id)},t=>[primaryKey({columns:[t.post,t.user]})]);

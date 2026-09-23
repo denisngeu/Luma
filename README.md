@@ -132,7 +132,7 @@ Pour lancer la pile localement :
 docker compose up --build
 ```
 
-Cette image execute les liaisons D1 et R2 en local dans le conteneur. L'authentification `Sign in with ChatGPT` reste fournie par l'hebergement Sites et n'est pas emulee par Docker en production. Une passerelle d'identite ou un fournisseur OAuth doit injecter des en-tetes d'identite verifies avant d'ouvrir ce deploiement au public.
+Cette image execute les liaisons D1 et R2 en local dans le conteneur et active l'authentification native Luma. Les visiteurs peuvent creer un compte avec leur nom, leur adresse e-mail et un mot de passe. Le mot de passe est derive avec PBKDF2-SHA-256 (310 000 iterations et sel aleatoire), les sessions sont stockees sous forme d'empreintes et le cookie de session est `HttpOnly`, `SameSite=Lax` et `Secure` derriere HTTPS. Les tentatives de connexion sont limitees dans une fenetre de 15 minutes.
 
 ## Diagnostic Commands
 

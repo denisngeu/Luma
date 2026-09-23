@@ -1,4 +1,4 @@
-import {getChatGPTUser} from '@/app/chatgpt-auth';
+import {getChatGPTUser,nativeAuthEnabled} from '@/app/chatgpt-auth';
 import {ApiError,bucket,db,fail,sameOrigin,str,user} from '@/lib/chat-server';
 
 const json=(data:unknown,status=200)=>Response.json(data,{status,headers:{'Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff'}});
@@ -56,6 +56,7 @@ export async function POST(request:Request){try{
    "UPDATE chats SET owner=COALESCE((SELECT user FROM members WHERE chat=chats.id ORDER BY user LIMIT 1),owner),invite=lower(hex(randomblob(16))) WHERE owner=?",
   ];
   const args=[[u.userId,u.userId],[u.userId,u.userId],[u.userId],[u.userId],[u.userId],[u.userId,u.userId],[u.userId,u.userId],[u.userId],[Date.now(),u.userId],[u.userId,u.userId],[u.userId],[u.userId,u.userId],[u.userId,u.userId],[u.userId],[u.userId],[u.userId],[u.userId],[u.userId]];
+  if(nativeAuthEnabled()){sql.splice(7,0,'DELETE FROM auth_sessions WHERE user=?','DELETE FROM auth_accounts WHERE user=?');args.splice(7,0,[u.userId],[u.userId]);}
   await db().batch(sql.map((s,i)=>db().prepare(s).bind(...args[i])));
   return json({closed:true,pendingFiles:true});
  }

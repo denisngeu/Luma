@@ -14,7 +14,7 @@ const stateDirectory = path.resolve(
 );
 const migrationStatePath = path.join(stateDirectory, "luma-migrations.json");
 const wrangler = path.resolve("node_modules/wrangler/bin/wrangler.js");
-const config = path.resolve("dist/server/wrangler.json");
+const config = "dist/server/wrangler.json";
 const migrationsDirectory = path.resolve("drizzle");
 
 mkdirSync(stateDirectory, { recursive: true });
@@ -88,6 +88,8 @@ const server = spawn(
     "0.0.0.0",
     "--port",
     process.env.PORT || "3000",
+    "--var",
+    "LUMA_AUTH_MODE:native",
     "--inspector-port",
     "0",
   ],
