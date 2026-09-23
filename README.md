@@ -120,6 +120,20 @@ node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1
 
 Replace the filename with the pending migration and `DB` with your D1 binding name if different. Use `.wrangler/state`, not `.wrangler/state/v3`; Wrangler adds the versioned directories. Do not replay migrations already applied locally. This updates only the preview database; publishing applies production migrations separately.
 
+## Docker et Coolify
+
+Le depot contient un `Dockerfile` et un `docker-compose.yaml` prets pour un deploiement Coolify base sur Git. Le service ecoute sur le port interne `3000`; configurez le domaine Coolify pour le service `luma` et ce port. Les donnees D1 et les fichiers R2 locaux sont conserves dans le volume nomme `luma-data` monte sur `/app/.wrangler/state`.
+
+Au demarrage, `scripts/docker-start.mjs` applique une seule fois chaque migration SQL de `drizzle/`, puis lance le Worker. Les migrations deja appliquees sont controlees par empreinte afin d'eviter qu'une migration publiee soit modifiee silencieusement.
+
+Pour lancer la pile localement :
+
+```bash
+docker compose up --build
+```
+
+Cette image execute les liaisons D1 et R2 en local dans le conteneur. L'authentification `Sign in with ChatGPT` reste fournie par l'hebergement Sites et n'est pas emulee par Docker en production. Une passerelle d'identite ou un fournisseur OAuth doit injecter des en-tetes d'identite verifies avant d'ouvrir ce deploiement au public.
+
 ## Diagnostic Commands
 
 - `npm run install:ci`: perform the one locked dependency install

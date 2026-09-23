@@ -1,0 +1,16 @@
+.git
+.next
+.sites-runtime
+.vinext
+.wrangler
+dist
+node_modules
+native/**/dist
+native/**/.expo
+native/mobile/android
+native/mobile/ios
+outputs
+work
+*.log
+.env*
+
