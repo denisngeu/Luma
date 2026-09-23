@@ -5,6 +5,7 @@ import {
   nativeAuthEnabled,
   safeRelativeReturnPath,
 } from "@/app/chatgpt-auth";
+import { sameRequestOrigin } from "@/lib/request-origin";
 
 type AuthEnv = { DB: D1Database };
 const SESSION_DURATION = 60 * 60 * 24 * 30;
@@ -123,8 +124,7 @@ function sessionCookie(request: Request, token: string, maxAge: number) {
 }
 
 function sameOrigin(request: Request) {
-  const origin = request.headers.get("origin");
-  if (origin && origin !== new URL(request.url).origin) throw new RequestError("Origine refusée.", 403);
+  if (!sameRequestOrigin(request)) throw new RequestError("Origine refusée.", 403);
 }
 
 function clientAddress(request: Request) {

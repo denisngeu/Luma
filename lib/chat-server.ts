@@ -1,10 +1,11 @@
 import {env} from 'cloudflare:workers';
 import {getChatGPTUser} from '@/app/chatgpt-auth';
+import {sameRequestOrigin} from '@/lib/request-origin';
 export function db(){const value=(env as unknown as {DB:D1Database}).DB;if(!value)throw new Error('Stockage indisponible');return value;}
 export function bucket(){return (env as unknown as {BUCKET:R2Bucket}).BUCKET;}
 export class ApiError extends Error{constructor(message:string,public status=400){super(message);}}
 export async function user(){const u=await getChatGPTUser();if(!u)throw new ApiError('Connectez-vous pour utiliser la messagerie.',401);const name=u.fullName||u.email.split('@')[0];await db().prepare('INSERT INTO users (id,name) VALUES (?,?) ON CONFLICT(id) DO NOTHING').bind(u.userId,name).run();const profile=await db().prepare('SELECT name,closed FROM users WHERE id=?').bind(u.userId).first<{name:string;closed:number}>();if(profile?.closed)throw new ApiError('Compte fermé. Rendez-vous dans Mes données pour terminer la suppression.',403);return {id:u.userId,name:profile?.name||name};}
-export function sameOrigin(request:Request){const origin=request.headers.get('origin');if(origin&&origin!==new URL(request.url).origin)throw new ApiError('Origine refusée',403);}
+export function sameOrigin(request:Request){if(!sameRequestOrigin(request))throw new ApiError('Origine refusée',403);}
 export async function member(uid:string,chat:string){const row=await db().prepare(`SELECT c.* FROM chats c WHERE c.id=? AND ((c.space IS NULL AND EXISTS(SELECT 1 FROM members m WHERE m.chat=c.id AND m.user=?)) OR (c.space IS NOT NULL AND EXISTS(SELECT 1 FROM space_members s WHERE s.space=c.space AND s.user=?)))`).bind(chat,uid,uid).first<{id:string;space:string|null;mode:string;owner:string}>();if(!row)throw new ApiError('Discussion introuvable',404);return row;}
 export async function spaceMember(uid:string,space:string){const row=await db().prepare('SELECT role FROM space_members WHERE space=? AND user=?').bind(space,uid).first<{role:string}>();if(!row)throw new ApiError('Communauté introuvable',404);return row;}
 export async function writable(uid:string,chat:string){const c=await member(uid,chat);if(c.space&&c.mode==='announcement'){const m=await spaceMember(uid,c.space);if(!['owner','moderator'].includes(m.role))throw new ApiError('Seuls les modérateurs peuvent publier des annonces.',403);}return c;}

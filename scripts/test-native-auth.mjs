@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 const base = process.env.LUMA_TEST_URL || "http://127.0.0.1:8790";
 const email = `auth-${randomUUID()}@example.test`;
 const password = "Luma-test-2026!";
+const publicOrigin = "https://luma.example";
 
 const landing = await fetch(base + "/");
 assert.equal(landing.status, 200);
@@ -24,7 +25,7 @@ assert.equal(feed.status, 200);
 const logout = await fetch(base + "/api/auth/logout?returnTo=%2F", {
   method: "POST",
   redirect: "manual",
-  headers: { Origin: base, Cookie: cookie },
+  headers: { Origin: publicOrigin, "X-Forwarded-Host": "luma.example", "X-Forwarded-Proto": "https", Cookie: cookie },
 });
 assert.equal(logout.status, 303);
 assert.match(logout.headers.get("set-cookie") || "", /Max-Age=0/);
@@ -41,7 +42,7 @@ console.log("Native authentication and public landing page verified.");
 function auth(body) {
   return fetch(base + "/api/auth", {
     method: "POST",
-    headers: { Origin: base, "Content-Type": "application/json" },
+    headers: { Origin: publicOrigin, "X-Forwarded-Host": "luma.example", "X-Forwarded-Proto": "https", "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
 }

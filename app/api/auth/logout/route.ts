@@ -1,10 +1,10 @@
 import { env } from "cloudflare:workers";
 import { SESSION_COOKIE, cookieValue, hashSessionToken, nativeAuthEnabled, safeRelativeReturnPath } from "@/app/chatgpt-auth";
+import { sameRequestOrigin } from "@/lib/request-origin";
 
 export async function POST(request: Request) {
   if (!nativeAuthEnabled()) return new Response(null, { status: 404 });
-  const origin = request.headers.get("origin");
-  if (origin && origin !== new URL(request.url).origin) return new Response(null, { status: 403 });
+  if (!sameRequestOrigin(request)) return new Response(null, { status: 403 });
   const token = cookieValue(request.headers.get("cookie"), SESSION_COOKIE);
   if (token) {
     const database = (env as unknown as { DB: D1Database }).DB;
