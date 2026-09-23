@@ -5,6 +5,9 @@ import './social.css';
 import './network.css';
 import CallInbox from './call-inbox';
 import ThemeProvider from './theme-provider';
+import AppShell from './app-shell';
+import {themeBootstrap} from './theme-bootstrap';
+import './shell.css';
 
 export const metadata: Metadata = {
   title: "Luma — Votre cercle",
@@ -21,8 +24,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr">
-      <body className="antialiased"><ThemeProvider/>{children}<CallInbox/></body>
+    <html lang="fr" suppressHydrationWarning>
+      <head><script dangerouslySetInnerHTML={{__html:themeBootstrap}}/></head>
+      <body className="antialiased"><ThemeProvider/><AppShell>{children}</AppShell><CallInbox/></body>
     </html>
   );
 }

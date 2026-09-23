@@ -1,0 +1,17 @@
+body{background:var(--t-canvas);color:var(--t-ink)}
+.luma-shell{--nav-height:76px;min-height:100dvh;background:var(--t-canvas);color:var(--t-ink)}
+.luma-shell>.social-nav{position:sticky;top:0;z-index:40;min-height:var(--nav-height);flex-wrap:nowrap;margin:0}
+.luma-page{animation:luma-enter 160ms ease-out;min-width:0}
+.luma-page .social-nav,.luma-page .app>.rail{display:none}
+.luma-page :is(.network,.privacy-page,.appearance,.call-room){min-height:calc(100dvh - var(--nav-height))}
+.luma-page :is(.app,.hub){height:calc(100dvh - var(--nav-height));position:relative}
+.luma-page .hub-rail>a{display:none}
+.luma-page :is(.privacy-page,.appearance){padding:28px max(24px,calc((100vw - 1180px)/2)) 64px}
+.luma-page :is(.privacy-page,.appearance)>header{margin:24px 0 28px;padding:0!important}
+.luma-page :is(.privacy-page,.appearance) h1{font-size:32px!important;letter-spacing:-1px!important;line-height:1.2}
+.luma-shell :is(button,a){transition:background-color 140ms ease,color 140ms ease,border-color 140ms ease}
+html[data-luma] .privacy-page button:not(.danger-button){background:var(--luma-accent);color:var(--luma-on-accent)}
+html[data-luma] .privacy-page :is(textarea,input,select){background:var(--t-raised);color:var(--t-ink);border-color:var(--t-line)}
+@keyframes luma-enter{from{opacity:.65;transform:translateY(3px)}to{opacity:1;transform:none}}
+@media(max-width:760px){.luma-shell{--nav-height:66px;padding-bottom:env(safe-area-inset-bottom,0px)}.luma-shell>.social-nav{padding:6px 4px}.luma-shell>.social-nav a{min-height:48px}.luma-page .app{padding-bottom:0}.luma-page :is(.privacy-page,.appearance){padding:20px 16px 40px}.luma-page :is(.privacy-page,.appearance) h1{font-size:28px!important}}
+@media(prefers-reduced-motion:reduce){.luma-page{animation:none}.luma-shell :is(button,a){transition:none}}
