@@ -1,10 +1,16 @@
 name: Applications Windows et Android de test
 on:
   workflow_dispatch:
+    inputs:
+      android_only:
+        description: Construire uniquement Android
+        type: boolean
+        default: false
 permissions:
   contents: read
 jobs:
   windows:
+    if: ${{ !inputs.android_only }}
     runs-on: windows-latest
     timeout-minutes: 20
     defaults:
@@ -53,7 +59,7 @@ jobs:
       - run: npx expo prebuild --platform android --no-install
       # Expo's generated release variant uses the template debug key.
       # This APK is for device testing, not for store publication.
-      - run: bash ./gradlew assembleRelease --no-daemon --max-workers=2
+      - run: bash ./gradlew assembleRelease --no-daemon --max-workers=2 -PreactNativeArchitectures=arm64-v8a,armeabi-v7a
         working-directory: native/mobile/android
       - run: cp android/app/build/outputs/apk/release/app-release.apk Luma-0.3.2-test.apk
       - uses: actions/upload-artifact@v4

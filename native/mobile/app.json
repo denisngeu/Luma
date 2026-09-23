@@ -22,6 +22,9 @@
         "RECORD_AUDIO"
       ],
       "versionCode": 5
-    }
+    },
+    "plugins": [
+      "expo-sharing"
+    ]
   }
 }
