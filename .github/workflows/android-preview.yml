@@ -47,6 +47,8 @@ jobs:
           distribution: temurin
           java-version: '17'
       - uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
       - run: npm ci
       - run: npx expo prebuild --platform android --no-install
       # Expo's generated release variant uses the template debug key.
