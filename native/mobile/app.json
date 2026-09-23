@@ -2,7 +2,7 @@
   "expo": {
     "name": "Luma",
     "slug": "luma-messenger",
-    "version": "0.3.1",
+    "version": "0.3.2",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
     "scheme": "luma",
@@ -13,7 +13,7 @@
         "NSCameraUsageDescription": "Luma utilise la caméra pour les appels vidéo et la lecture de QR codes.",
         "NSMicrophoneUsageDescription": "Luma utilise le micro pendant les appels que vous acceptez."
       },
-      "buildNumber": "4"
+      "buildNumber": "5"
     },
     "android": {
       "package": "app.luma.messenger",
@@ -21,7 +21,7 @@
         "CAMERA",
         "RECORD_AUDIO"
       ],
-      "versionCode": 4
+      "versionCode": 5
     }
   }
 }

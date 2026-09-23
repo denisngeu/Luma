@@ -1,0 +1,62 @@
+name: Applications Windows et Android de test
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: native/desktop
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: native/desktop/package-lock.json
+      - run: npm ci
+      - run: npm run dist:win -- --publish never
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Luma-Windows-0.3.2
+          path: native/desktop/dist/*.exe
+          retention-days: 30
+          if-no-files-found: error
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    defaults:
+      run:
+        working-directory: native/mobile
+    env:
+      EXPO_PUBLIC_LUMA_URL: https://cx9tpuja8iqkelk0zci4vlbs.app.luma-sas.fr
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: native/mobile/package-lock.json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - run: npm ci
+      - run: npx expo prebuild --platform android --no-install
+      # Expo's generated release variant uses the template debug key.
+      # This APK is for device testing, not for store publication.
+      - run: bash ./gradlew assembleRelease --no-daemon --max-workers=2
+        working-directory: native/mobile/android
+      - run: cp android/app/build/outputs/apk/release/app-release.apk Luma-0.3.2-test.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Luma-Android-0.3.2-test
+          path: native/mobile/Luma-0.3.2-test.apk
+          retention-days: 30
+          if-no-files-found: error

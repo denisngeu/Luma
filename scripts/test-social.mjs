@@ -4,9 +4,11 @@ const headers=u=>u?{'oai-authenticated-user-id':'social-'+u,'oai-authenticated-u
 async function api(u,route,action,data={},status=200){const r=await fetch(base+'/api/'+route,{method:'POST',headers:{...headers(u),'Content-Type':'application/json'},body:JSON.stringify({action,...data})});const d=await r.json();assert.equal(r.status,status,JSON.stringify(d));return d;}
 await api(null,'friends','list',{},401);
 await api('alice','friends','list');const bob=await api('bob','friends','list');
-await api('alice','friends','request',{email:'bob@example.test'});assert.equal((await api('bob','friends','list')).items.length,0);
+assert.equal((await api('alice','friends','request',{email:'bob@example.test'})).sent,false);assert.equal((await api('bob','friends','list')).items.length,0);
 await api('bob','friends','discoverable',{enabled:true});
-await api('alice','friends','request',{email:'bob@example.test'});await api('alice','friends','request',{email:'bob@example.test'});
+assert.equal((await api('alice','friends','request',{email:'bob@example.test'})).sent,true);assert.equal((await api('alice','friends','request',{email:'bob@example.test'})).sent,false);
+assert.match((await api('bob','friends','request',{code:(await api('alice','friends','list')).profile.code})).message,/Demandes reçues/);
+await api('bob','friends','request',{code:bob.profile.code},400);
 let list=await api('bob','friends','list');assert.equal(list.items.length,1);const f=list.items[0];
 await api('alice','friends','accept',{id:f.id},409);await api('eve','friends','accept',{id:f.id},404);
 await api('alice','calls','create',{peer:'social-bob'},403);
@@ -18,7 +20,7 @@ assert.equal((await api('bob','calls','incoming')).calls.length,0);
 await api('alice','calls','offer',{id:c.id,sdp:'v=0\r\n'});assert.equal((await api('bob','calls','incoming')).calls[0].id,c.id);
 await api('bob','calls','answer',{id:c.id,sdp:'v=0\r\n'});assert.equal((await api('alice','calls','get',{id:c.id})).call.state,'active');
 await api('alice','calls','end',{id:c.id});assert.equal((await api('bob','calls','get',{id:c.id})).call.offer,null);
-await api('bob','friends','rotate');await api('eve','friends','request',{code:bob.profile.code});assert.equal((await api('eve','friends','list')).items.length,0);
+await api('bob','friends','rotate');assert.equal((await api('eve','friends','request',{code:bob.profile.code})).sent,false);assert.equal((await api('eve','friends','list')).items.length,0);
 const fresh=await api('bob','friends','list');await api('eve','friends','request',{code:fresh.profile.code});assert.equal((await api('eve','friends','list')).items.length,1);
 const cross=await fetch(base+'/api/friends',{method:'POST',headers:{...headers('alice'),'Content-Type':'application/json',Origin:'https://evil.test'},body:JSON.stringify({action:'rotate'})});assert.equal(cross.status,403);
 await api('alice','privacy','close',{confirmation:'SUPPRIMER'});assert.equal((await api('bob','friends','list')).items.some(f=>f.peer==='social-alice'),false);await api('alice','calls','create',{peer:'social-bob'},403);
