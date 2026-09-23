@@ -23,7 +23,8 @@ ENV NODE_ENV=production \
     WRANGLER_WRITE_LOGS=false
 
 COPY --from=build --chown=node:node /app /app
-RUN mkdir -p /app/.wrangler/state && chown -R node:node /app/.wrangler
+RUN mkdir -p /app/.wrangler/state /app/.sites-runtime \
+  && chown -R node:node /app/.wrangler /app/.sites-runtime
 
 USER node
 
@@ -34,4 +35,3 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=45s --retries=3 \
   CMD node -e "fetch('http://127.0.0.1:3000/').then(r=>{if(!r.ok&&r.status!==302)process.exit(1)}).catch(()=>process.exit(1))"
 
 CMD ["node", "scripts/docker-start.mjs"]
-
