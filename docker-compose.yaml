@@ -10,6 +10,9 @@ services:
     environment:
       NODE_ENV: production
       PORT: "3000"
+      DATABASE_URL: ${DATABASE_URL:?Configure the internal PostgreSQL URL in Coolify}
+      LUMA_UPLOAD_DIRECTORY: /app/.wrangler/state/uploads
+      LUMA_ICE_SERVERS: ${LUMA_ICE_SERVERS:-[]}
       NEXT_TELEMETRY_DISABLED: "1"
       WRANGLER_SEND_METRICS: "false"
       WRANGLER_WRITE_LOGS: "false"
@@ -28,4 +31,3 @@ services:
 
 volumes:
   luma-data:
-

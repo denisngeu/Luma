@@ -1,4 +1,4 @@
-import { env } from "cloudflare:workers";
+import {getDatabase} from "@/lib/runtime";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
@@ -16,16 +16,16 @@ const USER_FULL_NAME_HEADER = "oai-authenticated-user-full-name";
 const USER_FULL_NAME_ENCODING_HEADER = "oai-authenticated-user-full-name-encoding";
 const PERCENT_ENCODED_UTF8 = "percent-encoded-utf-8";
 
-type LumaEnv = { DB?: D1Database; LUMA_AUTH_MODE?: string };
+
 
 export function nativeAuthEnabled() {
-  return (env as unknown as LumaEnv).LUMA_AUTH_MODE === "native";
+  return true;
 }
 
 export async function getChatGPTUser(): Promise<ChatGPTUser | null> {
   const requestHeaders = await headers();
   if (nativeAuthEnabled()) {
-    const database = (env as unknown as LumaEnv).DB;
+    const database = getDatabase();
     const token = cookieValue(requestHeaders.get("cookie"), SESSION_COOKIE);
     if (!database || !token) return null;
     const tokenHash = await hashSessionToken(token);

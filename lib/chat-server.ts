@@ -1,8 +1,8 @@
-import {env} from 'cloudflare:workers';
+import {getDatabase,getBucket} from './runtime';
 import {getChatGPTUser} from '@/app/chatgpt-auth';
 import {sameRequestOrigin} from '@/lib/request-origin';
-export function db(){const value=(env as unknown as {DB:D1Database}).DB;if(!value)throw new Error('Stockage indisponible');return value;}
-export function bucket(){return (env as unknown as {BUCKET:R2Bucket}).BUCKET;}
+export const db=getDatabase;
+export const bucket=getBucket;
 export class ApiError extends Error{constructor(message:string,public status=400){super(message);}}
 export async function user(){const u=await getChatGPTUser();if(!u)throw new ApiError('Connectez-vous pour utiliser la messagerie.',401);const name=u.fullName||u.email.split('@')[0];await db().prepare('INSERT INTO users (id,name) VALUES (?,?) ON CONFLICT(id) DO NOTHING').bind(u.userId,name).run();const profile=await db().prepare('SELECT name,closed FROM users WHERE id=?').bind(u.userId).first<{name:string;closed:number}>();if(profile?.closed)throw new ApiError('Compte fermé. Rendez-vous dans Mes données pour terminer la suppression.',403);return {id:u.userId,name:profile?.name||name};}
 export function sameOrigin(request:Request){if(!sameRequestOrigin(request))throw new ApiError('Origine refusée',403);}

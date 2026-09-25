@@ -1,4 +1,4 @@
-import { env } from "cloudflare:workers";
+import {getDatabase} from "@/lib/runtime";
 import {
   SESSION_COOKIE,
   hashSessionToken,
@@ -7,7 +7,7 @@ import {
 } from "@/app/chatgpt-auth";
 import { sameRequestOrigin } from "@/lib/request-origin";
 
-type AuthEnv = { DB: D1Database };
+
 const SESSION_DURATION = 60 * 60 * 24 * 30;
 class RequestError extends Error { constructor(message: string, public status = 400) { super(message); } }
 
@@ -23,7 +23,7 @@ export async function POST(request: Request) {
     const email = normalizeEmail(body.email);
     const password = validatePassword(body.password);
     const returnTo = safeRelativeReturnPath(typeof body.returnTo === "string" ? body.returnTo : "/fil");
-    const database = (env as unknown as AuthEnv).DB;
+    const database = getDatabase();
     const limiterKey = await hashSessionToken(`auth:${clientAddress(request)}:${email}`);
     if (!await allowAttempt(database, limiterKey)) return problem("Trop de tentatives. Réessayez dans quelques minutes.", 429);
 
@@ -108,7 +108,7 @@ async function passwordDigest(password: string, salt: string) {
   return toBase64Url(new Uint8Array(bits));
 }
 
-async function allowAttempt(database: D1Database, key: string) {
+async function allowAttempt(database: ReturnType<typeof getDatabase>, key: string) {
   const now = Date.now();
   const current = await database.prepare("SELECT attempts,reset FROM auth_rate_limits WHERE key=?").bind(key).first<{attempts:number;reset:number}>();
   if (current && current.reset > now && current.attempts >= 15) return false;

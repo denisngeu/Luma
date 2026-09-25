@@ -1,4 +1,4 @@
-import { env } from "cloudflare:workers";
+import {getDatabase} from "@/lib/runtime";
 import { SESSION_COOKIE, cookieValue, hashSessionToken, nativeAuthEnabled, safeRelativeReturnPath } from "@/app/chatgpt-auth";
 import { sameRequestOrigin } from "@/lib/request-origin";
 
@@ -7,7 +7,7 @@ export async function POST(request: Request) {
   if (!sameRequestOrigin(request)) return new Response(null, { status: 403 });
   const token = cookieValue(request.headers.get("cookie"), SESSION_COOKIE);
   if (token) {
-    const database = (env as unknown as { DB: D1Database }).DB;
+    const database = getDatabase();
     await database.prepare("DELETE FROM auth_sessions WHERE token_hash=?").bind(await hashSessionToken(token)).run();
   }
   const url = new URL(request.url);
