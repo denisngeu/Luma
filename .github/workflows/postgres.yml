@@ -18,6 +18,7 @@ jobs:
       - run: npm ci
       - run: node scripts/test-postgres.mjs
       - run: node scripts/test-import.mjs
+      - run: node scripts/test-auth-postgres.mjs
       - run: docker build -f docker/turn.Dockerfile -t luma-turn-test .
       - name: Validate TURN configuration
         run: |
