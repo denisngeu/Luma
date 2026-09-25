@@ -13,6 +13,7 @@ services:
       DATABASE_URL: ${DATABASE_URL:?Configure the internal PostgreSQL URL in Coolify}
       LUMA_UPLOAD_DIRECTORY: /app/.wrangler/state/uploads
       LUMA_ICE_SERVERS: ${LUMA_ICE_SERVERS:-[]}
+      LUMA_MIGRATE_SQLITE: ${LUMA_MIGRATE_SQLITE:-0}
       NEXT_TELEMETRY_DISABLED: "1"
       WRANGLER_SEND_METRICS: "false"
       WRANGLER_WRITE_LOGS: "false"

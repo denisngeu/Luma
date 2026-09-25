@@ -17,6 +17,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: node scripts/test-postgres.mjs
+      - run: node scripts/test-import.mjs
       - run: npm run build
         env:
           NEXT_TELEMETRY_DISABLED: '1'
