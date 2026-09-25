@@ -18,6 +18,13 @@ jobs:
       - run: npm ci
       - run: node scripts/test-postgres.mjs
       - run: node scripts/test-import.mjs
+      - run: docker build -f docker/turn.Dockerfile -t luma-turn-test .
+      - name: Validate TURN configuration
+        run: |
+          docker run -d --name luma-turn-test luma-turn-test -c /etc/coturn/turnserver.conf --static-auth-secret=ci-only-test-secret --external-ip=127.0.0.1
+          sleep 3
+          docker logs luma-turn-test
+          test "$(docker inspect --format '{{.State.Running}}' luma-turn-test)" = true
       - run: npm run build
         env:
           NEXT_TELEMETRY_DISABLED: '1'

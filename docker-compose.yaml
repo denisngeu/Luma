@@ -14,6 +14,8 @@ services:
       LUMA_UPLOAD_DIRECTORY: /app/.wrangler/state/uploads
       LUMA_ICE_SERVERS: ${LUMA_ICE_SERVERS:-[]}
       LUMA_MIGRATE_SQLITE: ${LUMA_MIGRATE_SQLITE:-0}
+      LUMA_TURN_SECRET: ${SERVICE_PASSWORD_64_TURN}
+      LUMA_TURN_PUBLIC_IP: ${LUMA_TURN_PUBLIC_IP:?Configure the public IPv4 address of this server}
       NEXT_TELEMETRY_DISABLED: "1"
       WRANGLER_SEND_METRICS: "false"
       WRANGLER_WRITE_LOGS: "false"
@@ -29,6 +31,21 @@ services:
       timeout: 5s
       start_period: 45s
       retries: 3
+
+  turn:
+    build:
+      context: .
+      dockerfile: docker/turn.Dockerfile
+    restart: unless-stopped
+    command:
+      - -c
+      - /etc/coturn/turnserver.conf
+      - --static-auth-secret=${SERVICE_PASSWORD_64_TURN}
+      - --external-ip=${LUMA_TURN_PUBLIC_IP}
+    ports:
+      - "3478:3478/tcp"
+      - "3478:3478/udp"
+      - "49160-49200:49160-49200/udp"
 
 volumes:
   luma-data:
