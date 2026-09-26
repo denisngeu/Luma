@@ -1,5 +1,5 @@
 import {pgTable,text,bigint,integer,index,primaryKey,uniqueIndex} from 'drizzle-orm/pg-core';
-export const users=pgTable('users',{id:text('id').primaryKey(),name:text('name').notNull(),closed:integer('closed').notNull().default(0)});
+export const users=pgTable('users',{id:text('id').primaryKey(),name:text('name').notNull(),closed:integer('closed').notNull().default(0),role:text('role').notNull().default('user')});
 export const authAccounts=pgTable('auth_accounts',{user:text('user').primaryKey().references(()=>users.id,{onDelete:'cascade'}),email:text('email').notNull(),passwordSalt:text('password_salt').notNull(),passwordHash:text('password_hash').notNull(),created:bigint('created',{mode:'number'}).notNull()},t=>[uniqueIndex('auth_accounts_email').on(t.email)]);
 export const authSessions=pgTable('auth_sessions',{tokenHash:text('token_hash').primaryKey(),user:text('user').notNull().references(()=>users.id,{onDelete:'cascade'}),created:bigint('created',{mode:'number'}).notNull(),expires:bigint('expires',{mode:'number'}).notNull()},t=>[index('auth_sessions_user').on(t.user),index('auth_sessions_expiry').on(t.expires)]);
 export const authRateLimits=pgTable('auth_rate_limits',{key:text('key').primaryKey(),attempts:integer('attempts').notNull().default(0),reset:bigint('reset',{mode:'number'}).notNull()});
