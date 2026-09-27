@@ -30,6 +30,7 @@ try{
  globalThis.__adminTest.id='alice';assert.equal((await request('chat',{action:'send',chat:'chat',body:'blocked'})).status,403);
  globalThis.__adminTest.id='owner';await ok(await act('restore_user','alice'));await ok(await act('lock_chat','chat',{value:true}));
  globalThis.__adminTest.id='alice';assert.equal((await request('chat',{action:'messages',chat:'chat'})).status,404);
+ assert.equal((await ok(await request('reports','?kind=message','GET'))).items.length,0);
  globalThis.__adminTest.id='owner';await ok(await act('lock_chat','chat',{value:false}));
  globalThis.__adminTest.id='bob';await ok(await request('reports',{kind:'message',target:'msg',reason:'Message à examiner pour abus'}));assert.equal((await request('reports',{kind:'message',target:'msg',reason:'Même message déjà signalé'})).status,409);
  globalThis.__adminTest.id='owner';assert.equal((await request('reports',{kind:'message',target:'msg',reason:'Pas membre de cette conversation'})).status,404);
