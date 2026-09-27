@@ -17,14 +17,14 @@ export async function POST(request:Request){try{
  }
  if(p.action==='feed'){
   const before=p.before?str(p.before,100):'~',author=typeof p.author==='string'?p.author:'';
-  const items=await db().prepare(`SELECT p.*,u.name,(SELECT count(*) FROM post_likes l WHERE l.post=p.id) likes,(SELECT count(*) FROM post_comments c WHERE c.post=p.id) comments,EXISTS(SELECT 1 FROM post_likes l WHERE l.post=p.id AND l.user=?) liked FROM posts p JOIN users u ON u.id=p.author WHERE u.closed=0 AND ${visible} AND p.id<? AND (?='' OR p.author=?) ORDER BY p.id DESC LIMIT 21`).bind(u.id,u.id,u.id,u.id,before,author,author).all();
+  const items=await db().prepare(`SELECT p.*,u.name,(SELECT count(*) FROM post_likes l WHERE l.post=p.id) likes,(SELECT count(*) FROM post_comments c WHERE c.post=p.id) comments,EXISTS(SELECT 1 FROM post_likes l WHERE l.post=p.id AND l.user=?) liked FROM posts p JOIN users u ON u.id=p.author WHERE p.hidden=0 AND u.closed=0 AND ${visible} AND p.id<? AND (?='' OR p.author=?) ORDER BY p.id DESC LIMIT 21`).bind(u.id,u.id,u.id,u.id,before,author,author).all();
   const rows=items.results;return json({items:rows.slice(0,20),next:rows.length>20?rows[19].id:null,user:u});
  }
  if(p.action==='publish'){
   const body=str(p.body,3000);const count=await db().prepare('SELECT count(*) n FROM posts WHERE author=? AND created>?').bind(u.id,Date.now()-86400000).first<{n:number}>();if((count?.n||0)>=50)throw new ApiError('Vous pouvez publier 50 fois par jour.',429);
   const created=Date.now(),id=String(created).padStart(15,'0')+'-'+crypto.randomUUID();await db().prepare('INSERT INTO posts(id,author,body,created) VALUES (?,?,?,?)').bind(id,u.id,body,created).run();return json({id});
  }
- const id=str(p.id,100),post=await db().prepare(`SELECT p.* FROM posts p JOIN users u ON u.id=p.author WHERE p.id=? AND u.closed=0 AND ${visible}`).bind(id,u.id,u.id,u.id).first<{author:string}>();if(!post)throw new ApiError('Publication indisponible',404);
+ const id=str(p.id,100),post=await db().prepare(`SELECT p.* FROM posts p JOIN users u ON u.id=p.author WHERE p.hidden=0 AND p.id=? AND u.closed=0 AND ${visible}`).bind(id,u.id,u.id,u.id).first<{author:string}>();if(!post)throw new ApiError('Publication indisponible',404);
  if(p.action==='delete'||p.action==='edit'){
   if(post.author!==u.id)throw new ApiError('Cette publication ne vous appartient pas.',403);
   if(p.action==='edit')await db().prepare('UPDATE posts SET body=?,edited=? WHERE id=? AND author=?').bind(str(p.body,3000),Date.now(),id,u.id).run();

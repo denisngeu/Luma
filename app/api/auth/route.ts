@@ -30,6 +30,8 @@ export async function POST(request: Request) {
     let userId: string;
     let displayName: string;
     if (action === "register") {
+      const settings=await database.prepare('SELECT registrations_open FROM service_settings WHERE id=1').first<{registrations_open:number}>();
+      if(!settings?.registrations_open)return problem('Les inscriptions sont temporairement fermées.',403);
       displayName = validateName(body.name);
       const existing = await database.prepare("SELECT user FROM auth_accounts WHERE email=?").bind(email).first();
       if (existing) return problem("Un compte utilise déjà cette adresse.", 409);
@@ -47,11 +49,11 @@ export async function POST(request: Request) {
       }
     } else if (action === "login") {
       const account = await database.prepare(`
-        SELECT a.user,a.password_salt AS salt,a.password_hash AS passwordHash,u.name,u.closed
+        SELECT a.user,a.password_salt AS salt,a.password_hash AS passwordHash,u.name,u.closed,u.suspended
         FROM auth_accounts a JOIN users u ON u.id=a.user WHERE a.email=?
-      `).bind(email).first<{user:string;salt:string;passwordHash:string;name:string;closed:number}>();
+      `).bind(email).first<{user:string;salt:string;passwordHash:string;name:string;closed:number;suspended:number}>();
       const candidate = await passwordDigest(password, account?.salt || "AAAAAAAAAAAAAAAAAAAAAAAA");
-      if (!account || !constantTimeEqual(candidate, account.passwordHash) || account.closed) {
+      if (!account || !constantTimeEqual(candidate, account.passwordHash) || account.closed || account.suspended) {
         return problem("Adresse ou mot de passe incorrect.", 401);
       }
       userId = account.user;

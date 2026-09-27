@@ -34,7 +34,7 @@ export async function getChatGPTUser(): Promise<ChatGPTUser | null> {
       FROM auth_sessions s
       JOIN users u ON u.id=s.user
       JOIN auth_accounts a ON a.user=u.id
-      WHERE s.token_hash=? AND s.expires>? AND u.closed=0
+      WHERE s.token_hash=? AND s.expires>? AND u.closed=0 AND u.suspended=0
     `).bind(tokenHash, Date.now()).first<{userId:string;displayName:string;email:string}>();
     return account ? { ...account, fullName: account.displayName } : null;
   }

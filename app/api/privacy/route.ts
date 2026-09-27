@@ -32,6 +32,8 @@ export async function POST(request:Request){try{
  if(p.action==='rename'){await user();const name=str(p.name,80);await db().prepare('UPDATE users SET name=? WHERE id=? AND closed=0').bind(name,u.userId).run();return json({ok:true});}
  if(p.action==='close'){
   if(p.confirmation!=='SUPPRIMER')throw new ApiError('Saisissez SUPPRIMER pour confirmer.');
+  const administrator=await db().prepare("SELECT 1 FROM users WHERE id=? AND role='admin'").bind(u.userId).first();
+  if(administrator)throw new ApiError('Un autre administrateur doit d’abord retirer votre rôle administrateur avant la fermeture du compte.',409);
   // A shared space must keep a real administrator. Never delete other members' content.
   const owned=await db().prepare('SELECT id,name FROM spaces WHERE owner=? LIMIT 100').bind(u.userId).all();
   if(owned.results.length)throw new ApiError('Transférez vos communautés à un autre membre depuis cette page avant de fermer votre compte.',409);
