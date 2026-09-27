@@ -12,7 +12,7 @@ export default function Dashboard({email}:{email:string}){
  const dialog=useRef<HTMLDialogElement>(null);
  useEffect(()=>{const c=new AbortController();setLoading(true);setError('');setData(null);fetch(`/api/admin?section=${tab}&page=${page}&q=${encodeURIComponent(search)}`,{signal:c.signal,cache:'no-store'}).then(async r=>{const d=await r.json() as Row;if(!r.ok)throw Error(d.error||'Chargement impossible.');setData(d);}).catch(e=>{if(e.name!=='AbortError')setError(e.message);}).finally(()=>{if(!c.signal.aborted)setLoading(false);});return()=>c.abort();},[tab,page,search,refresh]);
  useEffect(()=>{if(pending)dialog.current?.showModal();else dialog.current?.close();},[pending]);
- const navigate=(id:string)=>{setTab(id);setPage(0);setSearch('');setQ('');setNotice('');};
+ const navigate=(id:string)=>{if(id===tab)return;setData(null);setLoading(true);setTab(id);setPage(0);setSearch('');setQ('');setNotice('');};
  const ask=(action:string,target:string,name:string,extra:Row={})=>{setReason('');setModalError('');setPending({action,target,name,...extra});};
  async function submit(e:FormEvent){e.preventDefault();if(!pending)return;setSaving(true);setModalError('');try{const r=await fetch('/api/admin',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({...pending,reason})});const d=await r.json() as Row;if(!r.ok)throw Error(d.error||'Action impossible.');setPending(null);setNotice('Modification enregistrée dans le journal.');setRefresh(v=>v+1);}catch(e){setModalError(e instanceof Error?e.message:'Action impossible.');}finally{setSaving(false);}}
  const button=(label:string,fn:()=>void,danger=false,disabled=false)=><button className={danger?'danger':''} disabled={disabled} onClick={fn}>{label}</button>;
