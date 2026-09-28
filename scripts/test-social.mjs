@@ -17,7 +17,7 @@ await api('alice','chat','send',{chat:chat.chat,body:'Réel'});assert.equal((awa
 const mediaForm=new FormData();mediaForm.set('body','Une image réelle');mediaForm.append('media',new File(['image-test'],'preuve.png',{type:'image/png'}));const mediaResponse=await fetch(base+'/api/social-media',{method:'POST',headers:headers('alice'),body:mediaForm});assert.equal(mediaResponse.status,200,await mediaResponse.clone().text());const mediaPost=await mediaResponse.json().catch(()=>({}));const mediaFeed=await api('bob','social','feed');const shared=mediaFeed.items.find(p=>p.id===mediaPost.id);assert.equal(shared.media.length,1);assert.equal((await fetch(base+'/api/social-media?key='+shared.media[0].key,{headers:headers('bob')})).status,200);await api('alice','social','delete',{id:mediaPost.id});assert.equal((await fetch(base+'/api/social-media?key='+shared.media[0].key,{headers:headers('bob')})).status,404);
 const c=await api('alice','calls','create',{peer:'social-bob',mode:'video'});await api('bob','calls','create',{peer:'social-alice'},409);
 await api('eve','calls','get',{id:c.id},404);await api('bob','calls','offer',{id:c.id,sdp:'x'},409);
-assert.equal((await api('bob','calls','incoming')).calls.length,0);
+assert.equal((await api('bob','calls','incoming')).calls[0].id,c.id);
 await api('alice','calls','offer',{id:c.id,sdp:'v=0\r\n'});assert.equal((await api('bob','calls','incoming')).calls[0].id,c.id);
 await api('bob','calls','answer',{id:c.id,sdp:'v=0\r\n'});assert.equal((await api('alice','calls','get',{id:c.id})).call.state,'active');
 await api('alice','calls','end',{id:c.id});assert.equal((await api('bob','calls','get',{id:c.id})).call.offer,null);
