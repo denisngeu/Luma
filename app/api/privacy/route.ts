@@ -15,7 +15,7 @@ export async function GET(request:Request){try{
  queries.polls='SELECT p.message AS id,p.options,p.closed FROM polls p JOIN messages m ON m.id=p.message WHERE m.author=? AND p.message>? ORDER BY p.message LIMIT 100';
  queries.contacts='SELECT user AS id,discoverable FROM contacts WHERE user=? AND user>? ORDER BY user LIMIT 100';
  queries.friendships='SELECT id,sender,recipient,state,created FROM friendships WHERE (sender=? OR recipient=?) AND id>? ORDER BY id LIMIT 100';
- queries.socialProfile='SELECT user AS id,bio FROM social_profiles WHERE user=? AND user>? ORDER BY user LIMIT 100';
+  queries.socialProfile='SELECT user AS id,bio,(avatar IS NOT NULL) has_avatar FROM social_profiles WHERE user=? AND user>? ORDER BY user LIMIT 100';
  queries.posts='SELECT id,body,created,edited FROM posts WHERE author=? AND id>? ORDER BY id LIMIT 100';
  queries.postMedia='SELECT m.key AS id,m.post,m.kind,m.mime,m.filename,m.size FROM post_media m JOIN posts p ON p.id=m.post WHERE p.author=? AND m.key>? ORDER BY m.key LIMIT 100';
  queries.postComments='SELECT id,post,body,created FROM post_comments WHERE author=? AND id>? ORDER BY id LIMIT 100';
@@ -40,9 +40,11 @@ export async function POST(request:Request){try{
   if(owned.results.length)throw new ApiError('Transférez vos communautés à un autre membre depuis cette page avant de fermer votre compte.',409);
   const sql=[
    'INSERT OR IGNORE INTO erasure_files(key,user,created) SELECT m.key,p.author,? FROM post_media m JOIN posts p ON p.id=m.post WHERE p.author=?',
+   'INSERT OR IGNORE INTO erasure_files(key,user,created) SELECT avatar,user,? FROM social_profiles WHERE user=? AND avatar IS NOT NULL',
    'DELETE FROM post_comments WHERE author=? OR post IN (SELECT id FROM posts WHERE author=?)',
    'DELETE FROM post_likes WHERE user=? OR post IN (SELECT id FROM posts WHERE author=?)',
    'DELETE FROM posts WHERE author=?',
+   'DELETE FROM user_preferences WHERE "user"=?',
    'DELETE FROM social_profiles WHERE user=?',
    'DELETE FROM contacts WHERE user=?',
    'DELETE FROM friendships WHERE sender=? OR recipient=?',
@@ -59,7 +61,7 @@ export async function POST(request:Request){try{
    'DELETE FROM space_members WHERE user=?',
    "UPDATE chats SET owner=COALESCE((SELECT user FROM members WHERE chat=chats.id ORDER BY user LIMIT 1),owner),invite=lower(hex(randomblob(16))) WHERE owner=?",
   ];
-  const args=[[Date.now(),u.userId],[u.userId,u.userId],[u.userId,u.userId],[u.userId],[u.userId],[u.userId],[u.userId,u.userId],[u.userId,u.userId],[u.userId],[Date.now(),u.userId],[u.userId,u.userId],[u.userId],[u.userId,u.userId],[u.userId,u.userId],[u.userId],[u.userId],[u.userId],[u.userId],[u.userId]];
+  const args=[[Date.now(),u.userId],[Date.now(),u.userId],[u.userId,u.userId],[u.userId,u.userId],[u.userId],[u.userId],[u.userId],[u.userId],[u.userId,u.userId],[u.userId,u.userId],[u.userId],[Date.now(),u.userId],[u.userId,u.userId],[u.userId],[u.userId,u.userId],[u.userId,u.userId],[u.userId],[u.userId],[u.userId],[u.userId],[u.userId]];
   if(nativeAuthEnabled()){sql.splice(8,0,'DELETE FROM auth_sessions WHERE user=?','DELETE FROM auth_accounts WHERE user=?');args.splice(8,0,[u.userId],[u.userId]);}
   await db().batch(sql.map((s,i)=>db().prepare(s).bind(...args[i])));
   return json({closed:true,pendingFiles:true});

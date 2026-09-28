@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import './themes.css';
+import './theme-options.css';
 import './social.css';
 import './network.css';
+import './feed-v2.css';
+import './call-v2.css';
 import CallInbox from './call-inbox';
 import ThemeProvider from './theme-provider';
 import AppShell from './app-shell';

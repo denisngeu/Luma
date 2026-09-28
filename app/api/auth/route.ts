@@ -71,7 +71,7 @@ export async function POST(request: Request) {
     await database.prepare("DELETE FROM auth_rate_limits WHERE key=?").bind(limiterKey).run();
 
     return Response.json(
-      { ok: true, user: { displayName, email }, returnTo },
+      { ok: true, user: { displayName, email }, returnTo: action === "register" ? `/bienvenue?returnTo=${encodeURIComponent(returnTo)}` : returnTo },
       { headers: { "Set-Cookie": sessionCookie(request, token, SESSION_DURATION) } },
     );
   } catch (error) {
