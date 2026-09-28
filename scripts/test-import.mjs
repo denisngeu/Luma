@@ -11,7 +11,7 @@ const sqlite=new DatabaseSync(path.join(d1,'source.sqlite'));
 for(const f of readdirSync('drizzle').filter(n=>n.endsWith('.sql')).sort())sqlite.exec(readFileSync('drizzle/'+f,'utf8'));
 sqlite.exec("INSERT INTO users(id,name) VALUES('a','Alice');INSERT INTO chats(id,name,kind,owner,invite,created) VALUES('c','Test','direct','a','i',123);INSERT INTO members(chat,user) VALUES('c','a');INSERT INTO messages(id,chat,author,body,created,file,filename) VALUES('m','c','a','hello',123,'file-1','test.txt');INSERT INTO auth_accounts(user,email,password_salt,password_hash,created) VALUES('a','alice@example.test','salt-kept','hash-kept',123)");sqlite.close();
 const r2=new DatabaseSync(path.join(r2dir,'objects.sqlite'));r2.exec('CREATE TABLE _mf_objects(key text PRIMARY KEY,blob_id text,size integer)');r2.prepare('INSERT INTO _mf_objects VALUES(?,?,?)').run('file-1','blob-1',7);r2.close();writeFileSync(path.join(blobs,'blob-1'),'payload');
-const pg=new PGlite();await pg.exec(readFileSync('postgres/0001_initial.sql','utf8'));await pg.exec(readFileSync('postgres/0002_admin.sql','utf8'));await pg.exec(readFileSync('postgres/0003_admin_console.sql','utf8'));
+const pg=new PGlite();await pg.exec(readFileSync('postgres/0001_initial.sql','utf8'));await pg.exec(readFileSync('postgres/0002_admin.sql','utf8'));await pg.exec(readFileSync('postgres/0003_admin_console.sql','utf8'));await pg.exec(readFileSync('postgres/0004_media_rooms.sql','utf8'));
 const client={query:(sql,args)=>pg.query(sql,args),release(){}};const pool={connect:async()=>client};
 await assert.rejects(importSqlite(pool,root),/Enable LUMA_MIGRATE_SQLITE/);
 process.env.LUMA_MIGRATE_SQLITE='1';delete process.env.LUMA_UPLOAD_DIRECTORY;

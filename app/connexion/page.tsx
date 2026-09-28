@@ -30,7 +30,7 @@ export default async function Connection({ searchParams }: { searchParams: Promi
         {user ? <>
           <div className="login-account"><div className="login-avatar">{Array.from(user.displayName)[0]?.toUpperCase()}</div><div><strong>{user.displayName}</strong><span>{user.email}</span></div><Check size={19} aria-label="Session active" /></div>
           <a className="login-primary" href={returnTo}>Continuer vers Luma<ArrowRight size={19} aria-hidden="true" /></a>
-          <form className="login-logout" method="post" action={chatGPTSignOutPath("/")}><button type="submit" className="login-switch">Se déconnecter</button></form>
+          <div className="login-session-actions"><form className="login-logout" method="post" action={chatGPTSignOutPath(`/connexion?returnTo=${encodeURIComponent(returnTo)}`)}><button type="submit" className="login-switch">Changer de compte</button></form><form className="login-logout" method="post" action={chatGPTSignOutPath("/")}><button type="submit" className="login-switch">Se déconnecter</button></form></div>
         </> : native ? <AuthForm returnTo={returnTo} /> : <>
           <a className="login-primary" href={chatGPTSignInPath(returnTo)} target="_top">Continuer avec ChatGPT<ArrowRight size={19} aria-hidden="true" /></a>
           <p className="login-method">Connexion sécurisée par votre compte ChatGPT.</p>

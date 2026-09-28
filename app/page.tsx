@@ -1,4 +1,4 @@
-import { ArrowRight, Check, MessageCircle, Radio, ShieldCheck, Sparkles, Users, Video } from "lucide-react";
+import { ArrowRight, Check, Download, MessageCircle, MonitorDown, Radio, ShieldCheck, Smartphone, Sparkles, Users, Video } from "lucide-react";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -16,7 +16,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
   return <main className="landing">
     <nav className="landing-nav" aria-label="Navigation principale">
       <Link className="landing-brand" href="/"><Image src="/favicon.svg" width={38} height={38} alt="" /><strong>Luma</strong><span>VOTRE CERCLE</span></Link>
-      <div className="landing-links"><a href="#univers">Fonctionnalités</a><a href="#confiance">Confiance</a><a href="/confidentialite">Confidentialité</a></div>
+      <div className="landing-links"><a href="#univers">Fonctionnalités</a><a href="#telecharger">Télécharger</a><a href="#confiance">Confiance</a><a href="/confidentialite">Confidentialité</a></div>
       <a className="landing-login" href={destination}>{user ? "Ouvrir Luma" : "Se connecter"}<ArrowRight size={17} /></a>
     </nav>
 
@@ -44,6 +44,8 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
         <article><Video /><h3>Appels vraiment partagés</h3><p>Audio, vidéo, partage d’écran et soundboard réunis dans la même conversation.</p></article>
       </div>
     </section>
+
+    <section className="landing-download" id="telecharger"><div><span className="landing-kicker"><Download size={15}/> LUMA PARTOUT AVEC VOUS</span><h2>Installez Luma sur vos appareils.</h2><p>Retrouvez le même compte, vos thèmes et toutes vos conversations sur ordinateur et Android.</p></div><div className="download-cards"><a href="https://github.com/denisngeu/Luma/releases/download/v0.3.2-preview/Luma-Setup-0.3.2.exe"><MonitorDown/><span><strong>Windows</strong><small>Télécharger le fichier .exe</small></span><ArrowRight/></a><a href="https://github.com/denisngeu/Luma/releases/download/v0.3.2-preview/Luma-0.3.2-test.apk"><Smartphone/><span><strong>Android</strong><small>Télécharger le fichier .apk</small></span><ArrowRight/></a></div><small className="download-note">Versions de prévisualisation · Windows 10/11 et Android 8 ou supérieur</small></section>
 
     <section className="landing-trust" id="confiance"><div><span className="landing-kicker">VOTRE ESPACE, VOS RÈGLES</span><h2>Une expérience sociale plus humaine.</h2><p>Pas de publicité, pas de fil imposé. Vous choisissez vos amis, vos communautés, votre apparence et ce que vous partagez.</p><a href="/confidentialite">Lire notre approche des données <ArrowRight size={17} /></a></div><ShieldCheck size={112} /></section>
 

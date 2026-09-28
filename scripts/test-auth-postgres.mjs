@@ -8,7 +8,7 @@ import {pathToFileURL} from 'node:url';
 const dir='.sites-runtime/auth-pg';mkdirSync(dir,{recursive:true});
 await build({entryPoints:['lib/postgres.ts'],outfile:dir+'/adapter.mjs',bundle:true,packages:'external',platform:'node',format:'esm'});
 const {PostgresDatabase}=await import(pathToFileURL(process.cwd()+'/'+dir+'/adapter.mjs'));
-const pg=new PGlite();await pg.exec(readFileSync('postgres/0001_initial.sql','utf8'));await pg.exec(readFileSync('postgres/0002_admin.sql','utf8'));await pg.exec(readFileSync('postgres/0003_admin_console.sql','utf8'));
+const pg=new PGlite();await pg.exec(readFileSync('postgres/0001_initial.sql','utf8'));await pg.exec(readFileSync('postgres/0002_admin.sql','utf8'));await pg.exec(readFileSync('postgres/0003_admin_console.sql','utf8'));await pg.exec(readFileSync('postgres/0004_media_rooms.sql','utf8'));
 const driver={query:(s,v)=>pg.query(s,v),async connect(){return driver;}};
 globalThis.__authPg={db:new PostgresDatabase(driver),context:new AsyncLocalStorage()};
 for(const [name,entry] of [['auth','app/api/auth/route.ts'],['identity','app/chatgpt-auth.ts'],['logout','app/api/auth/logout/route.ts'],['admin','lib/admin.ts']]){

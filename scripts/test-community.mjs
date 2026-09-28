@@ -4,8 +4,8 @@ const headers=who=>who?{'oai-authenticated-user-id':who,'oai-authenticated-user-
 async function call(who,action,data={},status=200,chat=false){const r=await fetch(base+(chat?'/api/chat':'/api/community'),{method:'POST',headers:{'Content-Type':'application/json',...headers(who)},body:JSON.stringify({action,...data})});const d=await r.json();assert.equal(r.status,status,JSON.stringify(d));return d;}
 await call(null,'spaces',{},401);
 const created=await call('owner','create_space',{name:'Studio test',description:'Communauté fictive'});
-let space=await call('owner','space',{space:created.id});assert.equal(space.channels.length,2);assert.equal(space.role,'owner');
-const general=space.channels.find(c=>c.mode==='text').id,announcements=space.channels.find(c=>c.mode==='announcement').id;
+let space=await call('owner','space',{space:created.id});assert.equal(space.channels.length,3);assert.equal(space.role,'owner');
+const general=space.channels.find(c=>c.mode==='text').id,announcements=space.channels.find(c=>c.mode==='announcement').id,voice=space.channels.find(c=>c.mode==='voice').id;assert.ok(voice);
 await call('outsider','space',{space:created.id},404);await call('outsider','feed',{chat:general},404);
 await call('member','join_space',{code:space.space.invite});
 await call('member','create_channel',{space:created.id,name:'intrusion'},403);
@@ -31,7 +31,7 @@ await call('member','role',{space:created.id,user:'member',role:'moderator'},403
 await call('owner','role',{space:created.id,user:'member',role:'moderator'});await call('member','create_channel',{space:created.id,name:'projets'});await call('member','send',{chat:announcements,body:'Annonce autorisée'},200,true);
 await call('owner','role',{space:created.id,user:'owner',role:'member'},403);
 await call('owner','rotate_invite',{space:created.id});await call('newcomer','join_space',{code:space.space.invite},404);
-assert.equal((await call('member','space',{space:created.id})).channels.length,3);
+assert.equal((await call('member','space',{space:created.id})).channels.length,4);
 await call('member','star',{message:root.id},200,true);
 assert.equal((await call('member','saved',{chat:general})).messages[0].id,root.id);
 assert.equal((await call('owner','saved',{chat:general})).messages.length,0);

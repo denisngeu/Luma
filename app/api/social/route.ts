@@ -1,4 +1,4 @@
-import {ApiError,db,fail,sameOrigin,str,user} from '@/lib/chat-server';
+import {ApiError,bucket,db,fail,sameOrigin,str,user} from '@/lib/chat-server';
 const json=(data:unknown)=>Response.json(data,{headers:{'Cache-Control':'private, no-store'}});
 // Visibility follows the post owner, not friends-of-friends or commenters.
 const visible=`(p.author=? OR EXISTS(SELECT 1 FROM friendships f WHERE f.state='accepted' AND ((f.sender=? AND f.recipient=p.author) OR (f.recipient=? AND f.sender=p.author))))`;
@@ -18,7 +18,9 @@ export async function POST(request:Request){try{
  if(p.action==='feed'){
   const before=p.before?str(p.before,100):'~',author=typeof p.author==='string'?p.author:'';
   const items=await db().prepare(`SELECT p.*,u.name,(SELECT count(*) FROM post_likes l WHERE l.post=p.id) likes,(SELECT count(*) FROM post_comments c WHERE c.post=p.id) comments,EXISTS(SELECT 1 FROM post_likes l WHERE l.post=p.id AND l.user=?) liked FROM posts p JOIN users u ON u.id=p.author WHERE p.hidden=0 AND u.closed=0 AND ${visible} AND p.id<? AND (?='' OR p.author=?) ORDER BY p.id DESC LIMIT 21`).bind(u.id,u.id,u.id,u.id,before,author,author).all();
-  const rows=items.results;return json({items:rows.slice(0,20),next:rows.length>20?rows[19].id:null,user:u});
+  const rows=items.results as Array<Record<string,unknown>>;const shown=rows.slice(0,20);const ids=shown.map(x=>x.id as string);let media:Record<string,unknown>[]=[];
+  if(ids.length)media=(await db().driver.query(`SELECT post,key,kind,mime,filename,size,position FROM post_media WHERE post IN (${ids.map((_,i)=>'$'+(i+1)).join(',')}) ORDER BY post,position`,ids)).rows;
+  for(const row of shown)row.media=media.filter(item=>item.post===row.id);return json({items:shown,next:rows.length>20?rows[19].id:null,user:u});
  }
  if(p.action==='publish'){
   const body=str(p.body,3000);const count=await db().prepare('SELECT count(*) n FROM posts WHERE author=? AND created>?').bind(u.id,Date.now()-86400000).first<{n:number}>();if((count?.n||0)>=50)throw new ApiError('Vous pouvez publier 50 fois par jour.',429);
@@ -28,7 +30,7 @@ export async function POST(request:Request){try{
  if(p.action==='delete'||p.action==='edit'){
   if(post.author!==u.id)throw new ApiError('Cette publication ne vous appartient pas.',403);
   if(p.action==='edit')await db().prepare('UPDATE posts SET body=?,edited=? WHERE id=? AND author=?').bind(str(p.body,3000),Date.now(),id,u.id).run();
-  else await db().batch([db().prepare('DELETE FROM post_comments WHERE post=?').bind(id),db().prepare('DELETE FROM post_likes WHERE post=?').bind(id),db().prepare('DELETE FROM posts WHERE id=? AND author=?').bind(id,u.id)]);return json({ok:true});
+  else {const files=await db().prepare('SELECT key FROM post_media WHERE post=?').bind(id).all<{key:string}>();await db().batch([db().prepare('DELETE FROM post_comments WHERE post=?').bind(id),db().prepare('DELETE FROM post_likes WHERE post=?').bind(id),db().prepare('DELETE FROM post_media WHERE post=?').bind(id),db().prepare('DELETE FROM posts WHERE id=? AND author=?').bind(id,u.id)]);await Promise.all(files.results.map(f=>bucket().delete(f.key).catch(()=>{})));}return json({ok:true});
  }
  if(p.action==='like'){if(p.liked===true)await db().prepare('INSERT OR IGNORE INTO post_likes(post,user) VALUES (?,?)').bind(id,u.id).run();else await db().prepare('DELETE FROM post_likes WHERE post=? AND user=?').bind(id,u.id).run();return json({ok:true});}
  if(p.action==='comments'){
