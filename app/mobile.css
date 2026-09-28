@@ -1,6 +1,6 @@
 /* Mobile is a focused app surface: one screen, one action, one persistent tab bar. */
 @media (max-width:760px){
-  :root{--mobile-nav:68px}
+  :root{--mobile-nav:62px;--mobile-safe-bottom:max(env(safe-area-inset-bottom,0px),var(--native-safe-bottom,0px))}
   html,body{max-width:100%;overflow-x:hidden}
   body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent}
   button,a,input,textarea,select{touch-action:manipulation}
@@ -8,20 +8,20 @@
   .luma-shell{
     min-height:100dvh;
     padding-left:0!important;
-    padding-bottom:calc(var(--mobile-nav) + env(safe-area-inset-bottom,0px))!important;
+    padding-bottom:calc(var(--mobile-nav) + var(--mobile-safe-bottom))!important;
   }
   .luma-shell>.social-nav{
     position:fixed!important;
     inset:auto 0 0 0!important;
     z-index:90!important;
     width:100%!important;
-    height:calc(var(--mobile-nav) + env(safe-area-inset-bottom,0px))!important;
+    height:calc(var(--mobile-nav) + var(--mobile-safe-bottom))!important;
     display:grid!important;
     grid-template-columns:repeat(5,minmax(0,1fr));
     align-items:start;
     gap:2px!important;
     margin:0!important;
-    padding:7px 6px calc(7px + env(safe-area-inset-bottom,0px))!important;
+    padding:5px 6px calc(5px + var(--mobile-safe-bottom))!important;
     border:0!important;
     border-top:1px solid var(--t-line)!important;
     background:color-mix(in srgb,var(--t-rail) 94%,transparent)!important;
@@ -32,7 +32,7 @@
   .luma-shell>.social-nav a{
     width:auto!important;
     min-width:0;
-    min-height:52px!important;
+    min-height:50px!important;
     margin:0!important;
     padding:5px 2px!important;
     display:flex!important;
@@ -55,8 +55,8 @@
   }
   .luma-shell>.social-nav a[aria-current=page] svg{color:var(--luma-accent)}
   .luma-page{width:100%;min-width:0;overflow:clip}
-  .luma-page :is(.app,.hub){height:calc(100dvh - var(--mobile-nav) - env(safe-area-inset-bottom,0px))!important}
-  .luma-page :is(.network,.privacy-page,.appearance,.call-room){min-height:calc(100dvh - var(--mobile-nav) - env(safe-area-inset-bottom,0px))!important}
+  .luma-page :is(.app,.hub){height:calc(100dvh - var(--mobile-nav) - var(--mobile-safe-bottom))!important}
+  .luma-page :is(.network,.privacy-page,.appearance,.call-room){min-height:calc(100dvh - var(--mobile-nav) - var(--mobile-safe-bottom))!important}
 
   /* Fil */
   .network-layout{display:block!important;width:100%;padding:0!important;margin:0!important}
