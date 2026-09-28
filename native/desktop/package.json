@@ -20,6 +20,7 @@
   "build": {
     "appId": "app.luma.messenger",
     "productName": "Luma",
+    "icon": "build/icon.png",
     "files": [
       "main.cjs",
       "config.json"
