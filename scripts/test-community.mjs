@@ -18,7 +18,7 @@ const form=new FormData();form.set('chat',announcements);form.set('file',new Fil
 const root=await call('member','send',{chat:general,body:'Décidons ensemble'},200,true);
 await call('member','send',{chat:general,body:'Voici motinterdit'},422,true);
 await call('owner','send',{chat:general,body:'Réponse dans le fil',reply:root.id},200,true);
-let feed=await call('member','feed',{chat:general});assert.equal(feed.messages.length,1);assert.equal(feed.messages[0].replies,1);
+let feed=await call('member','feed',{chat:general});assert.equal(feed.messages.length,2);assert.equal(feed.messages.find(message=>message.id===root.id).replies,1);
 const thread=await call('member','feed',{chat:general,thread:root.id});assert.equal(thread.messages.length,2);
 await call('member','react',{message:root.id,emoji:'🔥',enabled:true});await call('member','react',{message:root.id,emoji:'🔥',enabled:true});
 feed=await call('owner','feed',{chat:general});assert.equal(feed.reactions[0].count,1);assert.equal(feed.reactions[0].mine,0);
