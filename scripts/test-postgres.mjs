@@ -1,7 +1,7 @@
 // Actual PostgreSQL engine (PGlite), actual API handlers; identity is mocked only here.
 import {PGlite} from '@electric-sql/pglite';
 import {build} from 'esbuild';
-import {readFileSync,mkdirSync,writeFileSync} from 'node:fs';
+import {readFileSync,mkdirSync,writeFileSync,readdirSync} from 'node:fs';
 import {AsyncLocalStorage} from 'node:async_hooks';
 import {createServer} from 'node:http';
 import {spawn} from 'node:child_process';
@@ -9,7 +9,7 @@ import {pathToFileURL} from 'node:url';
 const dir='.sites-runtime/postgres-tests';mkdirSync(dir,{recursive:true});
 await build({entryPoints:['lib/postgres.ts'],outfile:dir+'/adapter.mjs',bundle:true,packages:'external',platform:'node',format:'esm'});
 const {PostgresDatabase}=await import(pathToFileURL(process.cwd()+'/'+dir+'/adapter.mjs'));
-const pg=new PGlite();await pg.exec(readFileSync('postgres/0001_initial.sql','utf8'));await pg.exec(readFileSync('postgres/0002_admin.sql','utf8'));await pg.exec(readFileSync('postgres/0003_admin_console.sql','utf8'));await pg.exec(readFileSync('postgres/0004_media_rooms.sql','utf8'));
+const pg=new PGlite();for(const name of readdirSync('postgres').filter(name=>/^\d+.*\.sql$/.test(name)).sort())await pg.exec(readFileSync('postgres/'+name,'utf8'));
 const driver={query:async(sql,args)=>{try{return await pg.query(sql,args);}catch(e){console.error('SQL failed:',sql,e.message);throw e;}},async connect(){return driver;}};
 const db=new PostgresDatabase(driver),context=new AsyncLocalStorage(),blobs=new Map();
 globalThis.__pgTest={db,context,bucket:{async put(key,body){blobs.set(key,await new Response(body).arrayBuffer());},async get(key){return blobs.has(key)?{body:new Uint8Array(blobs.get(key))}:null;},async delete(key){blobs.delete(key);}}};

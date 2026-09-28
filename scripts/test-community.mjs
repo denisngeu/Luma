@@ -5,14 +5,18 @@ async function call(who,action,data={},status=200,chat=false){const r=await fetc
 await call(null,'spaces',{},401);
 const created=await call('owner','create_space',{name:'Studio test',description:'Communauté fictive'});
 let space=await call('owner','space',{space:created.id});assert.equal(space.channels.length,3);assert.equal(space.role,'owner');
+await call('owner','update_space',{space:created.id,name:'Studio privé',description:'Un vrai espace',rules:'Respect et entraide'});space=await call('owner','space',{space:created.id});assert.equal(space.space.name,'Studio privé');assert.equal(space.space.rules,'Respect et entraide');
+await call('owner','save_bot',{space:created.id,kind:'welcome',enabled:true,message:'Bienvenue {user} !'});await call('owner','save_bot',{space:created.id,kind:'moderation',enabled:true,blockedWords:'motinterdit'});space=await call('owner','space',{space:created.id});assert.equal(space.bots.length,2);
 const general=space.channels.find(c=>c.mode==='text').id,announcements=space.channels.find(c=>c.mode==='announcement').id,voice=space.channels.find(c=>c.mode==='voice').id;assert.ok(voice);
 await call('outsider','space',{space:created.id},404);await call('outsider','feed',{chat:general},404);
 await call('member','join_space',{code:space.space.invite});
+assert.ok((await call('member','feed',{chat:space.channels.find(c=>c.mode==='text').id})).messages.some(m=>m.body.includes('Bienvenue member')));
 await call('member','create_channel',{space:created.id,name:'intrusion'},403);
 await call('member','send',{chat:announcements,body:'Interdit'},403,true);
 await call('member','poll',{chat:announcements,question:'Interdit ?',options:['Oui','Non']},403);
 const form=new FormData();form.set('chat',announcements);form.set('file',new File(['test'],'test.txt'));assert.equal((await fetch(base+'/api/files',{method:'POST',headers:headers('member'),body:form})).status,403);
 const root=await call('member','send',{chat:general,body:'Décidons ensemble'},200,true);
+await call('member','send',{chat:general,body:'Voici motinterdit'},422,true);
 await call('owner','send',{chat:general,body:'Réponse dans le fil',reply:root.id},200,true);
 let feed=await call('member','feed',{chat:general});assert.equal(feed.messages.length,1);assert.equal(feed.messages[0].replies,1);
 const thread=await call('member','feed',{chat:general,thread:root.id});assert.equal(thread.messages.length,2);
