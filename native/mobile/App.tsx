@@ -6,7 +6,7 @@ import {SafeAreaProvider,SafeAreaView,useSafeAreaInsets} from 'react-native-safe
 import {WebView} from 'react-native-webview';
 
 const SERVER=process.env.EXPO_PUBLIC_LUMA_URL||'';
-const MOBILE_RELEASE='0.3.4';
+const MOBILE_RELEASE='0.3.5';
 const themeBridge=`(()=>{const send=()=>window.ReactNativeWebView.postMessage(JSON.stringify({theme:document.documentElement.dataset.luma}));new MutationObserver(send).observe(document.documentElement,{attributes:true,attributeFilter:['data-luma']});send()})();true;`;
 // One persistent WebView keeps cookies, theme preferences and navigation together.
 export default function App(){return <SafeAreaProvider><LumaApp/></SafeAreaProvider>;}
@@ -44,7 +44,7 @@ function LumaApp(){
  if(!origin)return <SafeAreaView edges={['top','left','right']} style={styles.screen}><Text style={styles.text}>Configurez l’adresse HTTPS de Luma avant de construire l’application.</Text></SafeAreaView>;
  const safeAreaBridge=`document.documentElement.style.setProperty('--native-safe-bottom','${insets.bottom}px');true;`;
  return <SafeAreaView edges={['top','left','right']} style={[styles.screen,{backgroundColor:dark?'#121623':'#f4f5fb'}]}>
-   <WebView key={webKey} ref={web} style={styles.web} source={{uri:origin+'/fil?native=android&release='+MOBILE_RELEASE}} originWhitelist={[origin+'/*']} sharedCookiesEnabled thirdPartyCookiesEnabled domStorageEnabled javaScriptEnabled allowsInlineMediaPlayback mediaCapturePermissionGrantType="prompt" mixedContentMode="never" cacheEnabled={false} cacheMode="LOAD_NO_CACHE" setSupportMultipleWindows={false} overScrollMode="never"
+   <WebView key={webKey} ref={web} style={styles.web} source={{uri:origin+'/fil?native=android&release='+MOBILE_RELEASE}} originWhitelist={[origin+'/*']} sharedCookiesEnabled thirdPartyCookiesEnabled domStorageEnabled javaScriptEnabled allowsInlineMediaPlayback mediaPlaybackRequiresUserAction={false} mediaCapturePermissionGrantType="prompt" mixedContentMode="never" cacheEnabled={false} cacheMode="LOAD_NO_CACHE" setSupportMultipleWindows={false} overScrollMode="never"
      onNavigationStateChange={state=>{back.current=state.canGoBack;}}
      injectedJavaScriptBeforeContentLoaded={safeAreaBridge} injectedJavaScript={safeAreaBridge+themeBridge} onMessage={event=>{try{const url=new URL(event.nativeEvent.url);if(url.origin!==origin)return;const message=JSON.parse(event.nativeEvent.data);if(message.theme==='dark'||message.theme==='light')setDark(message.theme==='dark');if(message.type==='share-contact-card'&&url.pathname==='/amis')void shareCard(message.image);}catch{}}}
      onLoadStart={beginLoad} onLoadEnd={finishLoad} onError={()=>recover()} onHttpError={event=>recover('Le serveur Luma répond avec une erreur ('+event.nativeEvent.statusCode+').')}
