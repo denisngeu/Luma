@@ -16,7 +16,7 @@ Luma comprend un site Next.js, une API connectée à PostgreSQL, une application
 
 ## Versions installables
 
-- Android 0.3.6 de test.
+- Android 0.3.7 de test.
 - Windows 0.3.5 de test.
 - Sources iOS présentes; signature et distribution Apple encore nécessaires.
 
