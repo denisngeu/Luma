@@ -54,8 +54,15 @@
     color:#fff!important;
   }
   .luma-shell>.social-nav a[aria-current=page] svg{color:var(--luma-accent)}
-  .luma-page{width:100%;min-width:0;overflow:clip}
-  .luma-page :is(.app,.hub){height:calc(100dvh - var(--mobile-nav) - var(--mobile-safe-bottom))!important}
+  .luma-page{
+    width:100%;min-width:0;
+    height:calc(100dvh - var(--mobile-nav) - var(--mobile-safe-bottom));
+    overflow-x:clip;overflow-y:auto;
+    overscroll-behavior-y:contain;
+    -webkit-overflow-scrolling:touch;
+    touch-action:pan-y;
+  }
+  .luma-page :is(.app,.hub){height:100%!important}
   .luma-page :is(.network,.privacy-page,.appearance,.call-room){min-height:calc(100dvh - var(--mobile-nav) - var(--mobile-safe-bottom))!important}
 
   /* Fil */

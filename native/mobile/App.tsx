@@ -7,7 +7,7 @@ import {SafeAreaProvider,SafeAreaView,useSafeAreaInsets} from 'react-native-safe
 import {WebView} from 'react-native-webview';
 
 const SERVER=process.env.EXPO_PUBLIC_LUMA_URL||'';
-const MOBILE_RELEASE='0.3.6';
+const MOBILE_RELEASE='0.3.7';
 const themeBridge=`(()=>{const send=()=>window.ReactNativeWebView.postMessage(JSON.stringify({theme:document.documentElement.dataset.luma}));new MutationObserver(send).observe(document.documentElement,{attributes:true,attributeFilter:['data-luma']});send()})();true;`;
 // One persistent WebView keeps cookies, theme preferences and navigation together.
 export default function App(){return <SafeAreaProvider><LumaApp/></SafeAreaProvider>;}
@@ -23,12 +23,14 @@ function LumaApp(){
  const [webKey,setWebKey]=useState(0);
  const [dark,setDark]=useState(true);
  const sharing=useRef(false);
+ const rendererCrashes=useRef<number[]>([]);
  const loadTimer=useRef<ReturnType<typeof setTimeout>|null>(null);
  const clearLoadTimer=useCallback(()=>{if(loadTimer.current){clearTimeout(loadTimer.current);loadTimer.current=null;}},[]);
  const beginLoad=useCallback(()=>{clearLoadTimer();setError(false);setLoading(true);setMessage('Ouverture de Luma…');loadTimer.current=setTimeout(()=>{setLoading(false);setError(true);setMessage('Luma met trop de temps à répondre.');},20000);},[clearLoadTimer]);
  const finishLoad=useCallback(()=>{clearLoadTimer();setLoading(false);setError(false);},[clearLoadTimer]);
  const recover=useCallback((reason='Connexion indisponible. Vérifiez votre réseau.')=>{clearLoadTimer();setMessage(reason);setError(true);setLoading(false);},[clearLoadTimer]);
- const retry=useCallback(()=>{beginLoad();setWebKey(value=>value+1);},[beginLoad]);
+ const retry=useCallback(()=>{rendererCrashes.current=[];beginLoad();setWebKey(value=>value+1);},[beginLoad]);
+ const recoverRenderer=useCallback(()=>{const now=Date.now(),recent=rendererCrashes.current.filter(time=>now-time<60000);rendererCrashes.current=[...recent,now];if(recent.length){recover('Le moteur d’affichage Android s’est arrêté deux fois. Touchez Recharger Luma pour repartir proprement.');return;}beginLoad();setWebKey(value=>value+1);},[beginLoad,recover]);
  async function shareCard(image:unknown){
   if(sharing.current||typeof image!=='string'||image.length>3000000||!/^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(image))return;
   sharing.current=true;
@@ -52,11 +54,11 @@ function LumaApp(){
  if(!origin)return <SafeAreaView edges={['top','left','right']} style={styles.screen}><Text style={styles.text}>Configurez l’adresse HTTPS de Luma avant de construire l’application.</Text></SafeAreaView>;
  const safeAreaBridge=`document.documentElement.style.setProperty('--native-safe-bottom','${insets.bottom}px');true;`;
  return <SafeAreaView edges={['top','left','right']} style={[styles.screen,{backgroundColor:dark?'#121623':'#f4f5fb'}]}>
-   <WebView key={webKey} ref={web} style={styles.web} source={{uri:origin+'/fil?native=android&release='+MOBILE_RELEASE}} originWhitelist={[origin+'/*']} sharedCookiesEnabled thirdPartyCookiesEnabled domStorageEnabled javaScriptEnabled allowsInlineMediaPlayback mediaPlaybackRequiresUserAction={false} mediaCapturePermissionGrantType="prompt" mixedContentMode="never" cacheEnabled={false} cacheMode="LOAD_NO_CACHE" setSupportMultipleWindows={false} overScrollMode="never"
+   <WebView key={webKey} ref={web} style={styles.web} source={{uri:origin+'/fil?native=android&release='+MOBILE_RELEASE}} originWhitelist={[origin+'/*']} sharedCookiesEnabled thirdPartyCookiesEnabled domStorageEnabled javaScriptEnabled allowsInlineMediaPlayback mediaPlaybackRequiresUserAction={false} mediaCapturePermissionGrantType="prompt" mixedContentMode="never" cacheEnabled={false} cacheMode="LOAD_NO_CACHE" setSupportMultipleWindows={false} overScrollMode="never" scrollEnabled nestedScrollEnabled decelerationRate="normal"
      onNavigationStateChange={state=>{back.current=state.canGoBack;}}
      injectedJavaScriptBeforeContentLoaded={safeAreaBridge} injectedJavaScript={safeAreaBridge+themeBridge} onMessage={event=>{try{const url=new URL(event.nativeEvent.url);if(url.origin!==origin)return;const message=JSON.parse(event.nativeEvent.data);if(message.theme==='dark'||message.theme==='light')setDark(message.theme==='dark');if(message.type==='share-contact-card'&&url.pathname==='/amis')void shareCard(message.image);if(message.type==='incoming-call')updateRingtone(message.id);}catch{}}}
      onLoadStart={beginLoad} onLoadEnd={finishLoad} onError={()=>recover()} onHttpError={event=>recover('Le serveur Luma répond avec une erreur ('+event.nativeEvent.statusCode+').')}
-     onRenderProcessGone={()=>{setWebKey(value=>value+1);beginLoad();}} onContentProcessDidTerminate={()=>{setWebKey(value=>value+1);beginLoad();}}
+     onRenderProcessGone={recoverRenderer} onContentProcessDidTerminate={recoverRenderer}
      onShouldStartLoadWithRequest={request=>{try{const url=new URL(request.url);if(url.protocol==='https:'&&url.origin===origin)return true;if(['https:','mailto:'].includes(url.protocol))void Linking.openURL(request.url);return false;}catch{return false;}}}
    />
    {loading&&<View style={styles.overlay}><ActivityIndicator size="large" color="#79e0f2"/><Text style={styles.text}>{message}</Text></View>}

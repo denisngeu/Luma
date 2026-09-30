@@ -1,6 +1,6 @@
 import {getChatGPTUser} from '@/app/chatgpt-auth';
 import {ApiError,db,fail,sameOrigin,str,user} from '@/lib/chat-server';
-export async function digest(s:string){return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s)))).map(x=>x.toString(16).padStart(2,'0')).join('');}
+async function digest(s:string){return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s)))).map(x=>x.toString(16).padStart(2,'0')).join('');}
 const json=(d:unknown)=>Response.json(d,{headers:{'Cache-Control':'private, no-store'}});
 export async function POST(r:Request){try{sameOrigin(r);if(!r.headers.get('content-type')?.startsWith('application/json'))throw new ApiError('Format invalide',415);const text=await r.text();if(text.length>2048)throw new ApiError('Requête trop volumineuse',413);const p=JSON.parse(text),u=await user(),auth=await getChatGPTUser();
  await db().prepare('INSERT OR IGNORE INTO contacts(user,code) VALUES (?,?)').bind(u.id,crypto.randomUUID()).run();
