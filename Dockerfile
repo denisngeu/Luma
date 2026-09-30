@@ -11,6 +11,9 @@ RUN npm ci
 
 COPY . .
 RUN npm run build
+RUN mkdir -p .next/standalone/.next \
+  && cp -R public .next/standalone/public \
+  && cp -R .next/static .next/standalone/.next/static
 
 FROM node:24-bookworm-slim AS runtime
 
