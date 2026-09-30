@@ -1,17 +1,20 @@
 import React,{useCallback,useEffect,useRef,useState} from 'react';
-import {ActivityIndicator,Alert,AppState,BackHandler,Linking,Pressable,StyleSheet,Text,View} from 'react-native';
+import {ActivityIndicator,Alert,AppState,BackHandler,Linking,Pressable,StyleSheet,Text,Vibration,View} from 'react-native';
+import {setAudioModeAsync,useAudioPlayer} from 'expo-audio';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import {SafeAreaProvider,SafeAreaView,useSafeAreaInsets} from 'react-native-safe-area-context';
 import {WebView} from 'react-native-webview';
 
 const SERVER=process.env.EXPO_PUBLIC_LUMA_URL||'';
-const MOBILE_RELEASE='0.3.5';
+const MOBILE_RELEASE='0.3.6';
 const themeBridge=`(()=>{const send=()=>window.ReactNativeWebView.postMessage(JSON.stringify({theme:document.documentElement.dataset.luma}));new MutationObserver(send).observe(document.documentElement,{attributes:true,attributeFilter:['data-luma']});send()})();true;`;
 // One persistent WebView keeps cookies, theme preferences and navigation together.
 export default function App(){return <SafeAreaProvider><LumaApp/></SafeAreaProvider>;}
 function LumaApp(){
  const insets=useSafeAreaInsets();
+ const ringtone=useAudioPlayer(require('./assets/ringtone.wav'));
+ const ringing=useRef<string|null>(null);
  const web=useRef<WebView>(null);
  const back=useRef(false);
  const [loading,setLoading]=useState(true);
@@ -39,6 +42,11 @@ function LumaApp(){
  useEffect(()=>{const listener=BackHandler.addEventListener('hardwareBackPress',()=>{if(error){retry();return true;}if(!back.current)return false;web.current?.goBack();return true;});return()=>listener.remove();},[error,retry]);
  useEffect(()=>{const listener=AppState.addEventListener('change',state=>{if(state==='active'&&error)retry();else if(state==='active')web.current?.injectJavaScript("window.dispatchEvent(new Event('focus'));window.dispatchEvent(new Event('online'));true;");});return()=>listener.remove();},[error,retry]);
  useEffect(()=>()=>clearLoadTimer(),[clearLoadTimer]);
+ useEffect(()=>{void setAudioModeAsync({playsInSilentMode:true,shouldPlayInBackground:true,interruptionMode:'doNotMix'});return()=>{Vibration.cancel();ringtone.pause();};},[ringtone]);
+ const updateRingtone=useCallback((id:unknown)=>{
+  if(typeof id==='string'&&id){if(ringing.current===id)return;ringing.current=id;ringtone.loop=true;ringtone.seekTo(0);ringtone.play();Vibration.vibrate([0,450,250,450,1200],true);return;}
+  ringing.current=null;Vibration.cancel();ringtone.pause();ringtone.seekTo(0);
+ },[ringtone]);
  let origin='';
  try{const url=new URL(SERVER);if(url.protocol==='https:')origin=url.origin;}catch{}
  if(!origin)return <SafeAreaView edges={['top','left','right']} style={styles.screen}><Text style={styles.text}>Configurez l’adresse HTTPS de Luma avant de construire l’application.</Text></SafeAreaView>;
@@ -46,7 +54,7 @@ function LumaApp(){
  return <SafeAreaView edges={['top','left','right']} style={[styles.screen,{backgroundColor:dark?'#121623':'#f4f5fb'}]}>
    <WebView key={webKey} ref={web} style={styles.web} source={{uri:origin+'/fil?native=android&release='+MOBILE_RELEASE}} originWhitelist={[origin+'/*']} sharedCookiesEnabled thirdPartyCookiesEnabled domStorageEnabled javaScriptEnabled allowsInlineMediaPlayback mediaPlaybackRequiresUserAction={false} mediaCapturePermissionGrantType="prompt" mixedContentMode="never" cacheEnabled={false} cacheMode="LOAD_NO_CACHE" setSupportMultipleWindows={false} overScrollMode="never"
      onNavigationStateChange={state=>{back.current=state.canGoBack;}}
-     injectedJavaScriptBeforeContentLoaded={safeAreaBridge} injectedJavaScript={safeAreaBridge+themeBridge} onMessage={event=>{try{const url=new URL(event.nativeEvent.url);if(url.origin!==origin)return;const message=JSON.parse(event.nativeEvent.data);if(message.theme==='dark'||message.theme==='light')setDark(message.theme==='dark');if(message.type==='share-contact-card'&&url.pathname==='/amis')void shareCard(message.image);}catch{}}}
+     injectedJavaScriptBeforeContentLoaded={safeAreaBridge} injectedJavaScript={safeAreaBridge+themeBridge} onMessage={event=>{try{const url=new URL(event.nativeEvent.url);if(url.origin!==origin)return;const message=JSON.parse(event.nativeEvent.data);if(message.theme==='dark'||message.theme==='light')setDark(message.theme==='dark');if(message.type==='share-contact-card'&&url.pathname==='/amis')void shareCard(message.image);if(message.type==='incoming-call')updateRingtone(message.id);}catch{}}}
      onLoadStart={beginLoad} onLoadEnd={finishLoad} onError={()=>recover()} onHttpError={event=>recover('Le serveur Luma répond avec une erreur ('+event.nativeEvent.statusCode+').')}
      onRenderProcessGone={()=>{setWebKey(value=>value+1);beginLoad();}} onContentProcessDidTerminate={()=>{setWebKey(value=>value+1);beginLoad();}}
      onShouldStartLoadWithRequest={request=>{try{const url=new URL(request.url);if(url.protocol==='https:'&&url.origin===origin)return true;if(['https:','mailto:'].includes(url.protocol))void Linking.openURL(request.url);return false;}catch{return false;}}}

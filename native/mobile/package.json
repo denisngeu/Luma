@@ -1,6 +1,6 @@
 {
   "name": "luma-mobile",
-  "version": "0.3.5",
+  "version": "0.3.6",
   "private": true,
   "main": "index.js",
   "scripts": {
@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "expo": "~55.0.0",
+    "expo-audio": "~55.0.18",
     "expo-file-system": "~55.0.26",
     "expo-sharing": "~55.0.24",
     "react": "19.2.0",

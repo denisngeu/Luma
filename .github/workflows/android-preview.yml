@@ -61,10 +61,10 @@ jobs:
       # This APK is for device testing, not for store publication.
       - run: bash ./gradlew assembleRelease --no-daemon --max-workers=2 -PreactNativeArchitectures=arm64-v8a,armeabi-v7a
         working-directory: native/mobile/android
-      - run: cp android/app/build/outputs/apk/release/app-release.apk Luma-0.3.5-test.apk
+      - run: cp android/app/build/outputs/apk/release/app-release.apk Luma-0.3.6-test.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: Luma-Android-0.3.5-test
-          path: native/mobile/Luma-0.3.5-test.apk
+          name: Luma-Android-0.3.6-test
+          path: native/mobile/Luma-0.3.6-test.apk
           retention-days: 30
           if-no-files-found: error

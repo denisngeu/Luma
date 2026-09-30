@@ -11,7 +11,7 @@ async function request(action:string,data:Record<string,unknown>={}){
  const d=await r.json() as Info & {error?:string;signals:Signal[]};if(!r.ok)throw Error(d.error||'Salon indisponible');return d;
 }
 export default function Room({id}:{id:string}){
- const [info,setInfo]=useState<Info|null>(null),[people,setPeople]=useState<Person[]>([]),[joined,setJoined]=useState(false),[busy,setBusy]=useState(false),[muted,setMuted]=useState(false),[camera,setCamera]=useState(false),[sharing,setSharing]=useState(false),[error,setError]=useState(''),[joinMuted,setJoinMuted]=useState(false),[joinCamera,setJoinCamera]=useState(false),[noiseSuppression,setNoiseSuppression]=useState(true),[echoCancellation,setEchoCancellation]=useState(true),[canShare,setCanShare]=useState(false),[streams,setStreams]=useState<Record<string,MediaStream>>({});
+ const [info,setInfo]=useState<Info|null>(null),[people,setPeople]=useState<Person[]>([]),[joined,setJoined]=useState(false),[busy,setBusy]=useState(false),[muted,setMuted]=useState(false),[camera,setCamera]=useState(false),[sharing,setSharing]=useState(false),[error,setError]=useState(''),[joinMuted,setJoinMuted]=useState(false),[joinCamera,setJoinCamera]=useState(false),[noiseSuppression,setNoiseSuppression]=useState(true),[echoCancellation,setEchoCancellation]=useState(true),[canShare]=useState(screenSharingSupported),[streams,setStreams]=useState<Record<string,MediaStream>>({});
  const local=useRef<MediaStream|null>(null),screen=useRef<MediaStream|null>(null),pcs=useRef(new Map<string,RTCPeerConnection>()),videoSenders=useRef(new Map<string,RTCRtpSender>()),timer=useRef<ReturnType<typeof setInterval>|null>(null),active=useRef(false),epoch=useRef(0),lock=useRef(false),soundContext=useRef<AudioContext|null>(null),soundTimer=useRef<ReturnType<typeof setTimeout>|null>(null);
  function dispose(){
   active.current=false;epoch.current++;if(soundTimer.current)clearTimeout(soundTimer.current);void soundContext.current?.close();soundContext.current=null;if(timer.current)clearInterval(timer.current);timer.current=null;
@@ -20,7 +20,7 @@ export default function Room({id}:{id:string}){
   local.current?.getTracks().forEach(t=>t.stop());local.current=null;
  }
  useEffect(()=>{
-  let live=true;setCanShare(screenSharingSupported());
+  let live=true;
   try{const p=JSON.parse(localStorage.getItem('luma-call-preferences')||'{}');setJoinCamera(!!p.camera);setNoiseSuppression(p.noiseSuppression!==false);setEchoCancellation(p.echoCancellation!==false);}catch{}
   request('info',{id}).then(d=>{if(live){setInfo(d);setPeople(d.participants);}}).catch(e=>{if(live)setError(e.message);});
   const exit=()=>{if(active.current)navigator.sendBeacon('/api/rooms',new Blob([JSON.stringify({action:'leave',id})],{type:'application/json'}));};

@@ -15,7 +15,8 @@ export async function gatherIce(peer: RTCPeerConnection) {
       clearTimeout(timer);
       peer.removeEventListener('icegatheringstatechange', check);
       peer.removeEventListener('connectionstatechange', closed);
-      error ? reject(error) : resolve();
+      if (error) reject(error);
+      else resolve();
     };
     const check = () => { if (peer.iceGatheringState === 'complete') finish(); };
     const closed = () => { if (peer.connectionState === 'closed') finish(new Error('Appel interrompu.')); };
@@ -27,7 +28,7 @@ export async function gatherIce(peer: RTCPeerConnection) {
 }
 
 export function screenSharingSupported() {
-  return typeof navigator.mediaDevices?.getDisplayMedia === 'function';
+  return typeof navigator !== 'undefined' && typeof navigator.mediaDevices?.getDisplayMedia === 'function';
 }
 
 export const screenSharingUnavailable = 'Cet appareil ne permet pas de partager son écran depuis Luma. Vous pouvez recevoir un partage ; pour en lancer un, utilisez Luma sur ordinateur.';
