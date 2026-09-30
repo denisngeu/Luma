@@ -1,5 +1,5 @@
 // Hidden Electron windows, fake camera/microphone, local server only. No production accounts.
-const {app,BrowserWindow,session,net}=require('electron');
+const {app,BrowserWindow,session}=require('electron');
 const {writeFileSync}=require('node:fs');
 const assert=require('node:assert/strict');
 const base='http://localhost:5173';const run=Date.now();const windows=[];

@@ -5,12 +5,14 @@ assert.equal(landing.status, 200);
 assert.match(await landing.text(), /Parlez\. Créez\./);
 const anonymous = await fetch(origin + '/connexion?returnTo=%2Fcommunities');
 assert.equal(anonymous.status, 200);
-assert.match(await anonymous.text(), /signin-with-chatgpt\?return_to=%2Fcommunities/);
+const anonymousHtml = await anonymous.text();
+assert.match(anonymousHtml, /Créer un compte/);
+assert.match(anonymousHtml, /Connexion sécurisée par Luma/);
 for (const target of ['https://evil.example', '//evil.example', '/signin-with-chatgpt', '/connexion']) {
-  const response = await fetch(origin + '/connexion?returnTo=' + encodeURIComponent(target), { headers: { Cookie: '__sites_local_auth=1' } });
+  const response = await fetch(origin + '/connexion?returnTo=' + encodeURIComponent(target));
   assert.equal(response.status, 200);
   const html = await response.text();
-  assert.match(html, /Continuer vers Luma/);
-  assert.match(html, /class="login-primary" href="\/fil"/);
+  assert.match(html, /Créer un compte/);
+  assert.doesNotMatch(html, /href="https:\/\/evil\.example|href="\/\/evil\.example/);
 }
-console.log('Login: public landing, anonymous entry, active session and safe return destinations passed.');
+console.log('Login: public landing, native authentication and safe return destinations passed.');

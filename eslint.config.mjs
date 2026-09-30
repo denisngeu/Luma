@@ -11,6 +11,13 @@ const eslintConfig = defineConfig([
     ".next/**",
     "out/**",
     "build/**",
+    "dist/**",
+    ".sites-runtime/**",
+    ".vinext/**",
+    ".wrangler/**",
+    "artifacts/**",
+    "outputs/**",
+    "native/mobile/dist-check/**",
     "next-env.d.ts",
   ]),
   {
@@ -21,6 +28,40 @@ const eslintConfig = defineConfig([
       "@typescript-eslint/no-unused-vars": "off",
       "react-hooks/purity": "off",
       "react-hooks/set-state-in-effect": "off",
+    },
+  },
+  {
+    files: ["app/admin/dashboard.tsx"],
+    rules: {
+      // The admin endpoint deliberately returns different row shapes for each
+      // selected section; the UI narrows them with the active section.
+      "@typescript-eslint/no-explicit-any": "off",
+    },
+  },
+  {
+    files: ["native/desktop/**/*.cjs", "scripts/**/*.cjs"],
+    rules: {
+      // Electron's main process is CommonJS because Electron loads this file
+      // directly from package.json.
+      "@typescript-eslint/no-require-imports": "off",
+    },
+  },
+  {
+    files: ["app/amis/contact-card.tsx", "app/bienvenue/profile-setup.tsx", "app/fil/feed.tsx", "app/parametres/user-preferences.tsx"],
+    rules: {
+      // These images are local object URLs or authenticated endpoints. Next's
+      // optimizer cannot fetch them without losing the user's session.
+      "@next/next/no-img-element": "off",
+    },
+  },
+  {
+    files: ["native/mobile/App.tsx"],
+    rules: {
+      // React Native resolves bundled audio assets through require(). The
+      // expo-audio player is an imperative object whose documented controls
+      // mutate playback state outside React rendering.
+      "@typescript-eslint/no-require-imports": "off",
+      "react-hooks/immutability": "off",
     },
   },
 ]);

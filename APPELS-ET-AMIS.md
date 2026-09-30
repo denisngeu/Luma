@@ -1,29 +1,49 @@
-# Amis et appels — état de livraison
+# Amis et appels — état actuel
 
-Fonctions web : demandes d'amis par e-mail (recherche désactivée par défaut), lien/QR renouvelable, lecture QR caméra et image locale, acceptation/refus, discussion privée partagée, appels WebRTC à deux, micro/caméra, remplacement de la vidéo par l'écran, soundboard mixée à la piste audio sortante. Les appels entrants apparaissent tant qu'une page Luma est ouverte et visible ; il n'y a pas de notification push quand l'application est fermée.
+## Amis
 
-## Connectivité à compléter
+- Recherche exacte par e-mail, désactivée par défaut pour chaque compte.
+- Carte de contact avec lien et QR code renouvelable.
+- Lecture du QR code avec la caméra ou depuis une image locale.
+- Demandes reçues et envoyées, acceptation, refus, annulation et retrait.
+- Création automatique d’une discussion privée commune après acceptation.
+- Accès direct au profil, au message, à l’appel audio et à l’appel vidéo depuis la carte d’un ami.
 
-Aucun fournisseur d'appels n'est encore souscrit. Par défaut, `iceServers` est vide : seuls les chemins de connexion directs accessibles peuvent fonctionner. Ne pas annoncer une fiabilité Internet générale. Un relais TURN est nécessaire pour couvrir les réseaux contraints ; une validation sur deux appareils et réseaux distincts reste obligatoire.
+Le refus ou le retrait suspend les nouvelles demandes entre les deux comptes pendant 24 heures. Retirer un ami lui retire l’accès aux publications privées, mais ne supprime pas automatiquement l’historique de conversation.
 
-Le serveur lit la variable privée d'hébergement `LUMA_ICE_SERVERS`, une liste JSON de configurations RTCIceServer (`urls`, et si nécessaire `username`/`credential`). Ne jamais y placer une clé d'administration de fournisseur. Les identifiants TURN fournis au navigateur doivent être limités et de courte durée. Pour la production, remplacer cette configuration statique par une émission de jetons temporaires côté serveur via le fournisseur choisi, avec authentification et quotas. Les contrats, localisations et transferts doivent être ajoutés au dossier RGPD avant activation du fournisseur.
+## Appels
 
-L'application permet actuellement la connexion directe sans relais ; les adresses IP des participants peuvent être révélées au correspondant. Un déploiement imposant la confidentialité des adresses IP devra exiger TURN et `iceTransportPolicy: 'relay'`, après configuration et validation.
+- Appels audio et vidéo à deux.
+- Appels de groupe et salons vocaux de communauté.
+- Activation ou désactivation du micro et de la caméra pendant l’appel.
+- Partage et restauration de l’écran sur le Web compatible et l’application bureau.
+- Réduction du bruit, suppression de l’écho et préférences de caméra.
+- Soundboard synthétique et son local temporaire de dix secondes maximum.
+- Sonnerie Web; sonnerie et vibration natives lorsque l’application Android est active.
 
-## Limites explicites
+Le navigateur envoie directement la piste du micro. L’audio distant utilise un élément séparé de la vidéo afin qu’une caméra inactive ne coupe pas le son. Les clients échangent les offres, réponses et candidats WebRTC par une signalisation authentifiée conservée temporairement dans PostgreSQL.
 
-- Appels à deux amis acceptés, pas de conférence de groupe ni de téléphone classique.
-- Un appel simultané par personne, 90 secondes pour répondre après l'offre, une heure maximum après acceptation.
-- Signalisation authentifiée et conservée temporairement en D1 ; expiration logique puis purge lors des requêtes. Ajouter une purge planifiée et une supervision avant ouverture publique.
-- Le micro et la caméra ne sont activés qu'après une action de l'utilisateur et la permission du navigateur. Le son système n'est pas partagé ; seul l'écran vidéo est transmis. Le support du partage d'écran varie selon le navigateur et l'appareil.
-- Soundboard : quatre sons synthétiques, un fichier temporaire de 10 secondes / 3 Mo maximum, volume réglable et arrêt. Aucun téléversement ni bibliothèque persistante de sons. Couper le micro ne coupe pas les sons ; leur commande d'arrêt et leur volume sont distincts.
-- La connexion privée Sites reste obligatoire : l'invitation d'ami n'ajoute pas d'accès au site.
-- Le retrait/refus suspend les nouvelles demandes de cette paire de comptes pendant 24 heures. Annuler sa propre demande permet de la renouveler. Retirer un ami lui retire l’accès aux publications, mais n’efface pas la conversation passée et ne bloque pas les messages.
-- Les sources desktop demandent une confirmation native pour micro/caméra et un choix explicite de fenêtre/écran. Remplacer l'ancienne version portable pour bénéficier de ces permissions.
-- Les sources mobiles doivent être recompilées/signées et les permissions testées sur Android/iOS. La publication web ne fabrique pas de nouvelles applications de stores.
+## Connectivité
 
-## Vérifications de livraison
+Le déploiement Docker démarre Coturn avec un secret partagé. `LUMA_ICE_SERVERS` fournit les serveurs ICE aux clients; `LUMA_TURN_PUBLIC_IP` et `SERVICE_PASSWORD_64_TURN` configurent le relais. Les ports `3478/tcp`, `3478/udp` et `49160-49200/udp` doivent être accessibles.
 
-Tests serveur : recherche par e-mail volontaire, doublons, acceptation réservée au destinataire, rotation QR, exclusion d'un tiers des appels, cycle offre/réponse/fin, contrôle d'origine, fermeture RGPD et préservation des autres comptes. Compilation TypeScript et production.
+Sans TURN joignable, certains réseaux mobiles, réseaux d’entreprise et routeurs NAT symétriques empêchent l’appel. En connexion directe, le correspondant peut recevoir l’adresse IP publique du participant.
 
-Ces tests ne démontrent pas une transmission audiovisuelle réelle entre appareils. Recette avant production : deux comptes autorisés, deux navigateurs/appareils, même réseau puis réseaux différents avec TURN ; refus des permissions ; appel ignoré, refusé, interrompu ; caméra activée après appel vocal ; partage d'écran démarré/arrêté ; son personnalisé entendu à distance et arrêt ; départ de page sans micro restant actif ; mise en veille mobile ; inspection des permissions OS.
+## Limites connues
+
+- Android peut recevoir un partage d’écran, mais sa WebView ne peut pas démarrer MediaProjection. L’émission depuis Android nécessitera un moteur WebRTC natif.
+- La sonnerie native Android fonctionne lorsque l’application est active. Une sonnerie lorsque l’application est fermée nécessitera APNs/FCM et un service d’appel natif.
+- Le partage transmet la vidéo de l’écran sans audio système.
+- Les appels ne sont pas enregistrés par Luma.
+- Un appel à deux expire après 90 secondes sans réponse et dure au maximum une heure après acceptation.
+
+## Vérifications automatisées
+
+`scripts/test-call-ui.cjs` lance deux clients Electron isolés avec micro et caméra synthétiques et vérifie :
+
+- l’énergie audio reçue dans les deux sens;
+- l’activation de la caméra pendant un appel;
+- le partage puis la restauration de l’écran;
+- les mêmes scénarios dans un salon de groupe.
+
+Les tests serveur couvrent en plus les autorisations, la présence de groupe, la confidentialité de la signalisation et la fin des salles. Une recette sur deux téléphones physiques et deux réseaux différents reste nécessaire avant une ouverture publique.
