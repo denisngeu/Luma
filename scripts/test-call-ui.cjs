@@ -56,7 +56,7 @@ app.on('window-all-closed',()=>{}); app.whenReady().then(async()=>{
    res.setHeader('Content-Type','application/json');res.end(JSON.stringify(out));return;
   }
   if(req.url==='/app.js'){res.setHeader('Content-Type','text/javascript');res.end(readFileSync(path.join(dir,'app.js')));return;}
-  res.setHeader('Content-Type','text/html');res.end('<div id="root"></div><script src="/app.js"></script>');
+  res.setHeader('Content-Type','text/html');const css=['app/themes.css','app/social.css','app/globals.css','app/call-v2.css'].map(p=>readFileSync(p,'utf8')).join('\n');res.end('<html data-luma="dark"><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif}button{font:inherit}'+css+'</style></head><body><div id="root"></div><script src="/app.js"></script></body></html>');
  });
  await new Promise(r=>server.listen(0,'127.0.0.1',r));const base='http://127.0.0.1:'+server.address().port;
  const checks=[];
@@ -73,6 +73,8 @@ app.on('window-all-closed',()=>{}); app.whenReady().then(async()=>{
   await click(a,'Caméra');
   await until(()=>run(b,"[...document.querySelectorAll('video')].some(v=>v.videoWidth>0)"),kind+' camera enabled after audio join');
   checks.push(kind+' camera enabled mid-call');
+  assert.equal(await run(a,'document.documentElement.scrollWidth<=innerWidth'),true,kind+' mobile horizontal overflow');
+  writeFileSync(path.join(dir,kind+'-mobile.png'),(await a.webContents.capturePage()).toPNG());
   await click(a,kind==='private'?'Partager l’écran':'Écran');
   await until(()=>run(a,"[...document.querySelectorAll('button')].some(b=>!b.disabled&&(b.textContent==='Arrêter le partage'||b.textContent==='Arrêter'))"),kind+' sharing');
   await click(a,kind==='private'?'Arrêter le partage':'Arrêter');

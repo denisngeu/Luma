@@ -34,3 +34,8 @@
  .room-page>footer{padding-bottom:max(12px,var(--native-safe-bottom,0px),env(safe-area-inset-bottom,0px))}
  .room-page>footer button{min-width:66px;flex:1}
 }
+.call-avatar{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:88px;height:88px;display:grid;place-items:center;border-radius:50%;background:var(--luma-accent);color:var(--luma-on-accent);font-size:28px;font-weight:700;z-index:0}
+.call-videos video{position:relative;z-index:1}
+.call-videos span{z-index:2}
+.call-controls .call-hangup{margin:0;min-width:0}
+@media(max-width:650px){.call-videos>div:first-child{height:clamp(210px,36dvh,320px);min-height:210px}.call-videos>div:first-child video{height:100%}.call-controls .call-hangup{grid-column:1/-1;flex-direction:row}}
