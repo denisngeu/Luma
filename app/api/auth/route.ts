@@ -53,7 +53,7 @@ export async function POST(request: Request) {
         FROM auth_accounts a JOIN users u ON u.id=a.user WHERE a.email=?
       `).bind(email).first<{user:string;salt:string;passwordHash:string;name:string;closed:number;suspended:number}>();
       const candidate = await passwordDigest(password, account?.salt || "AAAAAAAAAAAAAAAAAAAAAAAA");
-      if (!account || !constantTimeEqual(candidate, account.passwordHash) || account.closed || account.suspended) {
+      if (!account || !constantTimeEqual(candidate, account.passwordHash) || Number(account.closed) !== 0 || Number(account.suspended) !== 0) {
         return problem("Adresse ou mot de passe incorrect.", 401);
       }
       userId = account.user;

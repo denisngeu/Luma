@@ -1,12 +1,15 @@
 import React,{useCallback,useEffect,useRef,useState} from 'react';
-import {ActivityIndicator,Alert,AppState,BackHandler,Linking,Pressable,StyleSheet,Text,Vibration,View} from 'react-native';
+import {ActivityIndicator,Alert,AppState,BackHandler,Linking,LogBox,Pressable,StyleSheet,Text,Vibration,View} from 'react-native';
 import {setAudioModeAsync,useAudioPlayer} from 'expo-audio';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import {SafeAreaProvider,SafeAreaView,useSafeAreaInsets} from 'react-native-safe-area-context';
 import {WebView} from 'react-native-webview';
 
-const SERVER=process.env.EXPO_PUBLIC_LUMA_URL||'';
+LogBox.ignoreLogs(['Cannot connect to Expo CLI']);
+
+const DEFAULT_SERVER='https://cx9tpuja8iqkelk0zci4vlbs.app.luma-sas.fr';
+const SERVER=(process.env.EXPO_PUBLIC_LUMA_URL||'').trim()||DEFAULT_SERVER;
 const MOBILE_RELEASE='0.3.9';
 const themeBridge=`(()=>{const send=()=>window.ReactNativeWebView.postMessage(JSON.stringify({theme:document.documentElement.dataset.luma}));new MutationObserver(send).observe(document.documentElement,{attributes:true,attributeFilter:['data-luma']});send()})();true;`;
 // One persistent WebView keeps cookies, theme preferences and navigation together.
@@ -57,27 +60,27 @@ function LumaApp(){
  useEffect(()=>{const listener=BackHandler.addEventListener('hardwareBackPress',()=>{if(error){retry();return true;}if(!back.current)return false;web.current?.goBack();return true;});return()=>listener.remove();},[error,retry]);
  useEffect(()=>{const listener=AppState.addEventListener('change',state=>{if(state==='active'&&!error&&!rendererGone.current)web.current?.injectJavaScript("window.dispatchEvent(new Event('focus'));window.dispatchEvent(new Event('online'));true;");});return()=>listener.remove();},[error]);
  useEffect(()=>()=>{clearLoadTimer();clearRendererTimer();},[clearLoadTimer,clearRendererTimer]);
- useEffect(()=>{void setAudioModeAsync({playsInSilentMode:true,shouldPlayInBackground:false,interruptionMode:'doNotMix'}).catch(()=>{});return()=>{Vibration.cancel();try{ringtone.pause();}catch{}};},[ringtone]);
+ useEffect(()=>{void setAudioModeAsync({playsInSilentMode:true,shouldPlayInBackground:false,interruptionMode:'doNotMix'}).catch(()=>{});return()=>{Vibration.cancel();try{ringtone?.pause?.();}catch{}};},[ringtone]);
  const updateRingtone=useCallback((id:unknown)=>{
   try{
-   if(typeof id==='string'&&id){if(ringing.current===id)return;ringing.current=id;ringtone.loop=true;void ringtone.seekTo(0).catch(()=>{});ringtone.play();Vibration.vibrate([0,450,250,450,1200],true);return;}
-   ringing.current=null;Vibration.cancel();ringtone.pause();void ringtone.seekTo(0).catch(()=>{});
+   if(typeof id==='string'&&id){if(ringing.current===id)return;ringing.current=id;if(ringtone){ringtone.loop=true;void ringtone.seekTo?.(0)?.catch?.(()=>{});ringtone.play?.();}Vibration.vibrate([0,450,250,450,1200],true);return;}
+   ringing.current=null;Vibration.cancel();ringtone?.pause?.();void ringtone?.seekTo?.(0)?.catch?.(()=>{});
   }catch{ringing.current=null;Vibration.cancel();}
  },[ringtone]);
  let origin='';
- try{const url=new URL(SERVER);if(url.protocol==='https:')origin=url.origin;}catch{}
- if(!origin)return <SafeAreaView edges={['top','left','right']} style={styles.screen}><Text style={styles.text}>Configurez l’adresse HTTPS de Luma avant de construire l’application.</Text></SafeAreaView>;
+ try{const url=new URL(SERVER);if(url.protocol==='https:'||url.protocol==='http:')origin=url.origin;}catch{}
+ if(!origin)return <SafeAreaView edges={['top','left','right']} style={styles.screen}><Text style={styles.text}>Configurez l’adresse du serveur Luma (http:// ou https://) avant de lancer l’application.</Text></SafeAreaView>;
  const safeAreaBridge=`document.documentElement.style.setProperty('--native-safe-bottom','${insets.bottom}px');true;`;
  return <SafeAreaView edges={['top','left','right']} style={[styles.screen,{backgroundColor:dark?'#121623':'#f4f5fb'}]}>
-   {webMounted&&<WebView key={webKey} ref={web} style={styles.web} source={{uri:origin+'/fil?native=android&release='+MOBILE_RELEASE}} originWhitelist={[origin]} sharedCookiesEnabled thirdPartyCookiesEnabled domStorageEnabled javaScriptEnabled allowsInlineMediaPlayback mediaPlaybackRequiresUserAction={false} mediaCapturePermissionGrantType="prompt" mixedContentMode="never" cacheEnabled={false} cacheMode="LOAD_NO_CACHE" setSupportMultipleWindows={false} overScrollMode="never" scrollEnabled nestedScrollEnabled decelerationRate="normal"
+   {webMounted&&<WebView key={webKey} ref={web} style={styles.web} source={{uri:origin+'/fil?native=android&release='+MOBILE_RELEASE}} originWhitelist={[origin,'http://*','https://*']} sharedCookiesEnabled thirdPartyCookiesEnabled domStorageEnabled javaScriptEnabled allowsInlineMediaPlayback mediaPlaybackRequiresUserAction={false} mediaCapturePermissionGrantType="prompt" mixedContentMode="compatibility" cacheEnabled={false} cacheMode="LOAD_NO_CACHE" setSupportMultipleWindows={false} overScrollMode="never" scrollEnabled nestedScrollEnabled
      onNavigationStateChange={state=>{back.current=state.canGoBack;}}
      injectedJavaScriptBeforeContentLoaded={safeAreaBridge} injectedJavaScript={safeAreaBridge+themeBridge} onMessage={event=>{try{const url=new URL(event.nativeEvent.url);if(url.origin!==origin)return;const message=JSON.parse(event.nativeEvent.data);if(message.theme==='dark'||message.theme==='light')setDark(message.theme==='dark');if(message.type==='share-contact-card'&&url.pathname==='/amis')void shareCard(message.image);if(message.type==='incoming-call')updateRingtone(message.id);}catch{}}}
-     onLoadStart={beginLoad} onLoadEnd={finishLoad} onError={()=>recover()} onHttpError={event=>recover('Le serveur Luma répond avec une erreur ('+event.nativeEvent.statusCode+').')}
+     onLoadStart={beginLoad} onLoadEnd={finishLoad} onError={event=>recover(`Connexion impossible au serveur (${event.nativeEvent.description||'erreur réseau'}).`)} onHttpError={event=>recover('Le serveur Luma répond avec une erreur ('+event.nativeEvent.statusCode+').')}
      onRenderProcessGone={recoverRenderer} onContentProcessDidTerminate={recoverRenderer}
-     onShouldStartLoadWithRequest={request=>{try{const url=new URL(request.url);if(url.protocol==='https:'&&url.origin===origin)return true;if(['https:','mailto:'].includes(url.protocol))void Linking.openURL(request.url);return false;}catch{return false;}}}
+     onShouldStartLoadWithRequest={request=>{try{const url=new URL(request.url);if(url.origin===origin)return true;if(['https:','http:','mailto:'].includes(url.protocol))void Linking.openURL(request.url);return false;}catch{return false;}}}
    />}
    {loading&&<View style={styles.overlay}><ActivityIndicator size="large" color="#79e0f2"/><Text style={styles.text}>{message}</Text></View>}
-   {error&&<View style={styles.overlay}><Text style={styles.logo}>Luma</Text><Text style={styles.text}>{message}</Text><Pressable accessibilityRole="button" style={styles.retry} onPress={retry}><Text style={styles.retryText}>Recharger Luma</Text></Pressable><Text style={styles.hint}>La conversation reprendra automatiquement sans supprimer votre compte ni vos messages.</Text></View>}
+   {error&&<View style={styles.overlay}><Text style={styles.logo}>Luma</Text><Text style={styles.text}>{message}</Text><Pressable accessibilityRole="button" style={styles.retry} onPress={retry}><Text style={styles.retryText}>Recharger Luma</Text></Pressable><Text style={styles.serverInfo}>Serveur : {origin}</Text><Text style={styles.hint}>La conversation reprendra automatiquement sans supprimer votre compte ni vos messages.</Text></View>}
  </SafeAreaView>;
 }
-const styles=StyleSheet.create({screen:{flex:1,backgroundColor:'#121623'},web:{flex:1,backgroundColor:'#121623'},fallback:{flex:1,backgroundColor:'#121623',justifyContent:'center',alignItems:'center',padding:24},logo:{color:'#fff',fontSize:32,fontWeight:'800',marginBottom:8},text:{color:'#e6e9f4',padding:18,textAlign:'center',fontSize:16},hint:{color:'#8f99b7',fontSize:12,lineHeight:18,textAlign:'center',maxWidth:300,marginTop:18},retry:{backgroundColor:'#6f72f2',paddingHorizontal:22,paddingVertical:14,borderRadius:14,minWidth:190},retryText:{color:'#fff',fontSize:15,fontWeight:'700',textAlign:'center'},overlay:{...StyleSheet.absoluteFillObject,backgroundColor:'#121623',justifyContent:'center',alignItems:'center',padding:24}});
+const styles=StyleSheet.create({screen:{flex:1,backgroundColor:'#121623'},web:{flex:1,backgroundColor:'#121623'},fallback:{flex:1,backgroundColor:'#121623',justifyContent:'center',alignItems:'center',padding:24},logo:{color:'#fff',fontSize:32,fontWeight:'800',marginBottom:8},text:{color:'#e6e9f4',padding:18,textAlign:'center',fontSize:16},hint:{color:'#8f99b7',fontSize:12,lineHeight:18,textAlign:'center',maxWidth:300,marginTop:18},serverInfo:{color:'#79e0f2',fontSize:13,marginTop:14,textAlign:'center'},retry:{backgroundColor:'#6f72f2',paddingHorizontal:22,paddingVertical:14,borderRadius:14,minWidth:190},retryText:{color:'#fff',fontSize:15,fontWeight:'700',textAlign:'center'},overlay:{...StyleSheet.absoluteFill,backgroundColor:'#121623',justifyContent:'center',alignItems:'center',padding:24}});

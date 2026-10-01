@@ -16,6 +16,7 @@ export async function GET(request:Request){try{
   return json({stats,activity,latency:Date.now()-start,checkedAt:now,me:me.userId});
  }
  if(section==='settings')return json({settings:(await driver.query('SELECT registrations_open,calls_open FROM service_settings WHERE id=1')).rows[0]});
+ if(section==='simulation'){const {getSimulationStatus}=await import('@/lib/simulation');return json(await getSimulationStatus());}
  const queries:Record<string,string>={
   users:`SELECT u.id,u.name,u.role,u.closed,u.suspended,a.email,a.created,(SELECT count(*) FROM auth_sessions s WHERE s."user"=u.id AND s.expires>${now}) sessions FROM users u LEFT JOIN auth_accounts a ON a."user"=u.id WHERE strpos(lower(u.name||' '||coalesce(a.email,'')),lower($1))>0 ORDER BY a.created DESC NULLS LAST,u.id`,
   spaces:`SELECT s.id,s.name,s.description,s.locked,s.created,u.name owner,(SELECT count(*) FROM space_members m WHERE m.space=s.id) members,(SELECT count(*) FROM chats c WHERE c.space=s.id) channels FROM spaces s JOIN users u ON u.id=s.owner WHERE strpos(lower(s.name),lower($1))>0 ORDER BY s.created DESC,s.id`,
@@ -34,5 +35,7 @@ export async function POST(request:Request){try{
  const raw=await request.text();if(raw.length>4096)throw new ApiError('Requête trop volumineuse.',413);
  let body;try{body=JSON.parse(raw);}catch{throw new ApiError('Requête invalide.');}
  if(!body||typeof body!=='object'||Array.isArray(body))throw new ApiError('Requête invalide.');
+ if(body.action==='simulation_generate'){const {generateSimulationData}=await import('@/lib/simulation');return json(await generateSimulationData(me.userId));}
+ if(body.action==='simulation_clear'){const {clearSimulationData}=await import('@/lib/simulation');return json(await clearSimulationData(me.userId));}
  return json(await adminAction(me.userId,body));
 }catch(e){return fail(e);}}

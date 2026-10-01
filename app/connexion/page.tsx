@@ -3,6 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { getChatGPTUser, chatGPTSignInPath, chatGPTSignOutPath, nativeAuthEnabled, safeRelativeReturnPath } from "../chatgpt-auth";
 import AuthForm from "./auth-form";
+import { loginOrRegisterAction } from "./actions";
 import "./connexion.css";
 
 export const dynamic = "force-dynamic";

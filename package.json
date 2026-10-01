@@ -8,12 +8,15 @@
   "scripts": {
     "install:ci": "node scripts/install-ci.mjs",
     "dev": "next dev --port 5173",
+    "dev:local": "node scripts/dev-local.mjs",
     "build": "next build",
     "start": "node scripts/postgres-start.mjs",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
     "db:generate": "drizzle-kit generate",
     "dev:legacy": "node scripts/run-framework.mjs dev",
-    "db:migrate": "node scripts/postgres-migrate.mjs"
+    "db:migrate": "node scripts/postgres-migrate.mjs",
+    "mobile:start": "npm --prefix native/mobile start",
+    "mobile:check": "npm --prefix native/mobile run check"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
@@ -49,6 +52,7 @@
     "@cloudflare/vite-plugin": "1.37.1",
     "@cloudflare/workers-types": "4.20260515.1",
     "@electric-sql/pglite": "^0.5.8",
+    "@electric-sql/pglite-socket": "^0.2.11",
     "@next/swc-wasm-nodejs": "^16.3.4",
     "@tailwindcss/postcss": "4.2.1",
     "@types/node": "22.19.19",

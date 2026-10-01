@@ -25,17 +25,15 @@
       "permissions": [
         "CAMERA",
         "RECORD_AUDIO",
-        "MODIFY_AUDIO_SETTINGS"
+        "MODIFY_AUDIO_SETTINGS",
+        "INTERNET"
       ],
       "versionCode": 12
     },
-    "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#11172b"
-    },
     "plugins": [
-      "expo-sharing"
+      "expo-sharing",
+      "expo-asset",
+      "expo-audio"
     ]
   }
 }
