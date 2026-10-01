@@ -10,7 +10,7 @@ LogBox.ignoreLogs(['Cannot connect to Expo CLI']);
 
 const DEFAULT_SERVER='https://cx9tpuja8iqkelk0zci4vlbs.app.luma-sas.fr';
 const SERVER=(process.env.EXPO_PUBLIC_LUMA_URL||'').trim()||DEFAULT_SERVER;
-const MOBILE_RELEASE='0.3.9';
+const MOBILE_RELEASE='0.3.10';
 const themeBridge=`(()=>{const send=()=>window.ReactNativeWebView.postMessage(JSON.stringify({theme:document.documentElement.dataset.luma}));new MutationObserver(send).observe(document.documentElement,{attributes:true,attributeFilter:['data-luma']});send()})();true;`;
 // One persistent WebView keeps cookies, theme preferences and navigation together.
 class NativeErrorBoundary extends React.Component<React.PropsWithChildren,{failed:boolean}>{

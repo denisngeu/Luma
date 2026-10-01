@@ -2,7 +2,7 @@
   "expo": {
     "name": "Luma",
     "slug": "luma-messenger",
-    "version": "0.3.9",
+    "version": "0.3.10",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -28,7 +28,7 @@
         "MODIFY_AUDIO_SETTINGS",
         "INTERNET"
       ],
-      "versionCode": 12
+      "versionCode": 13
     },
     "plugins": [
       "expo-sharing",
