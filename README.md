@@ -57,7 +57,7 @@ Le port TURN `3478` est exposé en TCP et UDP; les ports UDP `49160-49200` trans
 
 ## Applications natives
 
-- Android : version de test actuelle `0.3.8`.
+- Android : version de test actuelle `0.3.9`.
 - Bureau : version de test actuelle `0.3.5`.
 - iOS : le projet Expo est présent, mais la distribution nécessite une signature et un compte Apple Developer.
 
