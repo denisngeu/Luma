@@ -1,6 +1,6 @@
 {
   "name": "luma-mobile",
-  "version": "0.3.8",
+  "version": "0.3.9",
   "private": true,
   "main": "index.js",
   "scripts": {
@@ -16,7 +16,7 @@
     "expo-file-system": "~55.0.26",
     "expo-sharing": "~55.0.24",
     "react": "19.2.0",
-    "react-native": "0.83.2",
+    "react-native": "0.83.10",
     "react-native-safe-area-context": "~5.6.2",
     "react-native-webview": "13.16.0"
   },

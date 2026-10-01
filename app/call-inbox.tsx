@@ -38,6 +38,7 @@ export default function CallInbox(){
 
  useEffect(()=>{
   if(!incomingId)return;
+  if((window as NativeWindow).ReactNativeWebView)return;
   let context:AudioContext|undefined,stopped=false;
   const ring=async()=>{try{context||=new AudioContext();await context.resume();const now=context.currentTime;[0,.22].forEach(offset=>{const oscillator=context!.createOscillator(),gain=context!.createGain();oscillator.frequency.value=offset?660:523;gain.gain.setValueAtTime(.0001,now+offset);gain.gain.exponentialRampToValueAtTime(.14,now+offset+.02);gain.gain.exponentialRampToValueAtTime(.0001,now+offset+.18);oscillator.connect(gain).connect(context!.destination);oscillator.start(now+offset);oscillator.stop(now+offset+.2);});}catch{}};
   void ring();const timer=window.setInterval(()=>{if(!stopped)void ring();},2200);
