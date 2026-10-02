@@ -1,5 +1,6 @@
 'use client';
 import {useEffect,useRef,useState} from 'react';
+import Link from 'next/link';
 import {ArrowLeft,Camera,CameraOff,Mic,MicOff,MonitorUp,PhoneOff,Users,Volume2} from 'lucide-react';
 import {gatherIce,mediaError,screenSharingSupported,screenSharingUnavailable} from '@/lib/call-media';
 
@@ -139,7 +140,7 @@ export default function Room({id}:{id:string}){
   }catch(e){void ctx.close();soundContext.current=null;setError(mediaError(e));}
  }
  async function leave(){const wasActive=active.current;dispose();setJoined(false);setStreams({});setCamera(false);setSharing(false);if(wasActive)await request('leave',{id}).catch(()=>{});}
- return <main className="room-page"><header><a href="/messages"><ArrowLeft/> Retour</a><div><strong>{info?.room.chat_name||'Salon Luma'}</strong><span>{info?.room.kind==='voice'?'Salon vocal':'Appel de groupe'}</span></div><span><Users size={17}/>{people.length} participant{people.length!==1?'s':''}</span></header>
+ return <main className="room-page"><header><Link href="/messages"><ArrowLeft/> Retour</Link><div><strong>{info?.room.chat_name||'Salon Luma'}</strong><span>{info?.room.kind==='voice'?'Salon vocal':'Appel de groupe'}</span></div><span><Users size={17}/>{people.length} participant{people.length!==1?'s':''}</span></header>
  {error&&<p className="room-error" role="alert">{error}</p>}
  <section className="room-stage">{!joined?<div className="room-lobby"><div><Users/></div><h1>Rejoignez la conversation</h1><p>Votre micro ne s’active qu’en rejoignant le salon.</p><section className="room-preflight">
  <label><input type="checkbox" checked={joinMuted} onChange={e=>setJoinMuted(e.target.checked)}/>Micro coupé au démarrage</label>

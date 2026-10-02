@@ -49,6 +49,7 @@
     overflow-wrap:normal!important;
   }
   .luma-shell>.social-nav a svg{width:22px;height:22px;stroke-width:2}
+  .nav-pending{right:calc(50% - 17px);top:5px;width:5px;height:5px}
   .luma-shell>.social-nav a[aria-current=page]{
     background:color-mix(in srgb,var(--luma-accent) 24%,transparent)!important;
     color:#fff!important;
@@ -61,6 +62,7 @@
     overscroll-behavior-y:contain;
     -webkit-overflow-scrolling:touch;
     touch-action:pan-y;
+    scroll-behavior:smooth;
   }
   .luma-page :is(.app,.hub){height:100%!important}
   .luma-page :is(.network,.privacy-page,.appearance,.call-room){min-height:calc(100dvh - var(--mobile-nav) - var(--mobile-safe-bottom))!important}
@@ -86,21 +88,22 @@
   .feed-heading>button{width:40px;height:40px;flex:0 0 40px}
   .feed-tabs{position:sticky;top:82px;z-index:19;margin:0 0 8px!important;padding:5px 10px!important;border-width:0 0 1px!important;border-radius:0!important;background:var(--t-surface)!important}
   .feed-tabs a{padding:10px 5px!important;font-size:.86rem!important}
-  .network-card{margin:0 0 8px!important;padding:16px!important;border-left:0!important;border-right:0!important;border-radius:0!important}
+  .network-card{margin:0 10px 10px!important;padding:16px!important;border-radius:18px!important}
   .post-composer>label{font-size:.95rem!important}
   .post-composer textarea{min-height:76px!important;font-size:16px!important;padding:10px 0!important}
   .post-composer footer{display:grid!important;grid-template-columns:1fr auto;gap:9px!important}
   .post-composer footer>span{grid-column:1/-1;font-size:.72rem!important}
   .post-composer footer .media-picker{order:initial!important;min-height:40px!important;justify-content:center;padding:8px 11px!important}
   .post-composer footer .social-primary{margin:0!important;min-width:94px}
-  .social-post>header{padding:15px 15px 0!important;flex-wrap:nowrap!important}
+  .social-post>header{padding:15px 15px 0!important;flex-wrap:nowrap!important;gap:10px!important}
   .social-post>.post-body,.social-post>form,.social-post>.social-confirm{margin-left:15px!important;margin-right:15px!important}
   .social-post>.post-body{margin-top:16px!important;margin-bottom:16px!important;line-height:1.55!important}
-  .post-own{width:auto!important;margin-left:auto!important;justify-content:flex-end!important}
+  .post-own{width:auto!important;margin-left:auto!important;justify-content:flex-end!important;gap:4px!important}
+  .post-own button{min-height:34px!important;padding:6px 8px!important;font-size:11px!important;border-radius:9px!important}
   .post-actions{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));padding:9px!important;gap:7px!important}
   .post-actions>a{display:none!important}
   .network .post-actions>button{min-width:0!important;min-height:42px!important;padding:8px!important}
-  .post-media img,.post-media video{height:230px!important}
+  .post-media img,.post-media video{height:auto!important;max-height:420px!important;object-fit:contain!important;background:#080b14}
 
   /* Conversations */
   .luma-page .app{padding:0!important}

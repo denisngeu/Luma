@@ -1,7 +1,9 @@
 body{background:var(--t-canvas);color:var(--t-ink)}
 .luma-shell{--nav-height:0px;min-height:100dvh;background:var(--t-canvas);color:var(--t-ink);padding-left:92px}
 .luma-shell>.social-nav{position:fixed;inset:0 auto 0 0;width:92px;z-index:40;display:flex;flex-direction:column;flex-wrap:nowrap;padding:24px 6px;gap:12px;margin:0;border-right:1px solid var(--t-line);border-bottom:0;background:var(--t-rail)}
-.luma-shell>.social-nav a{width:100%;flex:none;flex-direction:column;gap:7px;padding:12px 3px;font-size:11px;color:#b9c0d8}
+.luma-shell>.social-nav a{position:relative;width:100%;flex:none;flex-direction:column;gap:7px;padding:12px 3px;font-size:11px;color:#b9c0d8}
+.nav-pending{position:absolute;right:8px;top:8px;width:6px;height:6px;border-radius:999px;background:var(--luma-accent);opacity:0;transform:scale(.4);transition:opacity 120ms ease,transform 120ms ease;pointer-events:none}
+.nav-pending[data-pending]{opacity:1;transform:scale(1);animation:nav-pulse 850ms ease-in-out infinite}
 .luma-shell>.social-nav .social-logo{display:flex;font-size:20px;margin:0 0 18px;color:#e6e9f4}
 .luma-shell>.social-nav a[aria-current=page]{background:var(--luma-accent);color:var(--luma-on-accent)}
 .luma-shell>.social-nav a:last-child{margin-top:auto}
@@ -17,6 +19,7 @@ body{background:var(--t-canvas);color:var(--t-ink)}
 html[data-luma] .privacy-page button:not(.danger-button){background:var(--luma-accent);color:var(--luma-on-accent)}
 html[data-luma] .privacy-page :is(textarea,input,select){background:var(--t-raised);color:var(--t-ink);border-color:var(--t-line)}
 @keyframes luma-enter{from{opacity:.65;transform:translateY(3px)}to{opacity:1;transform:none}}
+@keyframes nav-pulse{50%{opacity:.35;transform:scale(.72)}}
 @media(max-width:760px){.luma-shell{padding-left:64px;padding-bottom:env(safe-area-inset-bottom,0px)}.luma-shell>.social-nav{width:64px;padding:12px 3px;gap:6px}.luma-shell>.social-nav a{min-height:48px;font-size:9px;overflow-wrap:anywhere}.luma-shell>.social-nav .social-logo{font-size:16px}.luma-page .app{padding-bottom:0}.luma-page :is(.privacy-page,.appearance){padding:20px 12px 40px}.luma-page :is(.privacy-page,.appearance) h1{font-size:28px!important}}
 @media(prefers-reduced-motion:reduce){.luma-page{animation:none}.luma-shell :is(button,a){transition:none}}
 

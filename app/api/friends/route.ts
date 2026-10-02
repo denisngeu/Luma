@@ -16,8 +16,8 @@ export async function POST(r:Request){try{sameOrigin(r);if(!r.headers.get('conte
  const existing=await db().prepare('SELECT sender,state FROM friendships WHERE id=?').bind(id).first<{sender:string;state:string}>();
  if(existing?.state==='accepted')return json({ok:true,sent:false,message:'Vous êtes déjà amis. Utilisez le bouton Discuter dans Mes amis.'});
  if(existing?.state==='pending')return json({ok:true,sent:false,message:existing.sender===u.id?'Votre demande est déjà en attente de réponse.':'Ce contact vous a déjà envoyé une demande. Acceptez-la dans Demandes reçues.'});
- const result=await db().prepare("INSERT INTO friendships(id,sender,recipient,state,created) VALUES (?,?,?,'pending',?) ON CONFLICT(id) DO UPDATE SET sender=excluded.sender,recipient=excluded.recipient,state='pending',created=excluded.created WHERE friendships.state='cancelled' OR (friendships.state='removed' AND friendships.created<excluded.created-86400000)").bind(id,u.id,target.user,Date.now()).run();
- if(!result.meta.changes)return json({ok:true,sent:false,message:'Aucune nouvelle demande créée. Après un retrait ou un refus, attendez 24 heures avant de réessayer.'});
+ const result=await db().prepare("INSERT INTO friendships(id,sender,recipient,state,created) VALUES (?,?,?,'pending',?) ON CONFLICT(id) DO UPDATE SET sender=excluded.sender,recipient=excluded.recipient,state='pending',created=excluded.created WHERE friendships.state IN ('cancelled','removed')").bind(id,u.id,target.user,Date.now()).run();
+ if(!result.meta.changes)return json({ok:true,sent:false,message:'Aucune nouvelle demande créée. Actualisez la page puis réessayez.'});
  return json({ok:true,sent:true,message:'Demande envoyée. Elle apparaît dans Demandes envoyées et votre contact peut l’accepter dans Demandes reçues.'});}
 
  const id=str(p.id,100);const f=await db().prepare('SELECT * FROM friendships WHERE id=? AND (sender=? OR recipient=?)').bind(id,u.id,u.id).first<{sender:string;recipient:string;state:string}>();if(!f)throw new ApiError('Demande introuvable',404);

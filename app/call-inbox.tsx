@@ -1,6 +1,7 @@
 'use client';
 import {useEffect,useRef,useState} from 'react';
 import {usePathname} from 'next/navigation';
+import Link from 'next/link';
 
 type IncomingCall={id:string;name:string;mode:string;state:string};
 type NativeWindow=Window&{ReactNativeWebView?:{postMessage:(message:string)=>void}};
@@ -25,7 +26,7 @@ export default function CallInbox(){
    }catch{}finally{polling.current=false;}
   };
   const wake=()=>{if(!document.hidden)void poll();};
-  void poll();const timer=setInterval(poll,1500);
+  void poll();const timer=setInterval(poll,3500);
   document.addEventListener('visibilitychange',wake);window.addEventListener('focus',wake);
   return()=>{live=false;clearInterval(timer);document.removeEventListener('visibilitychange',wake);window.removeEventListener('focus',wake);};
  },[pathname]);
@@ -46,5 +47,5 @@ export default function CallInbox(){
  },[incomingId]);
 
  if(!incoming)return null;
- return <aside className="call-inbox" role="alert"><div className="call-pulse"/><div><strong>{incoming.name}</strong><span>Appel {incoming.mode==='video'?'vidéo':'vocal'} entrant{incoming.state==='preparing'?' · connexion en cours':''}</span></div><a href={'/appel/'+incoming.id}>Répondre</a><button onClick={async()=>{await fetch('/api/calls',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'end',id:incoming.id})});setIncoming(null);}}>Refuser</button></aside>;
+ return <aside className="call-inbox" role="alert"><div className="call-pulse"/><div><strong>{incoming.name}</strong><span>Appel {incoming.mode==='video'?'vidéo':'vocal'} entrant{incoming.state==='preparing'?' · connexion en cours':''}</span></div><Link href={'/appel/'+incoming.id}>Répondre</Link><button onClick={async()=>{await fetch('/api/calls',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'end',id:incoming.id})});setIncoming(null);}}>Refuser</button></aside>;
 }

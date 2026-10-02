@@ -1,5 +1,10 @@
 name: Applications Windows et Android de test
 on:
+  push:
+    branches: [main]
+    paths:
+      - native/mobile/**
+      - .github/workflows/android-preview.yml
   workflow_dispatch:
     inputs:
       android_only:
@@ -10,7 +15,7 @@ permissions:
   contents: read
 jobs:
   windows:
-    if: ${{ !inputs.android_only }}
+    if: ${{ github.event_name == 'workflow_dispatch' && !inputs.android_only }}
     runs-on: windows-latest
     timeout-minutes: 20
     defaults:
@@ -58,10 +63,10 @@ jobs:
       # This APK is for device testing, not for store publication.
       - run: bash ./gradlew assembleRelease --no-daemon --max-workers=2 -PreactNativeArchitectures=arm64-v8a,armeabi-v7a
         working-directory: native/mobile/android
-      - run: cp android/app/build/outputs/apk/release/app-release.apk Luma-0.3.10-test.apk
+      - run: cp android/app/build/outputs/apk/release/app-release.apk Luma-0.3.11-test.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: Luma-Android-0.3.10-test
-          path: native/mobile/Luma-0.3.10-test.apk
+          name: Luma-Android-0.3.11-test
+          path: native/mobile/Luma-0.3.11-test.apk
           retention-days: 30
           if-no-files-found: error

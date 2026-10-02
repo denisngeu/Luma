@@ -7,5 +7,5 @@ const routes=['/fil','/messages','/amis','/communities','/parametres','/apparenc
 export default function AppShell({children}:{children:ReactNode}){
  const path=usePathname();
  if(!routes.some(route=>path===route||path.startsWith(route+'/')))return children;
- return <div className="luma-shell"><SocialNav/><div className="luma-page" key={path}>{children}</div></div>;
+ return <div className="luma-shell"><SocialNav/><div className="luma-page">{children}</div></div>;
 }
