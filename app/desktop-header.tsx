@@ -21,13 +21,15 @@ export default function DesktopHeader() {
   const [isWindows, setIsWindows] = useState(false);
 
   useEffect(() => {
-    const bridge = (window as unknown as { lumaDesktop?: LumaDesktopBridge }).lumaDesktop;
-    if (bridge?.isDesktop) {
-      setIsDesktop(true);
-      if (bridge.platform === 'win32') {
-        setIsWindows(true);
+    let live=true;
+    queueMicrotask(()=>{
+      const bridge = (window as unknown as { lumaDesktop?: LumaDesktopBridge }).lumaDesktop;
+      if (live&&bridge?.isDesktop) {
+        setIsDesktop(true);
+        setIsWindows(bridge.platform === 'win32');
       }
-    }
+    });
+    return()=>{live=false;};
   }, []);
 
   const handleMinimize = () => {

@@ -134,15 +134,13 @@ export default function Messenger() {
 
   useEffect(() => {
     let live = true;
-    let t: ReturnType<typeof setInterval> | undefined;
 
     if (!active) {
-      setMsgs([]);
       return;
     }
 
-    setMessagesLoading(true);
     const update = async () => {
+      if(live)setMessagesLoading(true);
       try {
         const d = await api('messages', { chat: active });
         if (live && d.messages) {
@@ -157,11 +155,11 @@ export default function Messenger() {
     };
 
     void update();
-    t = setInterval(update, 3500);
+    const t = setInterval(update, 3500);
 
     return () => {
       live = false;
-      if (t) clearInterval(t);
+      clearInterval(t);
     };
   }, [active, api]);
 
@@ -367,6 +365,9 @@ export default function Messenger() {
 
           {/* Conversations List */}
           <div className="flex-1 overflow-y-auto px-space-sm space-y-1 py-space-xs">
+            {loading&&<p className="p-space-md text-body-sm text-outline">Chargement de vos discussions…</p>}
+            {!loading&&error&&<p className="p-space-md text-body-sm text-error" role="alert">{error}</p>}
+            {!loading&&!error&&!shownChats.length&&<p className="p-space-md text-body-sm text-outline">Aucune discussion. Utilisez le bouton + pour en créer une ou rejoindre un groupe.</p>}
             {shownChats.map((c, i) => {
               const isSelected = c.id === active;
               const isGroup = c.kind === 'group';
@@ -526,6 +527,7 @@ export default function Messenger() {
 
           {/* Message History Canvas */}
           <section className="flex-1 overflow-y-auto p-space-lg space-y-space-lg flex flex-col justify-end">
+            {messagesLoading&&<p className="mx-auto text-body-sm text-outline">Actualisation…</p>}
             {/* Day Timestamp Divider */}
             <div className="flex items-center justify-center my-space-sm">
               <div className="flex items-center gap-space-sm px-space-md py-1 rounded-full bg-surface-container-low text-outline font-label-caps text-label-caps tracking-wider uppercase shadow-inner border border-white/5">
@@ -795,20 +797,21 @@ export default function Messenger() {
               {initials(activeChat?.name || 'F')}
             </div>
             <h4 className="font-title-sm text-title-sm font-bold text-on-surface">{activeChat?.name}</h4>
-            <p className="font-label-caps text-label-caps text-tertiary">Chiffrement AES-GCM 256-bit actif</p>
+            <p className="font-label-caps text-label-caps text-tertiary">Discussion réservée aux membres</p>
           </div>
           <div className="space-y-space-md">
             <div className="p-space-sm rounded-xl bg-surface-container-lowest border border-white/5">
               <span className="font-label-caps text-label-caps text-outline block mb-1">Invitation</span>
               <code className="text-body-sm text-primary font-mono select-all block break-all">
-                {activeChat?.invite || 'luma-invite-code-verified'}
+                {activeChat?.invite || 'Aucun code disponible'}
               </code>
             </div>
             <button
               className="w-full py-2 rounded-xl bg-surface-container hover:bg-surface-container-highest text-on-surface font-label-md transition-colors cursor-pointer"
-              onClick={() => copy(activeChat?.invite || 'luma-invite-code-verified')}
+              disabled={!activeChat?.invite}
+              onClick={() => activeChat?.invite&&copy(activeChat.invite)}
             >
-              Copier le lien d'invitation
+              Copier le lien d&apos;invitation
             </button>
           </div>
         </aside>
@@ -821,7 +824,7 @@ export default function Messenger() {
             {modal === 'new' ? 'Nouvelle discussion' : 'Programmer un message'}
           </DialogTitle>
           <DialogDescription className="text-body-sm text-outline">
-            {modal === 'new' ? 'Créez un salon ou une discussion chiffrée de bout en bout.' : 'Le message sera délivré à l’heure précise.'}
+            {modal === 'new' ? 'Créez un salon ou une discussion privée.' : 'Le message sera délivré à l’heure précise.'}
           </DialogDescription>
 
           {modal === 'new' && (
@@ -850,7 +853,7 @@ export default function Messenger() {
               </div>
               <input
                 className="w-full bg-surface-container-lowest text-on-surface p-space-sm rounded-xl border border-white/10 focus:outline-none"
-                placeholder="Collez le code d'invitation"
+                placeholder="Collez le code d’invitation"
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
               />
@@ -872,13 +875,13 @@ export default function Messenger() {
                 value={schedule}
                 onChange={(e) => setSchedule(e.target.value)}
               />
-              <p className="text-body-sm text-outline italic">Message : "{text}"</p>
+              <p className="text-body-sm text-outline italic">Message : « {text} »</p>
               <button
                 className="w-full py-2.5 rounded-xl bg-primary text-on-primary font-bold hover:opacity-90 transition-opacity cursor-pointer disabled:opacity-40"
                 disabled={!schedule || busy}
                 onClick={() => send(true)}
               >
-                Confirmer l'envoi programmé
+                Confirmer l’envoi programmé
               </button>
             </div>
           )}
