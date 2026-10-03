@@ -12,6 +12,7 @@ import AppShell from './app-shell';
 import {themeBootstrap} from './theme-bootstrap';
 import './shell.css';
 import './mobile.css';
+import './stitch-design.css';
 
 export const metadata: Metadata = {
   title: "Luma — Votre cercle",

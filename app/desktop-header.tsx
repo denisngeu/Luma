@@ -56,7 +56,7 @@ export default function DesktopHeader() {
     <header className={`luma-desktop-header ${isWindows ? 'is-windows' : ''}`}>
       {/* Left: Window controls (dots) & Luma Desktop branding */}
       <div className="header-left">
-        <div className="window-dots" aria-label="Contrôles de fenêtre">
+        {isDesktop&&<div className="window-dots" aria-label="Contrôles de fenêtre">
           <button
             type="button"
             className="dot dot-close group"
@@ -84,7 +84,7 @@ export default function DesktopHeader() {
           >
             <Square size={7} className="dot-icon" />
           </button>
-        </div>
+        </div>}
 
         <Link href="/messages" className="header-brand" prefetch>
           <div className="brand-logo-glow">
@@ -147,7 +147,6 @@ export default function DesktopHeader() {
           <div className="user-avatar-circle">
             <User size={15} />
           </div>
-          <span className="user-online-dot" />
         </Link>
       </div>
     </header>

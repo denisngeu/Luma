@@ -28,56 +28,12 @@ type Msg = {
   starred?: number;
 };
 
-const DEFAULT_STITCH_CHATS: Chat[] = [
-  {
-    id: 'chat_stitch_frete',
-    name: 'Frete',
-    kind: 'direct',
-    preview: '669e6bcb-aecc-4298-b04b-a7e9af872a55',
-    time: '11:29',
-    unread: 0,
-  },
-  {
-    id: 'chat_stitch_christ',
-    name: 'Christ Ndong',
-    kind: 'direct',
-    preview: 'NON, rendez-vous à la séance demain matin',
-    time: '10:45',
-    unread: 1,
-  },
-  {
-    id: 'chat_stitch_audio',
-    name: 'Salon Audio & Veille',
-    kind: 'group',
-    preview: 'Lina: Écoutez la maquette v2',
-    time: '09:12',
-    unread: 4,
-  },
-  {
-    id: 'chat_stitch_eric',
-    name: 'Eric',
-    kind: 'direct',
-    preview: 'Commencez la conversation',
-    time: 'Hier',
-    unread: 0,
-  },
-  {
-    id: 'chat_stitch_yo',
-    name: 'yo',
-    kind: 'direct',
-    preview: 'Commencez la conversation',
-    time: '01/10',
-    unread: 0,
-  },
-];
-
 export default function Messenger() {
   const router = useRouter();
   const [chats, setChats] = useState<Chat[]>([]);
-  const [active, setActive] = useState<string>('chat_stitch_frete');
+  const [active, setActive] = useState<string>('');
   const [msgs, setMsgs] = useState<Msg[]>([]);
-  const [me, setMe] = useState<string>('usr_denis_stitch');
-  const [accountName, setAccountName] = useState<string>('Denis');
+  const [me, setMe] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [text, setText] = useState('');
   const [search, setSearch] = useState('');
@@ -95,13 +51,12 @@ export default function Messenger() {
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [messagesLoading, setMessagesLoading] = useState(false);
-  const [voiceConnected, setVoiceConnected] = useState(true);
 
   const bottom = useRef<HTMLDivElement>(null);
   const file = useRef<HTMLInputElement>(null);
 
   const activeChat = useMemo(() => {
-    return chats.find((c) => c.id === active) || DEFAULT_STITCH_CHATS.find((c) => c.id === active) || chats[0];
+    return chats.find((c) => c.id === active) || chats[0];
   }, [chats, active]);
 
   const api = useCallback(async (action: string, data: Record<string, unknown> = {}) => {
@@ -146,23 +101,22 @@ export default function Messenger() {
     setLoading(true);
     try {
       const d = await api('list');
-      const loadedChats = d.chats && d.chats.length > 0 ? d.chats : DEFAULT_STITCH_CHATS;
+      const loadedChats = d.chats || [];
       setChats(loadedChats);
       if (d.user) {
         setMe(d.user.id);
-        setAccountName(d.user.name);
       }
       setActive((a) => {
         const requested = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('chat') : null;
         if (requested && loadedChats.some((c) => c.id === requested)) return requested;
         if (loadedChats.some((c) => c.id === a)) return a;
-        return loadedChats[0]?.id || 'chat_stitch_frete';
+        return loadedChats[0]?.id || '';
       });
       setError('');
-    } catch {
-      // Fallback to Stitch chats if local DB is loading or empty
-      setChats(DEFAULT_STITCH_CHATS);
-      setActive('chat_stitch_frete');
+    } catch (e) {
+      setChats([]);
+      setActive('');
+      setError((e as Error).message || 'Impossible de charger vos discussions.');
     } finally {
       setLoading(false);
     }
@@ -195,36 +149,8 @@ export default function Messenger() {
           setMsgs(d.messages);
           setError('');
         }
-      } catch {
-        if (live && active === 'chat_stitch_frete') {
-          // Default messages for Frete matching the Stitch design
-          setMsgs([
-            {
-              id: 'msg_frete_1',
-              body: 'Salut',
-              author: 'usr_frete',
-              name: 'Frete',
-              created: Date.now() - 120000,
-              scheduled: 0,
-            },
-            {
-              id: 'msg_frete_2',
-              body: 'Cv',
-              author: 'usr_frete',
-              name: 'Frete',
-              created: Date.now() - 110000,
-              scheduled: 0,
-            },
-            {
-              id: 'msg_frete_3',
-              body: '669e6bcb-aecc-4298-b04b-a7e9af872a55',
-              author: me,
-              name: accountName,
-              created: Date.now() - 30000,
-              scheduled: 0,
-            },
-          ]);
-        }
+      } catch (e) {
+        if (live) setError((e as Error).message || 'Impossible de charger les messages.');
       } finally {
         if (live) setMessagesLoading(false);
       }
@@ -237,7 +163,7 @@ export default function Messenger() {
       live = false;
       if (t) clearInterval(t);
     };
-  }, [active, api, me, accountName]);
+  }, [active, api]);
 
   useEffect(() => {
     bottom.current?.scrollIntoView({ behavior: 'smooth' });
@@ -271,19 +197,9 @@ export default function Messenger() {
       setModal('');
       const res = await api('messages', { chat: active });
       setMsgs(res.messages);
-    } catch {
-      // Local optimistic append if API is offline
-      setMsgs((prev) => [
-        ...prev,
-        {
-          id: 'local_' + Date.now(),
-          body: msgText,
-          author: me,
-          name: accountName,
-          created: Date.now(),
-          scheduled: 0,
-        },
-      ]);
+    } catch (e) {
+      setText(msgText);
+      setError((e as Error).message || 'Le message n’a pas été envoyé.');
     } finally {
       setBusy(false);
     }
@@ -457,16 +373,12 @@ export default function Messenger() {
 
               // Visual styling per item
               let avatarBg = 'bg-secondary-container text-on-secondary-container';
-              let statusBg = 'bg-tertiary';
               if (i === 1) {
                 avatarBg = 'bg-surface-container-highest text-on-surface';
-                statusBg = 'bg-tertiary';
               } else if (i === 2) {
                 avatarBg = 'bg-tertiary-container text-on-tertiary-container';
-                statusBg = 'bg-secondary';
               } else if (i >= 3) {
                 avatarBg = 'bg-surface-container text-on-surface-variant';
-                statusBg = 'bg-outline';
               }
 
               return (
@@ -498,7 +410,6 @@ export default function Messenger() {
                         initials(c.name)
                       )}
                     </div>
-                    <span className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full ${statusBg}`} />
                   </div>
 
                   {/* Info */}
@@ -510,7 +421,7 @@ export default function Messenger() {
                           isSelected ? 'text-primary-fixed-dim font-bold' : 'text-outline'
                         }`}
                       >
-                        {c.time || '11:29'}
+                        {c.time || ''}
                       </span>
                     </div>
                     <div className="flex items-center justify-between gap-space-xs">
@@ -533,26 +444,6 @@ export default function Messenger() {
             })}
           </div>
 
-          {/* Quick Audio Status Banner (bottom of sidebar) */}
-          {voiceConnected && (
-            <div className="p-space-sm m-space-sm rounded-xl bg-surface-container-lowest/80 flex items-center justify-between border border-white/5 mt-auto">
-              <div className="flex items-center gap-space-sm min-w-0">
-                <span className="w-2.5 h-2.5 rounded-full bg-tertiary animate-pulse" />
-                <div className="min-w-0">
-                  <p className="font-label-caps text-label-caps text-on-surface font-semibold truncate">Voix connectée</p>
-                  <p className="font-label-caps text-label-caps text-tertiary truncate">Canal Privé · 24ms</p>
-                </div>
-              </div>
-              <button
-                className="w-7 h-7 rounded-lg bg-surface-container-high hover:bg-error-container hover:text-on-error-container text-on-surface-variant flex items-center justify-center transition-colors cursor-pointer"
-                title="Déconnecter"
-                type="button"
-                onClick={() => setVoiceConnected(false)}
-              >
-                <span className="material-symbols-outlined text-[16px]">call_end</span>
-              </button>
-            </div>
-          )}
         </aside>
 
         {/* =========================================================================
@@ -567,25 +458,22 @@ export default function Messenger() {
             <div className="flex items-center gap-space-md">
               <div className="relative">
                 <div className="w-10 h-10 rounded-xl bg-secondary-container text-on-secondary-container flex items-center justify-center font-title-sm text-title-sm shadow-md">
-                  {initials(activeChat?.name || 'Frete')}
+                  {initials(activeChat?.name || 'Luma')}
                 </div>
-                <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-tertiary" />
               </div>
               <div>
                 <div className="flex items-center gap-space-xs">
-                  <h2 className="font-title-sm text-title-sm text-on-surface font-bold">{activeChat?.name || 'Frete'}</h2>
+                  <h2 className="font-title-sm text-title-sm text-on-surface font-bold">{activeChat?.name || 'Sélectionnez une discussion'}</h2>
                   <span
                     className="material-symbols-outlined text-[16px] text-tertiary"
                     style={{ fontVariationSettings: "'FILL' 1" }}
-                    title="Certifié & Chiffré"
+                    title="Espace Luma privé"
                   >
                     verified_user
                   </span>
                 </div>
                 <div className="flex items-center gap-space-xs font-label-caps text-label-caps text-outline">
-                  <span className="text-tertiary font-bold">En ligne</span>
-                  <span>•</span>
-                  <span>Discussion privée de bout en bout</span>
+                  <span>{activeChat?.kind==='group'?'Conversation de groupe':'Discussion privée'}</span>
                 </div>
               </div>
             </div>
@@ -642,14 +530,14 @@ export default function Messenger() {
             <div className="flex items-center justify-center my-space-sm">
               <div className="flex items-center gap-space-sm px-space-md py-1 rounded-full bg-surface-container-low text-outline font-label-caps text-label-caps tracking-wider uppercase shadow-inner border border-white/5">
                 <span className="material-symbols-outlined text-[14px]">calendar_today</span>
-                <span>Aujourd'hui · 03 Octobre</span>
+                <span>{new Intl.DateTimeFormat('fr-FR',{dateStyle:'long'}).format(new Date())}</span>
               </div>
             </div>
 
             {/* Security Encryption Notice */}
             <div className="mx-auto max-w-md p-space-sm rounded-xl bg-surface-container-lowest/60 text-center text-outline font-label-caps text-label-caps flex items-center justify-center gap-space-xs border border-white/5">
               <span className="material-symbols-outlined text-[14px] text-primary">lock</span>
-              <span>Les messages et appels sont chiffrés de bout en bout. Seuls les participants peuvent les lire.</span>
+              <span>Cette discussion est réservée à ses participants dans votre espace Luma.</span>
             </div>
 
             {/* Message Stream */}
@@ -822,7 +710,7 @@ export default function Messenger() {
                 {/* Text Input */}
                 <input
                   className="flex-1 bg-transparent text-body-md font-body-md text-on-surface placeholder:text-outline focus:outline-none py-2 px-space-xs"
-                  placeholder={`Écrivez votre message à ${activeChat?.name || 'Frete'}...`}
+                  placeholder={activeChat?`Écrivez votre message à ${activeChat.name}...`:'Sélectionnez une discussion'}
                   type="text"
                   value={text}
                   onChange={(e) => setText(e.target.value)}

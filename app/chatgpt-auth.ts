@@ -26,21 +26,7 @@ export async function getChatGPTUser(): Promise<ChatGPTUser | null> {
   const requestHeaders = await headers();
   if (nativeAuthEnabled()) {
     const database = getDatabase();
-    let token = cookieValue(requestHeaders.get("cookie"), SESSION_COOKIE);
-    if (!token && (requestHeaders.get("host")?.includes("localhost") || requestHeaders.get("host")?.includes("127.0.0.1") || requestHeaders.get("user-agent")?.includes("LumaDesktop"))) {
-      if (database) {
-        const denis = await database.prepare(`
-          SELECT u.id AS "userId", u.name AS "displayName", a.email AS "email"
-          FROM users u
-          LEFT JOIN auth_accounts a ON a.user=u.id
-          WHERE u.name='Denis'
-          LIMIT 1
-        `).first<{userId:string;displayName:string;email:string}>();
-        if (denis) {
-          return { ...denis, fullName: denis.displayName };
-        }
-      }
-    }
+    const token = cookieValue(requestHeaders.get("cookie"), SESSION_COOKIE);
     if (!database || !token) return null;
     const tokenHash = await hashSessionToken(token);
     const account = await database.prepare(`
