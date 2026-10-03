@@ -54,6 +54,7 @@ export default function Messenger() {
 
   const bottom = useRef<HTMLDivElement>(null);
   const file = useRef<HTMLInputElement>(null);
+  const searchInput = useRef<HTMLInputElement>(null);
 
   const activeChat = useMemo(() => {
     return chats.find((c) => c.id === active) || chats[0];
@@ -310,6 +311,7 @@ export default function Messenger() {
             <div className="relative flex items-center rounded-xl bg-surface-container-lowest hover:bg-surface-container transition-colors px-space-md py-space-xs border border-white/5">
               <span className="material-symbols-outlined text-outline text-[18px]">search</span>
               <input
+                ref={searchInput}
                 className="w-full bg-transparent text-body-sm font-body-sm text-on-surface placeholder:text-outline focus:outline-none pl-space-sm pr-space-md py-1"
                 placeholder="Rechercher une discussion..."
                 type="text"
@@ -485,6 +487,7 @@ export default function Messenger() {
                 className="w-9 h-9 rounded-xl bg-surface-container hover:bg-surface-container-high hover:text-primary flex items-center justify-center transition-all cursor-pointer"
                 title="Appel vocal"
                 type="button"
+                disabled={!activeChat||busy}
                 onClick={() => startCall('audio')}
               >
                 <span className="material-symbols-outlined text-[18px]">call</span>
@@ -493,6 +496,7 @@ export default function Messenger() {
                 className="w-9 h-9 rounded-xl bg-surface-container hover:bg-surface-container-high hover:text-primary flex items-center justify-center transition-all cursor-pointer"
                 title="Appel vidéo"
                 type="button"
+                disabled={!activeChat||busy}
                 onClick={() => startCall('video')}
               >
                 <span className="material-symbols-outlined text-[18px]">videocam</span>
@@ -507,9 +511,9 @@ export default function Messenger() {
               </button>
               <button
                 className="w-9 h-9 rounded-xl bg-surface-container hover:bg-surface-container-high hover:text-primary flex items-center justify-center transition-all cursor-pointer"
-                title="Rechercher dans la discussion"
+                title="Rechercher une discussion"
                 type="button"
-                onClick={() => setNotice('Recherche activée')}
+                onClick={() => searchInput.current?.focus()}
               >
                 <span className="material-symbols-outlined text-[18px]">search</span>
               </button>
@@ -518,6 +522,7 @@ export default function Messenger() {
                 className="w-9 h-9 rounded-xl bg-surface-container hover:bg-surface-container-high hover:text-on-surface flex items-center justify-center transition-all cursor-pointer"
                 title="Options et profil"
                 type="button"
+                disabled={!activeChat}
                 onClick={() => setDetail(!detail)}
               >
                 <span className="material-symbols-outlined text-[18px]">more_vert</span>
@@ -584,14 +589,6 @@ export default function Messenger() {
                         </span>
                       </div>
 
-                      {/* Quick Emoji Float on hover */}
-                      <div className="absolute -top-3 left-2 hidden group-hover/bubble:flex items-center gap-0.5 bg-surface-container-highest px-1.5 py-0.5 rounded-full shadow-lg text-[13px] border border-white/10">
-                        <button className="hover:scale-125 transition-transform px-1 cursor-pointer">🙏</button>
-                        <button className="hover:scale-125 transition-transform px-1 cursor-pointer">✨</button>
-                        <button className="hover:text-primary transition-colors text-outline pl-1 cursor-pointer">
-                          <span className="material-symbols-outlined text-[13px]">add_reaction</span>
-                        </button>
-                      </div>
                     </div>
 
                     {/* Micro Quick actions below bubble */}
@@ -636,39 +633,11 @@ export default function Messenger() {
                     <div className="relative group/bubble bg-surface-container-high text-on-surface px-space-md py-space-sm rounded-2xl rounded-tl-sm shadow-md transition-all hover:bg-surface-variant">
                       <p className="font-body-md text-body-md">{m.body}</p>
 
-                      {/* Quick Emoji Float on hover */}
-                      <div className="absolute -top-3 right-2 hidden group-hover/bubble:flex items-center gap-0.5 bg-surface-container-highest px-1.5 py-0.5 rounded-full shadow-lg text-[13px] border border-white/10">
-                        <button className="hover:scale-125 transition-transform px-1 cursor-pointer">👍</button>
-                        <button className="hover:scale-125 transition-transform px-1 cursor-pointer">❤️</button>
-                        <button className="hover:scale-125 transition-transform px-1 cursor-pointer">🔥</button>
-                        <button className="hover:text-primary transition-colors text-outline pl-1 cursor-pointer">
-                          <span className="material-symbols-outlined text-[13px]">add_reaction</span>
-                        </button>
-                      </div>
                     </div>
                   </div>
                 </div>
               );
             })}
-
-            {/* Rich Card Attachment Mockup (Session initiée) */}
-            <div className="flex flex-col items-end gap-1 ml-auto max-w-md group">
-              <div className="p-space-md rounded-2xl rounded-tr-sm bg-surface-container-high text-on-surface shadow-md w-full border border-white/5">
-                <div className="flex items-center gap-space-sm mb-space-xs">
-                  <span className="p-2 rounded-xl bg-tertiary-container text-on-tertiary-container flex items-center justify-center">
-                    <span className="material-symbols-outlined text-[18px]">lock_reset</span>
-                  </span>
-                  <div>
-                    <p className="font-title-sm text-title-sm font-semibold">Session sécurisée initiée</p>
-                    <p className="font-label-caps text-label-caps text-outline">Identifiant de session éphémère</p>
-                  </div>
-                </div>
-                <div className="p-space-sm rounded-lg bg-surface-container-lowest font-mono font-label-caps text-label-caps text-primary-fixed-dim break-all flex items-center justify-between border border-white/5">
-                  <span>luma://sync-node#a7e9af872a55</span>
-                  <span className="material-symbols-outlined text-[16px] text-tertiary">check_circle</span>
-                </div>
-              </div>
-            </div>
 
             <div ref={bottom} />
           </section>
@@ -702,8 +671,9 @@ export default function Messenger() {
                 {/* Attach File Button */}
                 <button
                   className="w-9 h-9 rounded-xl hover:bg-surface-container-high text-on-surface-variant hover:text-primary flex items-center justify-center transition-colors cursor-pointer"
-                  title="Joindre un fichier (jusqu'à 50 Mo)"
+                  title="Joindre un fichier (jusqu’à 20 Mo)"
                   type="button"
+                  disabled={!activeChat||busy}
                   onClick={() => file.current?.click()}
                 >
                   <span className="material-symbols-outlined text-[20px]">attach_file</span>
@@ -724,16 +694,6 @@ export default function Messenger() {
                   }}
                 />
 
-                {/* Voice Clip */}
-                <button
-                  className="w-9 h-9 rounded-xl hover:bg-surface-container-high text-on-surface-variant hover:text-primary flex items-center justify-center transition-colors cursor-pointer"
-                  title="Message vocal"
-                  type="button"
-                  onClick={() => setNotice('L\'enregistrement vocal est disponible dans les salons audio')}
-                >
-                  <span className="material-symbols-outlined text-[20px]">mic</span>
-                </button>
-
                 {/* Schedule Message */}
                 <button
                   className="w-9 h-9 rounded-xl hover:bg-surface-container-high text-on-surface-variant hover:text-primary flex items-center justify-center transition-colors cursor-pointer"
@@ -752,7 +712,7 @@ export default function Messenger() {
                   className="w-10 h-10 rounded-xl bg-primary-container text-on-primary-container hover:opacity-90 flex items-center justify-center transition-all duration-200 shadow-md shadow-primary-container/30 active:scale-95 group disabled:opacity-40 cursor-pointer"
                   title="Envoyer le message"
                   type="button"
-                  disabled={!text.trim() || busy}
+                  disabled={!activeChat||!text.trim() || busy}
                   onClick={() => send()}
                 >
                   <span className="material-symbols-outlined text-[20px] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform">
@@ -773,10 +733,7 @@ export default function Messenger() {
                     <kbd className="px-1 py-0.5 rounded bg-surface-container-high text-on-surface-variant">Maj + Entrée</kbd> saut de ligne
                   </span>
                 </div>
-                <div className="flex items-center gap-space-xs">
-                  <span className="w-1.5 h-1.5 rounded-full bg-tertiary" />
-                  <span>Chiffrement matériel actif</span>
-                </div>
+                <span>Fichiers jusqu’à 20 Mo</span>
               </div>
             </div>
           </footer>
