@@ -459,6 +459,7 @@ export default function Messenger() {
           {/* Chat Header */}
           <header className="h-16 px-space-lg flex items-center justify-between bg-surface-container-lowest/70 backdrop-blur-xl z-20 shadow-sm flex-shrink-0 border-b border-white/5">
             <div className="flex items-center gap-space-md">
+              <button className="stitch-mobile-back" type="button" aria-label="Revenir aux discussions" onClick={()=>setMobile(false)}><span className="material-symbols-outlined">arrow_back</span></button>
               <div className="relative">
                 <div className="w-10 h-10 rounded-xl bg-secondary-container text-on-secondary-container flex items-center justify-center font-title-sm text-title-sm shadow-md">
                   {initials(activeChat?.name || 'Luma')}
