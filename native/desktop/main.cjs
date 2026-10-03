@@ -8,6 +8,7 @@ const {
   Menu,
   Tray,
   ipcMain,
+  nativeImage,
 } = require('electron');
 const path = require('node:path');
 const fs = require('node:fs');
@@ -253,12 +254,21 @@ app.whenReady().then(async () => {
     }
   }
 
-  function createTray() {
+  function getAppIcon() {
     const iconPath = path.join(__dirname, 'build', 'icon.png');
-    if (!fs.existsSync(iconPath)) return;
+    if (fs.existsSync(iconPath)) {
+      const img = nativeImage.createFromPath(iconPath);
+      if (!img.isEmpty()) return img;
+    }
+    return null;
+  }
+
+  function createTray() {
+    const appIcon = getAppIcon();
+    if (!appIcon) return;
 
     try {
-      tray = new Tray(iconPath);
+      tray = new Tray(appIcon);
       const contextMenu = Menu.buildFromTemplate([
         {
           label: 'Ouvrir Luma',
@@ -318,8 +328,8 @@ app.whenReady().then(async () => {
   }
 
   function create() {
-    const iconPath = path.join(__dirname, 'build', 'icon.png');
     const preloadPath = path.join(__dirname, 'preload.cjs');
+    const appIcon = getAppIcon();
 
     win = new BrowserWindow({
       width: 1300,
@@ -327,7 +337,7 @@ app.whenReady().then(async () => {
       minWidth: 760,
       minHeight: 600,
       title: 'Luma',
-      icon: fs.existsSync(iconPath) ? iconPath : undefined,
+      icon: appIcon || undefined,
       backgroundColor: '#0f131d',
       autoHideMenuBar: true,
       titleBarStyle: 'hidden',
@@ -343,6 +353,11 @@ app.whenReady().then(async () => {
         webSecurity: true,
         preload: fs.existsSync(preloadPath) ? preloadPath : undefined,
       },
+    });
+
+    win.once('ready-to-show', () => {
+      win.show();
+      win.focus();
     });
 
     const baseUa = win.webContents.getUserAgent();

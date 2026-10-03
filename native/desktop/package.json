@@ -26,7 +26,8 @@
     "files": [
       "main.cjs",
       "preload.cjs",
-      "config.json"
+      "config.json",
+      "build/icon.png"
     ],
     "win": {
       "target": "nsis"
