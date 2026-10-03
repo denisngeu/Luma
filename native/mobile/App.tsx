@@ -10,7 +10,7 @@ LogBox.ignoreLogs(['Cannot connect to Expo CLI']);
 
 const DEFAULT_SERVER='https://cx9tpuja8iqkelk0zci4vlbs.app.luma-sas.fr';
 const SERVER=(process.env.EXPO_PUBLIC_LUMA_URL||'').trim()||DEFAULT_SERVER;
-const MOBILE_RELEASE='0.3.11';
+const MOBILE_RELEASE='0.3.12';
 const themeBridge=`(()=>{const send=()=>window.ReactNativeWebView.postMessage(JSON.stringify({theme:document.documentElement.dataset.luma}));new MutationObserver(send).observe(document.documentElement,{attributes:true,attributeFilter:['data-luma']});send()})();true;`;
 // One persistent WebView keeps cookies, theme preferences and navigation together.
 class NativeErrorBoundary extends React.Component<React.PropsWithChildren,{failed:boolean}>{
@@ -59,9 +59,9 @@ function LumaApp(){
   }catch{Alert.alert('Partage indisponible','Réessayez ou copiez votre lien d’invitation depuis la page Amis.');}finally{sharing.current=false;}
  }
  useEffect(()=>{const listener=BackHandler.addEventListener('hardwareBackPress',()=>{if(error){retry();return true;}if(!back.current)return false;web.current?.goBack();return true;});return()=>listener.remove();},[error,retry]);
- useEffect(()=>{const listener=AppState.addEventListener('change',state=>{if(state==='active'&&!error&&!rendererGone.current)web.current?.injectJavaScript("window.dispatchEvent(new Event('focus'));window.dispatchEvent(new Event('online'));true;");});return()=>listener.remove();},[error]);
+ useEffect(()=>{const listener=AppState.addEventListener('change',state=>{if(error||rendererGone.current)return;const event=state==='active'?'luma-native-active':'luma-native-background';web.current?.injectJavaScript(`window.dispatchEvent(new Event('${event}'));${state==='active'?"window.dispatchEvent(new Event('focus'));window.dispatchEvent(new Event('online'));":''}true;`);});return()=>listener.remove();},[error]);
  useEffect(()=>()=>{clearLoadTimer();clearRendererTimer();},[clearLoadTimer,clearRendererTimer]);
- useEffect(()=>{void setAudioModeAsync({playsInSilentMode:true,shouldPlayInBackground:false,interruptionMode:'doNotMix'}).catch(()=>{});return()=>{Vibration.cancel();try{ringtone?.pause?.();}catch{}};},[ringtone]);
+ useEffect(()=>{void setAudioModeAsync({allowsRecording:true,playsInSilentMode:true,shouldPlayInBackground:true,interruptionMode:'doNotMix'}).catch(()=>{});return()=>{Vibration.cancel();try{ringtone?.pause?.();}catch{}};},[ringtone]);
  const updateRingtone=useCallback((id:unknown)=>{
   try{
    if(typeof id==='string'&&id){if(ringing.current===id)return;ringing.current=id;if(ringtone){ringtone.loop=true;void ringtone.seekTo?.(0)?.catch?.(()=>{});ringtone.play?.();}Vibration.vibrate([0,450,250,450,1200],true);return;}
@@ -73,7 +73,7 @@ function LumaApp(){
  if(!origin)return <SafeAreaView edges={['top','left','right']} style={styles.screen}><Text style={styles.text}>Configurez l’adresse du serveur Luma (http:// ou https://) avant de lancer l’application.</Text></SafeAreaView>;
  const safeAreaBridge=`document.documentElement.style.setProperty('--native-safe-bottom','${insets.bottom}px');true;`;
  return <SafeAreaView edges={['top','left','right']} style={[styles.screen,{backgroundColor:dark?'#121623':'#f4f5fb'}]}>
-   {webMounted&&<WebView key={webKey} ref={web} style={styles.web} source={{uri:origin+'/fil?native=android&release='+MOBILE_RELEASE}} originWhitelist={[origin,'http://*','https://*']} sharedCookiesEnabled thirdPartyCookiesEnabled domStorageEnabled javaScriptEnabled allowsInlineMediaPlayback mediaPlaybackRequiresUserAction={false} mediaCapturePermissionGrantType="prompt" mixedContentMode="compatibility" cacheEnabled cacheMode="LOAD_DEFAULT" setSupportMultipleWindows={false} overScrollMode="never" scrollEnabled nestedScrollEnabled
+   {webMounted&&<WebView key={webKey} ref={web} style={styles.web} source={{uri:origin+'/messages?native=android&release='+MOBILE_RELEASE}} originWhitelist={[origin,'http://*','https://*']} sharedCookiesEnabled thirdPartyCookiesEnabled domStorageEnabled javaScriptEnabled allowsInlineMediaPlayback mediaPlaybackRequiresUserAction={false} mediaCapturePermissionGrantType="prompt" mixedContentMode="compatibility" cacheEnabled cacheMode="LOAD_DEFAULT" setSupportMultipleWindows={false} overScrollMode="never" scrollEnabled nestedScrollEnabled
      onNavigationStateChange={state=>{back.current=state.canGoBack;}}
      injectedJavaScriptBeforeContentLoaded={safeAreaBridge} injectedJavaScript={safeAreaBridge+themeBridge} onMessage={event=>{try{const url=new URL(event.nativeEvent.url);if(url.origin!==origin)return;const message=JSON.parse(event.nativeEvent.data);if(message.theme==='dark'||message.theme==='light')setDark(message.theme==='dark');if(message.type==='share-contact-card'&&url.pathname==='/amis')void shareCard(message.image);if(message.type==='incoming-call')updateRingtone(message.id);}catch{}}}
      onLoadStart={beginLoad} onLoadEnd={finishLoad} onError={event=>recover(`Connexion impossible au serveur (${event.nativeEvent.description||'erreur réseau'}).`)} onHttpError={event=>recover('Le serveur Luma répond avec une erreur ('+event.nativeEvent.statusCode+').')}

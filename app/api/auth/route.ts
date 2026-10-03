@@ -22,7 +22,7 @@ export async function POST(request: Request) {
     const action = body.action;
     const email = normalizeEmail(body.email);
     const password = validatePassword(body.password);
-    const returnTo = safeRelativeReturnPath(typeof body.returnTo === "string" ? body.returnTo : "/fil");
+    const returnTo = safeRelativeReturnPath(typeof body.returnTo === "string" ? body.returnTo : "/messages");
     const database = getDatabase();
     const limiterKey = await hashSessionToken(`auth:${clientAddress(request)}:${email}`);
     if (!await allowAttempt(database, limiterKey)) return problem("Trop de tentatives. Réessayez dans quelques minutes.", 429);

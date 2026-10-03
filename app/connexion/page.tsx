@@ -11,7 +11,7 @@ export const metadata = { title: "Connexion — Luma" };
 
 export default async function Connection({ searchParams }: { searchParams: Promise<{ returnTo?: string }> }) {
   const params = await searchParams;
-  const returnTo = safeRelativeReturnPath(typeof params.returnTo === "string" ? params.returnTo : "/fil");
+  const returnTo = safeRelativeReturnPath(typeof params.returnTo === "string" ? params.returnTo : "/messages");
   const user = await getChatGPTUser();
   const native = nativeAuthEnabled();
   return <main className="login-page">

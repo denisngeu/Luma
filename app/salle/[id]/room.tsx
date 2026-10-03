@@ -1,7 +1,7 @@
 'use client';
 import {useEffect,useRef,useState} from 'react';
 import Link from 'next/link';
-import {ArrowLeft,Camera,CameraOff,Mic,MicOff,MonitorUp,PhoneOff,Users,Volume2} from 'lucide-react';
+import {ArrowLeft,Camera,CameraOff,Maximize2,Mic,MicOff,Minimize2,MonitorUp,Music2,PhoneOff,SwitchCamera,Users,Volume2} from 'lucide-react';
 import {gatherIce,mediaError,screenSharingSupported,screenSharingUnavailable} from '@/lib/call-media';
 
 type Person={user:string;name:string};
@@ -12,7 +12,7 @@ async function request(action:string,data:Record<string,unknown>={}){
  const d=await r.json() as Info & {error?:string;signals:Signal[]};if(!r.ok)throw Error(d.error||'Salon indisponible');return d;
 }
 export default function Room({id}:{id:string}){
- const [info,setInfo]=useState<Info|null>(null),[people,setPeople]=useState<Person[]>([]),[joined,setJoined]=useState(false),[busy,setBusy]=useState(false),[muted,setMuted]=useState(false),[camera,setCamera]=useState(false),[sharing,setSharing]=useState(false),[error,setError]=useState(''),[joinMuted,setJoinMuted]=useState(false),[joinCamera,setJoinCamera]=useState(false),[noiseSuppression,setNoiseSuppression]=useState(true),[echoCancellation,setEchoCancellation]=useState(true),[canShare]=useState(screenSharingSupported),[streams,setStreams]=useState<Record<string,MediaStream>>({});
+ const [info,setInfo]=useState<Info|null>(null),[people,setPeople]=useState<Person[]>([]),[joined,setJoined]=useState(false),[busy,setBusy]=useState(false),[muted,setMuted]=useState(false),[camera,setCamera]=useState(false),[sharing,setSharing]=useState(false),[error,setError]=useState(''),[joinMuted,setJoinMuted]=useState(false),[joinCamera,setJoinCamera]=useState(false),[noiseSuppression,setNoiseSuppression]=useState(true),[echoCancellation,setEchoCancellation]=useState(true),[canShare]=useState(screenSharingSupported),[streams,setStreams]=useState<Record<string,MediaStream>>({}),[facing,setFacing]=useState<'user'|'environment'>('user'),[expanded,setExpanded]=useState<string|null>(null);
  const local=useRef<MediaStream|null>(null),screen=useRef<MediaStream|null>(null),pcs=useRef(new Map<string,RTCPeerConnection>()),videoSenders=useRef(new Map<string,RTCRtpSender>()),timer=useRef<ReturnType<typeof setInterval>|null>(null),active=useRef(false),epoch=useRef(0),lock=useRef(false),soundContext=useRef<AudioContext|null>(null),soundTimer=useRef<ReturnType<typeof setTimeout>|null>(null);
  function dispose(){
   active.current=false;epoch.current++;if(soundTimer.current)clearTimeout(soundTimer.current);void soundContext.current?.close();soundContext.current=null;if(timer.current)clearInterval(timer.current);timer.current=null;
@@ -24,9 +24,9 @@ export default function Room({id}:{id:string}){
   let live=true;
   queueMicrotask(()=>{if(!live)return;try{const p=JSON.parse(localStorage.getItem('luma-call-preferences')||'{}');setJoinCamera(!!p.camera);setNoiseSuppression(p.noiseSuppression!==false);setEchoCancellation(p.echoCancellation!==false);}catch{}});
   request('info',{id}).then(d=>{if(live){setInfo(d);setPeople(d.participants);}}).catch(e=>{if(live)setError(e.message);});
-  const exit=()=>{if(active.current)navigator.sendBeacon('/api/rooms',new Blob([JSON.stringify({action:'leave',id})],{type:'application/json'}));};
-  window.addEventListener('pagehide',exit);
-  return()=>{live=false;exit();dispose();window.removeEventListener('pagehide',exit);};
+  const resume=()=>{if(active.current)void request('poll',{id}).catch(()=>{});};
+  window.addEventListener('luma-native-active',resume);window.addEventListener('online',resume);
+  return()=>{live=false;if(active.current)navigator.sendBeacon('/api/rooms',new Blob([JSON.stringify({action:'leave',id})],{type:'application/json'}));dispose();window.removeEventListener('luma-native-active',resume);window.removeEventListener('online',resume);};
  },[id]);
  async function send(uid:string,type:'offer'|'answer',pc:RTCPeerConnection,generation:number){
   await gatherIce(pc);if(epoch.current!==generation||!active.current)return;
@@ -60,7 +60,7 @@ export default function Room({id}:{id:string}){
   if(lock.current||active.current)return;lock.current=true;setBusy(true);setError('');const generation=epoch.current;let registered=false;
   try{
    if(!navigator.mediaDevices?.getUserMedia)throw Error('Micro indisponible. Ouvrez Luma en HTTPS et autorisez son utilisation.');
-   const stream=await navigator.mediaDevices.getUserMedia({audio:{noiseSuppression,echoCancellation},video:joinCamera});
+    const stream=await navigator.mediaDevices.getUserMedia({audio:{noiseSuppression,echoCancellation},video:joinCamera?{width:{ideal:1280},height:{ideal:720},facingMode:{ideal:facing}}:false});
    if(epoch.current!==generation){stream.getTracks().forEach(t=>t.stop());return;}local.current=stream;
    stream.getAudioTracks().forEach(t=>t.enabled=!joinMuted);
    const d=await request('join',{id}) as Info;registered=true;
@@ -96,17 +96,22 @@ export default function Room({id}:{id:string}){
   finally{lock.current=false;setBusy(false);}
  }
  async function replaceVideo(track:MediaStreamTrack|null){await Promise.all([...videoSenders.current.values()].map(sender=>sender.replaceTrack(track)));}
+ async function captureCamera(nextFacing=facing){try{return await navigator.mediaDevices.getUserMedia({video:{width:{ideal:1280},height:{ideal:720},facingMode:{exact:nextFacing}},audio:false});}catch{return navigator.mediaDevices.getUserMedia({video:{width:{ideal:1280},height:{ideal:720},facingMode:{ideal:nextFacing}},audio:false});}}
+ async function installCamera(stream:MediaStream,nextFacing=facing){const track=stream.getVideoTracks()[0];if(!track)throw Error('Aucune caméra disponible.');const previous=local.current?.getVideoTracks()[0];await replaceVideo(track);if(previous){local.current?.removeTrack(previous);previous.stop();}local.current?.addTrack(track);setFacing(nextFacing);setCamera(true);if(info)setStreams(s=>({...s,[info.me]:new MediaStream(local.current!.getTracks())}));}
  async function toggleVideo(){
   if(lock.current||sharing||!local.current)return;lock.current=true;setBusy(true);setError('');const generation=epoch.current;let captured:MediaStream|null=null;
   try{
    const existing=local.current.getVideoTracks()[0];
    if(existing){existing.enabled=!existing.enabled;setCamera(existing.enabled);return;}
-   captured=await navigator.mediaDevices.getUserMedia({video:{width:{ideal:1280},height:{ideal:720},facingMode:'user'},audio:false});
+    captured=await captureCamera();
    if(epoch.current!==generation){captured.getTracks().forEach(t=>t.stop());return;}
-   const track=captured.getVideoTracks()[0];await replaceVideo(track);local.current.addTrack(track);setCamera(true);
-   setStreams(s=>({...s,[info!.me]:new MediaStream(local.current!.getTracks())}));
+    await installCamera(captured);
   }catch(e){captured?.getTracks().forEach(t=>t.stop());await replaceVideo(local.current?.getVideoTracks()[0]||null).catch(()=>{});setError(mediaError(e));}
   finally{lock.current=false;setBusy(false);}
+ }
+ async function switchCamera(){
+  if(lock.current||sharing||!local.current)return;lock.current=true;setBusy(true);setError('');const generation=epoch.current,next=facing==='user'?'environment':'user';let captured:MediaStream|null=null;
+  try{captured=await captureCamera(next);if(epoch.current!==generation){captured.getTracks().forEach(t=>t.stop());return;}await installCamera(captured,next);}catch(e){captured?.getTracks().forEach(t=>t.stop());setError(mediaError(e));}finally{lock.current=false;setBusy(false);}
  }
  async function stopSharing(){
   const stream=screen.current;screen.current=null;stream?.getTracks().forEach(t=>{t.onended=null;t.stop();});
@@ -126,17 +131,17 @@ export default function Room({id}:{id:string}){
   }catch(e){await stopSharing().catch(()=>{});setError(mediaError(e));}finally{lock.current=false;setBusy(false);}
  }
 
- async function sound(freq:number){
+ async function sound(index:number){
   if(!local.current||soundContext.current)return;
   const generation=epoch.current,ctx=new AudioContext();soundContext.current=ctx;
   try{
    await ctx.resume();if(generation!==epoch.current||!local.current)return;
-   const dest=ctx.createMediaStreamDestination(),osc=ctx.createOscillator(),gain=ctx.createGain();
-   ctx.createMediaStreamSource(local.current).connect(dest);osc.frequency.value=freq;gain.gain.value=.12;osc.connect(gain).connect(dest);
+   const dest=ctx.createMediaStreamDestination();ctx.createMediaStreamSource(local.current).connect(dest);
    const restore=()=>{if(generation===epoch.current&&local.current)pcs.current.forEach(pc=>{const sender=pc.getSenders().find(s=>s.track?.kind==='audio');void sender?.replaceTrack(local.current!.getAudioTracks()[0]).catch(()=>{});});void ctx.close();if(soundContext.current===ctx)soundContext.current=null;};
    ctx.onstatechange=()=>{if(ctx.state==='suspended')restore();};
    await Promise.all([...pcs.current.values()].map(pc=>pc.getSenders().find(s=>s.track?.kind==='audio')?.replaceTrack(dest.stream.getAudioTracks()[0])));
-   osc.start();osc.stop(ctx.currentTime+.45);osc.onended=restore;soundTimer.current=setTimeout(restore,1500);
+   const presets=[[[523,.00,.42,'sine'],[659,.08,.42,'sine'],[784,.16,.55,'triangle']],[[880,.00,.16,'square'],[660,.18,.18,'square'],[880,.38,.22,'square']],[[196,.00,.38,'sawtooth'],[98,.12,.55,'sine']],[[392,.00,.24,'triangle'],[523,.16,.28,'triangle'],[659,.32,.32,'triangle'],[784,.48,.60,'sine']]] as const;
+   let remaining=presets[index].length;presets[index].forEach(([hz,offset,duration,wave])=>{const osc=ctx.createOscillator(),gain=ctx.createGain(),filter=ctx.createBiquadFilter(),at=ctx.currentTime+offset;osc.type=wave;osc.frequency.value=hz;filter.type='lowpass';filter.frequency.value=2400;gain.gain.setValueAtTime(.0001,at);gain.gain.exponentialRampToValueAtTime(.13,at+.025);gain.gain.exponentialRampToValueAtTime(.0001,at+duration);osc.connect(filter).connect(gain).connect(dest);osc.start(at);osc.stop(at+duration+.03);osc.onended=()=>{remaining--;if(!remaining)restore();};});soundTimer.current=setTimeout(restore,2200);
   }catch(e){void ctx.close();soundContext.current=null;setError(mediaError(e));}
  }
  async function leave(){const wasActive=active.current;dispose();setJoined(false);setStreams({});setCamera(false);setSharing(false);if(wasActive)await request('leave',{id}).catch(()=>{});}
@@ -147,16 +152,17 @@ export default function Room({id}:{id:string}){
  <label><input type="checkbox" checked={joinCamera} onChange={e=>setJoinCamera(e.target.checked)}/>Activer ma caméra</label>
  <label><input type="checkbox" checked={noiseSuppression} onChange={e=>setNoiseSuppression(e.target.checked)}/>Réduire le bruit ambiant</label>
  <label><input type="checkbox" checked={echoCancellation} onChange={e=>setEchoCancellation(e.target.checked)}/>Éviter l’écho</label></section>
- <button disabled={busy||!info} onClick={join}>{busy?'Connexion…':'Rejoindre le salon'}</button></div>:people.map(person=><article key={person.user}>
+ <button disabled={busy||!info} onClick={join}>{busy?'Connexion…':'Rejoindre le salon'}</button></div>:people.map(person=><article key={person.user} className={expanded===person.user?'is-expanded':''}>
  <div className="room-avatar">{person.name.slice(0,2).toUpperCase()}</div>
  <Remote stream={streams[person.user]} self={person.user===info?.me}/>
- <b>{person.user===info?.me?'Vous':person.name}</b></article>)}</section>
+ <b>{person.user===info?.me?(sharing?'Votre écran':'Vous'):person.name}</b><button className="call-expand" aria-label={expanded===person.user?'Réduire la vidéo':'Agrandir la vidéo ou le partage'} onClick={()=>setExpanded(expanded===person.user?null:person.user)}>{expanded===person.user?<Minimize2/>:<Maximize2/>}</button></article>)}</section>
  {joined&&<><footer>
  <button className={muted?'off':''} onClick={()=>{local.current?.getAudioTracks().forEach(t=>t.enabled=muted);setMuted(!muted);}} aria-pressed={muted}>{muted?<MicOff/>:<Mic/>}<span>{muted?'Activer micro':'Micro'}</span></button>
  <button disabled={busy||sharing} className={!camera?'off':''} onClick={toggleVideo} aria-pressed={camera}>{camera?<Camera/>:<CameraOff/>}<span>Caméra</span></button>
+ <button disabled={busy||sharing||!camera} onClick={switchCamera}><SwitchCamera/><span>Retourner</span></button>
  <button disabled={busy||!canShare} title={!canShare?screenSharingUnavailable:undefined} className={sharing?'active':''} onClick={share} aria-pressed={sharing}><MonitorUp/><span>{sharing?'Arrêter':'Écran'}</span></button>
  <button className="hangup" onClick={leave}><PhoneOff/><span>Quitter</span></button></footer>
- <details className="soundboard"><summary>Soundboard</summary><button onClick={()=>void sound(420)}>Notification</button><button onClick={()=>void sound(760)}>Signal</button></details>{!canShare&&<p className="room-capability">{screenSharingUnavailable}</p>}</>}
+ <details className="soundboard"><summary><Music2/> Soundboard HD</summary><div className="soundboard-grid">{[['✨','Halo'],['🔔','Double signal'],['💥','Impact'],['🏆','Victoire']].map(([emoji,name],i)=><button key={name} onClick={()=>void sound(i)}><span>{emoji}</span>{name}</button>)}</div></details>{!canShare&&<p className="room-capability">{screenSharingUnavailable}</p>}</>}
  </main>;
 }
 function Remote({stream,self=false}:{stream?:MediaStream;self?:boolean}){

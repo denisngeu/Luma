@@ -68,13 +68,13 @@ export function chatGPTSignOutPath(returnTo = "/"): string {
 }
 
 export function safeRelativeReturnPath(value: string): string {
-  if (!value.startsWith("/") || value.startsWith("//")) return "/fil";
+  if (!value.startsWith("/") || value.startsWith("//")) return "/messages";
   try {
     const url = new URL(value, "https://app.local");
-    if (url.origin !== "https://app.local" || isReservedAuthPath(url.pathname)) return "/fil";
+    if (url.origin !== "https://app.local" || isReservedAuthPath(url.pathname)) return "/messages";
     return `${url.pathname}${url.search}${url.hash}`;
   } catch {
-    return "/fil";
+    return "/messages";
   }
 }
 

@@ -50,7 +50,7 @@ export async function loginOrRegisterAction(prevState: AuthActionResult | undefi
   const rawEmail = (formData.get("email") as string) || "";
   const rawPassword = (formData.get("password") as string) || "";
   const rawName = (formData.get("name") as string) || "";
-  const returnTo = safeRelativeReturnPath((formData.get("returnTo") as string) || "/fil");
+  const returnTo = safeRelativeReturnPath((formData.get("returnTo") as string) || "/messages");
 
   const email = rawEmail.trim().toLowerCase();
   const password = rawPassword;

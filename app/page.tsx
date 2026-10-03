@@ -11,7 +11,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
   const user = await getChatGPTUser();
   const { chat } = await searchParams;
   if (chat && user) redirect(`/messages?chat=${encodeURIComponent(chat)}`);
-  const destination = user ? "/fil" : "/connexion";
+  const destination = user ? "/messages" : "/connexion?returnTo=%2Fmessages";
 
   return <main className="landing">
     <nav className="landing-nav" aria-label="Navigation principale">
