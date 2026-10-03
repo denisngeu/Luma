@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation';
 import Link, { useLinkStatus } from 'next/link';
 import {
   House,
+  Layers,
   MessageSquare,
   Users,
   Hash,
@@ -32,7 +33,7 @@ export default function SocialNav() {
 
   const mainNavItems = [
     {
-      Icon: House,
+      Icon: Layers,
       href: '/fil',
       label: 'Fil',
       badge: null,
@@ -134,7 +135,7 @@ export default function SocialNav() {
               <User size={18} />
             </div>
             <span className="dock-user-status" />
-            <span className="dock-tooltip">En ligne</span>
+            <span className="dock-tooltip">Denis (En ligne)</span>
           </Link>
 
           <div className="dock-audio-controls">
