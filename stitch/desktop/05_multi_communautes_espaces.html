@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="fr"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "primary": "#c0c1ff", "surface-bright": "#353944", "on-tertiary": "#003824", "background": "#0f131d", "secondary-fixed": "#e0e0ff", "tertiary-container": "#00885d", "error-container": "#93000a", "on-tertiary-fixed": "#002113", "primary-fixed": "#e1e0ff", "on-error-container": "#ffdad6", "primary-fixed-dim": "#c0c1ff", "surface-tint": "#c0c1ff", "surface": "#0f131d", "inverse-primary": "#494bd6", "error": "#ffb4ab", "on-tertiary-container": "#000703", "on-secondary-fixed": "#000767", "surface-container-lowest": "#0a0e18", "secondary-container": "#2f3aa3", "surface-container-high": "#262a35", "surface-dim": "#0f131d", "secondary": "#bdc2ff", "on-error": "#690005", "tertiary-fixed": "#6ffbbe", "tertiary": "#4edea3", "primary-container": "#8083ff", "surface-container": "#1c1f2a", "tertiary-fixed-dim": "#4edea3", "on-primary": "#1000a9", "surface-container-low": "#171b26", "on-primary-container": "#0d0096", "on-secondary-fixed-variant": "#2f3aa3", "on-primary-fixed": "#07006c", "on-surface": "#dfe2f1", "outline-variant": "#464554", "on-secondary": "#131e8c", "on-primary-fixed-variant": "#2f2ebe", "surface-container-highest": "#313540", "surface-variant": "#313540", "on-background": "#dfe2f1", "on-surface-variant": "#c7c4d7", "inverse-on-surface": "#2c303b", "outline": "#908fa0", "secondary-fixed-dim": "#bdc2ff", "on-tertiary-fixed-variant": "#005236", "inverse-surface": "#dfe2f1", "on-secondary-container": "#a8afff" }, "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, "spacing": { "gutter": "1rem", "space-md": "0.875rem", "space-sm": "0.5rem", "space-lg": "1.25rem", "space-xl": "2rem", "space-xs": "0.25rem", "margin": "1.5rem" }, "fontFamily": { "label-md": ["Plus Jakarta Sans"], "body-sm": ["Plus Jakarta Sans"], "headline-xl": ["Plus Jakarta Sans"], "body-md": ["Plus Jakarta Sans"], "headline-md": ["Plus Jakarta Sans"], "headline-lg": ["Plus Jakarta Sans"], "title-sm": ["Plus Jakarta Sans"], "body-lg": ["Plus Jakarta Sans"], "label-caps": ["Plus Jakarta Sans"] }, "fontSize": { "label-md": ["0.75rem", { "lineHeight": "1rem", "fontWeight": "600" }], "body-sm": ["0.8125rem", { "lineHeight": "1.25rem", "fontWeight": "400" }], "headline-xl": ["2rem", { "lineHeight": "2.5rem", "fontWeight": "700" }], "body-md": ["0.875rem", { "lineHeight": "1.375rem", "fontWeight": "400" }], "headline-md": ["1.125rem", { "lineHeight": "1.625rem", "fontWeight": "600" }], "headline-lg": ["1.5rem", { "lineHeight": "2rem", "fontWeight": "700" }], "title-sm": ["0.9375rem", { "lineHeight": "1.375rem", "fontWeight": "600" }], "body-lg": ["1rem", { "lineHeight": "1.5rem", "fontWeight": "400" }], "label-caps": ["0.6875rem", { "lineHeight": "1rem", "fontWeight": "700" }] } } } };</script></head><body class="bg-surface font-body-md text-body-md text-on-surface antialiased select-none"><header class="fixed top-0 left-0 right-0 z-50 bg-surface-container-lowest/90 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.25)]"><div class="h-10 w-full px-space-md flex items-center justify-between"><div class="flex items-center gap-space-sm"><div class="flex items-center gap-space-xs"><div class="w-3 h-3 rounded-full bg-error hover:opacity-80 transition-opacity cursor-pointer flex items-center justify-center group"><span class="material-symbols-outlined text-[8px] text-on-error opacity-0 group-hover:opacity-100">close</span></div><div class="w-3 h-3 rounded-full bg-tertiary hover:opacity-80 transition-opacity cursor-pointer flex items-center justify-center group"><span class="material-symbols-outlined text-[8px] text-on-tertiary opacity-0 group-hover:opacity-100">remove</span></div><div class="w-3 h-3 rounded-full bg-secondary hover:opacity-80 transition-opacity cursor-pointer flex items-center justify-center group"><span class="material-symbols-outlined text-[8px] text-on-secondary opacity-0 group-hover:opacity-100">fullscreen</span></div></div><div class="flex items-center gap-space-xs ml-space-sm"><img alt="Luma Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBLBbapFrAbvYKGM-iKX9i1bFIHM63fX4BzEHE5C8oz35kBpYN_mCFiAQmXuNpZkI4lVCC71q9pHUgpOYDhl-yCRJH4SOSrnANQZIoUvxfj0XTbMzJ9OIu7kXBeV922EJl-S7mIuXAKgNhqR1G3zgSVFI5ET1240LVBE9yWutzl2bsv79fDJvU0ofSNVp4A9XWAQtSCoEI0uTGx2cLEGlzUHQJV-nf1Li8DsWxRtViyjuOQy8_Qdl0Z5g"/><span class="font-label-caps text-label-caps text-on-surface-variant tracking-widest uppercase">Luma Desktop</span></div></div><nav class="hidden md:flex items-center gap-space-lg" data-active-classes="text-primary font-title-sm"><a class="font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-colors" data-path="fil" href="#">Fil</a><a class="font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-colors" data-path="messages" href="#">Messages</a><a class="font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-colors" data-path="amis" href="#">Amis</a><a class="font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-colors" data-path="communautes" href="#">Communautés</a></nav><div class="flex items-center gap-space-md"><div class="flex items-center gap-space-xs text-on-surface-variant"><span class="material-symbols-outlined text-[16px] hover:text-on-surface cursor-pointer">search</span><span class="material-symbols-outlined text-[16px] hover:text-on-surface cursor-pointer">notifications</span></div><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><aside class="fixed left-0 top-10 bottom-0 w-20 bg-surface-container-lowest z-40 flex flex-col justify-between items-center py-space-md shadow-[0_1px_8px_rgba(0,0,0,0.3)]"><div class="flex flex-col items-center gap-space-lg w-full"><a class="group relative flex items-center justify-center p-space-xs rounded-xl hover:bg-surface-container-high transition-all" data-path="fil" href="#"><div class="relative"><div class="w-10 h-10 rounded-xl bg-surface-container flex items-center justify-center group-hover:bg-surface-container-high transition-colors"><span class="material-symbols-outlined text-on-surface group-hover:text-primary transition-colors">home</span></div><div class="absolute -left-3 top-1/2 -translate-y-1/2 w-1 h-5 bg-primary rounded-r-full opacity-0 group-hover:opacity-100 transition-opacity"></div></div></a><nav class="flex flex-col items-center gap-space-md w-full px-space-xs" data-active-classes="bg-secondary-container text-on-secondary-container"><a class="relative group flex items-center justify-center w-12 h-12 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="fil" href="#"><span class="material-symbols-outlined text-[24px]">dynamic_feed</span><span class="absolute left-16 bg-surface-container-highest text-on-surface font-label-md text-label-md px-space-sm py-space-xs rounded-lg shadow-lg opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50 whitespace-nowrap">Fil</span></a><a class="relative group flex items-center justify-center w-12 h-12 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="messages" href="#"><span class="material-symbols-outlined text-[24px]">chat_bubble</span><span class="absolute top-1.5 right-1.5 bg-secondary-container text-on-secondary-container font-label-caps text-label-caps w-4 h-4 rounded-full flex items-center justify-center shadow-md">3</span><span class="absolute left-16 bg-surface-container-highest text-on-surface font-label-md text-label-md px-space-sm py-space-xs rounded-lg shadow-lg opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50 whitespace-nowrap">Messages</span></a><a class="relative group flex items-center justify-center w-12 h-12 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="amis" href="#"><span class="material-symbols-outlined text-[24px]">group</span><span class="absolute bottom-2 right-2 w-2 h-2 rounded-full bg-tertiary ring-2 ring-surface-container-lowest"></span><span class="absolute left-16 bg-surface-container-highest text-on-surface font-label-md text-label-md px-space-sm py-space-xs rounded-lg shadow-lg opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50 whitespace-nowrap">Amis</span></a><a class="relative group flex items-center justify-center w-12 h-12 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="communautes" href="#"><span class="material-symbols-outlined text-[24px]">tag</span><span class="absolute left-16 bg-surface-container-highest text-on-surface font-label-md text-label-md px-space-sm py-space-xs rounded-lg shadow-lg opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50 whitespace-nowrap">Communautés</span></a></nav></div><div class="flex flex-col items-center gap-space-md w-full px-space-xs"><a class="group relative flex items-center justify-center w-12 h-12 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="parametres" href="#"><span class="material-symbols-outlined text-[24px]">settings</span><span class="absolute left-16 bg-surface-container-highest text-on-surface font-label-md text-label-md px-space-sm py-space-xs rounded-lg shadow-lg opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50 whitespace-nowrap">Paramètres</span></a><div class="flex flex-col items-center gap-space-xs pt-space-xs w-full"><div class="relative group cursor-pointer"><div class="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center font-title-sm text-title-sm text-primary ring-1 ring-surface-bright"><span class="material-symbols-outlined text-[20px]">person</span></div><span class="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-tertiary ring-2 ring-surface-container-lowest"></span><span class="absolute left-16 bg-surface-container-highest text-on-surface font-label-md text-label-md px-space-sm py-space-xs rounded-lg shadow-lg opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50 whitespace-nowrap">Denis (En ligne)</span></div><div class="flex items-center gap-space-xs pt-space-xs"><button aria-label="Microphone" class="w-6 h-6 rounded flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" type="button"><span class="material-symbols-outlined text-[14px]">mic</span></button><button aria-label="Casque" class="w-6 h-6 rounded flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" type="button"><span class="material-symbols-outlined text-[14px]">headphones</span></button></div></div></div></aside><div class="pl-20"><main class="relative pt-10 min-h-screen bg-surface w-full px-space-lg"><div class="flex flex-col w-full h-[calc(100vh-2.5rem)] overflow-hidden text-on-surface">
+<!-- Multi-Community Container Layout -->
+<div class="flex flex-row w-full h-full min-w-0">
+<!-- Community Server Rail (Column 1 - 64px width) -->
+<div class="w-16 shrink-0 bg-surface-container-lowest flex flex-col items-center py-space-sm gap-space-sm select-none z-20">
+<!-- Home / Global Feed Shortcut -->
+<div class="relative group flex items-center justify-center w-full">
+<div class="absolute -left-0 top-1/2 -translate-y-1/2 w-1 h-3 bg-primary rounded-r-full opacity-0 group-hover:opacity-60 transition-all"></div>
+<button class="w-11 h-11 rounded-2xl bg-surface-container flex items-center justify-center hover:bg-secondary-container hover:text-on-secondary-container transition-all group-hover:rounded-xl shadow-md text-on-surface-variant hover:text-on-secondary-container" title="Hub d'accueil Luma">
+<span class="material-symbols-outlined text-[20px]">explore</span>
+</button>
+<!-- Tooltip -->
+<span class="absolute left-16 bg-surface-container-highest text-on-surface font-label-md text-label-md px-space-sm py-space-xs rounded-lg shadow-xl opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50 whitespace-nowrap">Vue d'ensemble</span>
+</div>
+<div class="w-8 h-[1px] bg-outline-variant/30 my-space-xs"></div>
+<!-- Server 1: Active "Cercle Studio" -->
+<div class="relative group flex items-center justify-center w-full">
+<!-- Active Pill indicator -->
+<div class="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-9 bg-primary rounded-r-full shadow-[0_0_10px_rgba(192,193,255,0.8)]"></div>
+<button class="relative w-11 h-11 rounded-xl bg-gradient-to-tr from-secondary-container to-primary flex items-center justify-center text-on-primary font-headline-md text-headline-md shadow-[0_0_16px_rgba(99,102,241,0.35)] transition-all">
+<span class="font-headline-md text-headline-md tracking-tighter text-on-primary">CS</span>
+<!-- Verified check pip -->
+<span class="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-surface-container-lowest flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-[13px]" style="font-variation-settings: 'FILL' 1;">verified</span>
+</span>
+</button>
+<span class="absolute left-16 bg-surface-container-highest text-on-surface font-label-md text-label-md px-space-sm py-space-xs rounded-lg shadow-xl opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50 whitespace-nowrap">Cercle Studio (Actif • Ctrl+1)</span>
+</div>
+<!-- Server 2: "Design & Prototyping FR" -->
+<div class="relative group flex items-center justify-center w-full">
+<div class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-3 bg-on-surface-variant rounded-r-full opacity-0 group-hover:opacity-100 transition-all"></div>
+<button class="relative w-11 h-11 rounded-2xl bg-surface-container hover:rounded-xl hover:bg-surface-container-high transition-all flex items-center justify-center font-headline-md text-headline-md text-primary overflow-hidden shadow-sm">
+<div class="w-full h-full bg-gradient-to-br from-primary-container/30 to-surface-container-high flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px] text-primary">draw</span>
+</div>
+<!-- Badge count -->
+<span class="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-error text-on-error font-label-caps text-label-caps flex items-center justify-center shadow-md">3</span>
+</button>
+<span class="absolute left-16 bg-surface-container-highest text-on-surface font-label-md text-label-md px-space-sm py-space-xs rounded-lg shadow-xl opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50 whitespace-nowrap">Design &amp; Prototyping FR (3 non lus • Ctrl+2)</span>
+</div>
+<!-- Server 3: "Dev & Open Source Hub" -->
+<div class="relative group flex items-center justify-center w-full">
+<div class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-3 bg-on-surface-variant rounded-r-full opacity-0 group-hover:opacity-100 transition-all"></div>
+<button class="relative w-11 h-11 rounded-2xl bg-surface-container hover:rounded-xl hover:bg-surface-container-high transition-all flex items-center justify-center font-headline-md text-headline-md text-on-surface-variant hover:text-primary overflow-hidden shadow-sm">
+<span class="material-symbols-outlined text-[20px]">terminal</span>
+<!-- Mention pip -->
+<span class="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-primary ring-2 ring-surface-container-lowest"></span>
+</button>
+<span class="absolute left-16 bg-surface-container-highest text-on-surface font-label-md text-label-md px-space-sm py-space-xs rounded-lg shadow-xl opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50 whitespace-nowrap">Dev &amp; Open Source Hub (Mention • Ctrl+3)</span>
+</div>
+<!-- Server 4: "Gaming & Chill Lounge" -->
+<div class="relative group flex items-center justify-center w-full">
+<div class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-3 bg-on-surface-variant rounded-r-full opacity-0 group-hover:opacity-100 transition-all"></div>
+<button class="relative w-11 h-11 rounded-2xl bg-surface-container hover:rounded-xl hover:bg-surface-container-high transition-all flex items-center justify-center text-on-surface-variant hover:text-tertiary shadow-sm">
+<span class="material-symbols-outlined text-[20px]">sports_esports</span>
+<!-- Live voice indicator badge -->
+<span class="absolute -bottom-1 -right-1 bg-tertiary-container text-on-tertiary-container font-label-caps text-[10px] px-1 rounded-full flex items-center gap-0.5 shadow-md">
+<span class="material-symbols-outlined text-[10px]">volume_up</span>4
+          </span>
+</button>
+<span class="absolute left-16 bg-surface-container-highest text-on-surface font-label-md text-label-md px-space-sm py-space-xs rounded-lg shadow-xl opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50 whitespace-nowrap">Gaming &amp; Chill (4 en vocal • Ctrl+4)</span>
+</div>
+<!-- Server 5: "Musique & Modular Synth" -->
+<div class="relative group flex items-center justify-center w-full">
+<div class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-3 bg-on-surface-variant rounded-r-full opacity-0 group-hover:opacity-100 transition-all"></div>
+<button class="relative w-11 h-11 rounded-2xl bg-surface-container hover:rounded-xl hover:bg-surface-container-high transition-all flex items-center justify-center text-on-surface-variant hover:text-secondary shadow-sm">
+<span class="material-symbols-outlined text-[20px]">equalizer</span>
+</button>
+<span class="absolute left-16 bg-surface-container-highest text-on-surface font-label-md text-label-md px-space-sm py-space-xs rounded-lg shadow-xl opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50 whitespace-nowrap">Musique &amp; Modular Synth (Ctrl+5)</span>
+</div>
+<div class="w-8 h-[1px] bg-outline-variant/30 my-space-xs"></div>
+<!-- Rail Action: Add Community -->
+<div class="relative group flex items-center justify-center w-full">
+<button class="w-11 h-11 rounded-2xl bg-surface-container-low hover:bg-surface-container-high text-tertiary hover:rounded-xl transition-all flex items-center justify-center border-dashed" title="Ajouter une communauté">
+<span class="material-symbols-outlined text-[22px]">add</span>
+</button>
+<span class="absolute left-16 bg-surface-container-highest text-on-surface font-label-md text-label-md px-space-sm py-space-xs rounded-lg shadow-xl opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50 whitespace-nowrap">Créer ou rejoindre un serveur</span>
+</div>
+<!-- Rail Action: Public Discovery -->
+<div class="relative group flex items-center justify-center w-full mt-auto">
+<button class="w-11 h-11 rounded-2xl bg-surface-container-low hover:bg-surface-container-high text-on-surface-variant hover:text-primary hover:rounded-xl transition-all flex items-center justify-center" title="Explorer">
+<span class="material-symbols-outlined text-[20px]">public</span>
+</button>
+<span class="absolute left-16 bg-surface-container-highest text-on-surface font-label-md text-label-md px-space-sm py-space-xs rounded-lg shadow-xl opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50 whitespace-nowrap">Découvrir les espaces publics</span>
+</div>
+</div>
+<!-- Community Channel Sidebar (Column 2 - 270px width) -->
+<div class="w-68 shrink-0 bg-surface-container-low flex flex-col justify-between shadow-sm select-none">
+<!-- Community Top Header -->
+<div class="flex flex-col shrink-0">
+<!-- Community Header Dropdown Banner -->
+<div class="relative p-space-md bg-surface-container hover:bg-surface-container-high transition-colors cursor-pointer group shadow-sm">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-sm min-w-0">
+<div class="w-8 h-8 rounded-lg bg-secondary-container flex items-center justify-center text-on-secondary-container font-headline-md text-headline-md shrink-0 shadow-sm">
+<span class="material-symbols-outlined text-[18px]">hub</span>
+</div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-1">
+<span class="font-headline-md text-headline-md text-on-surface truncate">Cercle Studio</span>
+<span class="material-symbols-outlined text-primary text-[16px] shrink-0" style="font-variation-settings: 'FILL' 1;">verified</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant/80 truncate">428 membres en ligne</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-on-surface transition-transform group-hover:translate-y-0.5 text-[20px]">keyboard_arrow_down</span>
+</div>
+<!-- Quick switcher hint badge -->
+<div class="mt-2.5 px-space-sm py-1 bg-surface-container-highest/60 rounded flex items-center justify-between text-on-surface-variant">
+<div class="flex items-center gap-1.5 font-label-caps text-label-caps uppercase tracking-wider">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary animate-pulse"></span>
+<span>Espace Actif 1 / 5</span>
+</div>
+<span class="font-label-caps text-label-caps text-primary bg-primary-container/20 px-1 py-0.5 rounded">Ctrl + Tab</span>
+</div>
+</div>
+<!-- Channels Scrollable Tree -->
+<div class="overflow-y-auto px-space-sm pt-space-md space-y-space-md max-h-[calc(100vh-14rem)]">
+<!-- Category 1: SALONS TEXTUELS -->
+<div>
+<div class="flex items-center justify-between px-space-xs mb-1 text-on-surface-variant/70 hover:text-on-surface cursor-pointer group">
+<div class="flex items-center gap-1 font-label-caps text-label-caps tracking-wider uppercase font-bold">
+<span class="material-symbols-outlined text-[13px] text-on-surface-variant">keyboard_arrow_down</span>
+<span>Salons Textuels</span>
+</div>
+<button class="material-symbols-outlined text-[14px] opacity-0 group-hover:opacity-100 hover:text-primary transition-opacity" title="Créer un salon">add</button>
+</div>
+<div class="space-y-0.5">
+<!-- Active Channel: #général -->
+<a class="flex items-center justify-between px-space-sm py-space-xs rounded-lg bg-surface-container-highest text-primary font-title-sm text-title-sm shadow-sm group" href="#">
+<div class="flex items-center gap-space-sm min-w-0">
+<span class="material-symbols-outlined text-[18px] text-primary">tag</span>
+<span class="truncate">général</span>
+</div>
+<span class="font-label-caps text-label-caps px-1.5 py-0.2 rounded bg-primary/20 text-primary uppercase">Focus</span>
+</a>
+<!-- Channel: #annonces -->
+<a class="flex items-center justify-between px-space-sm py-space-xs rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all font-body-md text-body-md group" href="#">
+<div class="flex items-center gap-space-sm min-w-0">
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant">campaign</span>
+<span class="truncate">annonces</span>
+</div>
+<span class="w-2 h-2 rounded-full bg-primary shadow-[0_0_8px_rgba(192,193,255,0.6)]"></span>
+</a>
+<!-- Channel: #design-critique -->
+<a class="flex items-center justify-between px-space-sm py-space-xs rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all font-body-md text-body-md group" href="#">
+<div class="flex items-center gap-space-sm min-w-0">
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant">palette</span>
+<span class="truncate">design-critique</span>
+</div>
+<span class="bg-secondary-container text-on-secondary-container font-label-caps text-label-caps px-1.5 rounded-full">2</span>
+</a>
+<!-- Channel: #ressources-outils -->
+<a class="flex items-center justify-between px-space-sm py-space-xs rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all font-body-md text-body-md" href="#">
+<div class="flex items-center gap-space-sm min-w-0">
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant">folder_special</span>
+<span class="truncate">ressources-outils</span>
+</div>
+</a>
+</div>
+</div>
+<!-- Category 2: SALONS VOCAUX & VIDÉO -->
+<div>
+<div class="flex items-center justify-between px-space-xs mb-1 text-on-surface-variant/70 hover:text-on-surface cursor-pointer group">
+<div class="flex items-center gap-1 font-label-caps text-label-caps tracking-wider uppercase font-bold">
+<span class="material-symbols-outlined text-[13px] text-on-surface-variant">keyboard_arrow_down</span>
+<span>Salons Vocaux &amp; Scènes</span>
+</div>
+<button class="material-symbols-outlined text-[14px] opacity-0 group-hover:opacity-100 hover:text-tertiary transition-opacity" title="Créer un salon vocal">add</button>
+</div>
+<div class="space-y-1">
+<!-- Active Vocal Channel: Lounge Studio -->
+<div class="p-space-xs rounded-lg bg-surface-container/70 shadow-sm">
+<div class="flex items-center justify-between px-space-xs py-1 text-tertiary cursor-pointer hover:text-tertiary-fixed transition-colors">
+<div class="flex items-center gap-2 min-w-0">
+<span class="material-symbols-outlined text-[18px] text-tertiary animate-pulse">volume_up</span>
+<span class="font-title-sm text-title-sm truncate text-on-surface font-semibold">Lounge Studio</span>
+</div>
+<span class="font-label-caps text-label-caps bg-tertiary/15 text-tertiary px-1.5 py-0.5 rounded">En direct</span>
+</div>
+<!-- Active vocal members list -->
+<div class="pl-5 pt-1 space-y-1">
+<!-- Denis (Self) -->
+<div class="flex items-center justify-between py-0.5 px-1.5 rounded hover:bg-surface-container-high transition-colors">
+<div class="flex items-center gap-2 min-w-0">
+<div class="w-5 h-5 rounded-full bg-primary flex items-center justify-center text-on-primary font-label-caps text-[10px]">D</div>
+<span class="font-body-sm text-body-sm text-on-surface truncate font-semibold">Denis (Vous)</span>
+</div>
+<span class="material-symbols-outlined text-tertiary text-[14px]">graphic_eq</span>
+</div>
+<!-- Frete -->
+<div class="flex items-center justify-between py-0.5 px-1.5 rounded hover:bg-surface-container-high transition-colors">
+<div class="flex items-center gap-2 min-w-0">
+<div class="w-5 h-5 rounded-full bg-surface-variant flex items-center justify-center text-on-surface font-label-caps text-[10px]">F</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant truncate">Frete</span>
+</div>
+<span class="material-symbols-outlined text-tertiary text-[14px]">graphic_eq</span>
+</div>
+<!-- Aline L. -->
+<div class="flex items-center justify-between py-0.5 px-1.5 rounded hover:bg-surface-container-high transition-colors">
+<div class="flex items-center gap-2 min-w-0">
+<div class="w-5 h-5 rounded-full bg-surface-variant flex items-center justify-center text-on-surface font-label-caps text-[10px]">A</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant truncate">Aline L.</span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant/50 text-[14px]">mic_off</span>
+</div>
+<!-- Marc K. -->
+<div class="flex items-center justify-between py-0.5 px-1.5 rounded hover:bg-surface-container-high transition-colors">
+<div class="flex items-center gap-2 min-w-0">
+<div class="w-5 h-5 rounded-full bg-surface-variant flex items-center justify-center text-on-surface font-label-caps text-[10px]">M</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant truncate">Marc K.</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Channel: Scène Dev & Demo -->
+<a class="flex items-center justify-between px-space-sm py-space-xs rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all font-body-md text-body-md group" href="#">
+<div class="flex items-center gap-space-sm min-w-0">
+<span class="material-symbols-outlined text-[18px]">screen_share</span>
+<span class="truncate">Scène Dev &amp; Demo</span>
+</div>
+<span class="font-label-caps text-[9px] bg-secondary-container text-on-secondary-container px-1 py-0.5 rounded uppercase">Partage</span>
+</a>
+<!-- Channel: Pause Café -->
+<a class="flex items-center justify-between px-space-sm py-space-xs rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all font-body-md text-body-md" href="#">
+<div class="flex items-center gap-space-sm min-w-0">
+<span class="material-symbols-outlined text-[18px]">coffee</span>
+<span class="truncate">Pause Café</span>
+</div>
+<span class="font-label-caps text-label-caps text-on-surface-variant/60">0/10</span>
+</a>
+</div>
+</div>
+</div>
+</div>
+<!-- Docked Bottom Voice Connection Bar & User Profile -->
+<div class="mt-auto shrink-0 flex flex-col bg-surface-container-lowest">
+<!-- Voice Connected Status Panel -->
+<div class="p-space-sm bg-surface-container-high flex items-center justify-between">
+<div class="flex items-center gap-2 min-w-0">
+<div class="w-2.5 h-2.5 rounded-full bg-tertiary animate-pulse shrink-0"></div>
+<div class="flex flex-col min-w-0">
+<span class="font-label-caps text-label-caps text-tertiary tracking-wide uppercase font-bold truncate">Vocal Connecté / 24ms</span>
+<span class="font-body-sm text-body-sm text-on-surface truncate">Lounge Studio • Cercle</span>
+</div>
+</div>
+<div class="flex items-center gap-1">
+<button class="w-7 h-7 rounded-lg hover:bg-surface-variant text-on-surface-variant hover:text-on-surface flex items-center justify-center transition-colors" title="Paramètres audio">
+<span class="material-symbols-outlined text-[16px]">tune</span>
+</button>
+<button class="w-7 h-7 rounded-lg bg-error-container/40 hover:bg-error hover:text-on-error text-error flex items-center justify-center transition-colors shadow-sm" title="Quitter le salon vocal">
+<span class="material-symbols-outlined text-[16px]">call_end</span>
+</button>
+</div>
+</div>
+<!-- User Identity Strip -->
+<div class="p-space-sm flex items-center justify-between bg-surface-container-lowest">
+<div class="flex items-center gap-2 min-w-0">
+<div class="relative shrink-0">
+<div class="w-9 h-9 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container font-headline-md text-headline-md font-bold">
+                D
+              </div>
+<span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-tertiary ring-2 ring-surface-container-lowest"></span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-title-sm text-title-sm text-on-surface truncate font-semibold">Denis</span>
+<span class="font-body-sm text-[11px] text-on-surface-variant truncate">#8492 • En ligne</span>
+</div>
+</div>
+<div class="flex items-center gap-0.5 text-on-surface-variant">
+<button class="w-7 h-7 rounded-lg hover:bg-surface-container hover:text-on-surface flex items-center justify-center transition-colors" id="micBtn" onclick="this.classList.toggle('text-error'); this.firstElementChild.innerText = this.firstElementChild.innerText === 'mic' ? 'mic_off' : 'mic'">
+<span class="material-symbols-outlined text-[18px]">mic</span>
+</button>
+<button class="w-7 h-7 rounded-lg hover:bg-surface-container hover:text-on-surface flex items-center justify-center transition-colors" id="headsetBtn" onclick="this.classList.toggle('text-error'); this.firstElementChild.innerText = this.firstElementChild.innerText === 'headphones' ? 'headset_off' : 'headphones'">
+<span class="material-symbols-outlined text-[18px]">headphones</span>
+</button>
+<button class="w-7 h-7 rounded-lg hover:bg-surface-container hover:text-on-surface flex items-center justify-center transition-colors" title="Paramètres du compte">
+<span class="material-symbols-outlined text-[18px]">settings</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Main Stage Content Area (Flex-1) -->
+<div class="flex-1 flex flex-col min-w-0 bg-surface shadow-inner">
+<!-- Main Channel Header Bar -->
+<div class="h-14 shrink-0 px-space-lg flex items-center justify-between bg-surface-container-lowest/80 backdrop-blur-md shadow-sm z-10">
+<div class="flex items-center gap-space-md min-w-0">
+<div class="flex items-center gap-space-xs font-headline-md text-headline-md text-on-surface">
+<span class="material-symbols-outlined text-primary text-[22px]">tag</span>
+<span class="font-bold">général</span>
+</div>
+<div class="hidden lg:flex items-center gap-space-sm pl-space-md text-on-surface-variant/80 font-body-sm text-body-sm truncate">
+<span class="w-1 h-1 rounded-full bg-outline-variant"></span>
+<span class="truncate">Le point de rencontre de tout le monde • Retours &amp; roadmap v2.4</span>
+</div>
+</div>
+<!-- Channel Actions & Tools -->
+<div class="flex items-center gap-space-sm shrink-0">
+<!-- Multi-Server Fast Switch Indicator -->
+<div class="hidden xl:flex items-center gap-1.5 px-space-sm py-1 rounded-lg bg-surface-container text-on-surface-variant font-label-md text-label-md">
+<span class="material-symbols-outlined text-primary text-[15px]">layers</span>
+<span>5 espaces rejoints</span>
+</div>
+<!-- Channel Search -->
+<div class="relative flex items-center">
+<input class="w-44 focus:w-64 transition-all h-8 pl-8 pr-3 rounded-lg bg-surface-container-high text-body-sm text-on-surface placeholder:text-on-surface-variant/60 focus:outline-none focus:ring-1 focus:ring-primary font-body-sm" placeholder="Rechercher dans #général..." type="text"/>
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant absolute left-2.5 pointer-events-none">search</span>
+</div>
+<button class="w-8 h-8 rounded-lg bg-surface-container-high hover:bg-surface-bright flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors" title="Messages épinglés">
+<span class="material-symbols-outlined text-[18px]">push_pin</span>
+</button>
+<button class="w-8 h-8 rounded-lg bg-surface-container-high hover:bg-surface-bright flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors" title="Notifications">
+<span class="material-symbols-outlined text-[18px]">notifications_active</span>
+</button>
+<button class="w-8 h-8 rounded-lg bg-surface-container-high hover:bg-surface-bright flex items-center justify-center text-primary transition-colors" id="toggleMembersBtn" onclick="document.getElementById('memberSidebar').classList.toggle('hidden')" title="Afficher la liste des membres">
+<span class="material-symbols-outlined text-[18px]">group</span>
+</button>
+</div>
+</div>
+<!-- Feed / Conversation Canvas -->
+<div class="flex-1 overflow-y-auto px-space-xl py-space-lg space-y-space-lg">
+<!-- Welcome Community Hero Card -->
+<div class="relative overflow-hidden rounded-xl bg-surface-container-low p-space-lg shadow-md">
+<div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-space-md">
+<div class="flex items-center gap-space-md">
+<div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-secondary-container to-primary flex items-center justify-center text-on-primary font-headline-xl text-headline-xl shadow-lg shrink-0">
+<span class="material-symbols-outlined text-[32px]">diversity_3</span>
+</div>
+<div>
+<div class="flex items-center gap-2">
+<h2 class="font-headline-lg text-headline-lg font-bold text-on-surface">Bienvenue dans Cercle Studio !</h2>
+<span class="px-2 py-0.5 rounded-full bg-primary/20 text-primary font-label-caps text-label-caps uppercase">Officiel</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant mt-0.5">Ceci est le début du salon <span class="font-semibold text-primary">#général</span>. Partagez vos idées et échangez avec l'équipe.</p>
+</div>
+</div>
+<div class="flex items-center gap-space-sm shrink-0">
+<button class="px-space-md py-1.5 rounded-lg bg-surface-container-high hover:bg-surface-bright text-on-surface font-title-sm text-title-sm transition-all flex items-center gap-1.5 shadow-sm">
+<span class="material-symbols-outlined text-[16px]">menu_book</span>
+<span>Règlement</span>
+</button>
+<button class="px-space-md py-1.5 rounded-lg bg-primary hover:bg-primary-fixed text-on-primary font-title-sm text-title-sm transition-all flex items-center gap-1.5 shadow-md">
+<span class="material-symbols-outlined text-[16px]">person_add</span>
+<span>Inviter des amis</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Date Divider -->
+<div class="relative flex items-center justify-center my-space-md">
+<div class="absolute inset-0 flex items-center">
+<div class="w-full h-[1px] bg-outline-variant/30"></div>
+</div>
+<span class="relative bg-surface px-space-md font-label-caps text-label-caps uppercase tracking-wider text-on-surface-variant/70">Aujourd'hui • 24 Octobre</span>
+</div>
+<!-- Message Item 1: Lead Announcement -->
+<div class="flex gap-space-md group hover:bg-surface-container-low/40 p-space-sm -mx-space-sm rounded-xl transition-colors">
+<img class="w-10 h-10 rounded-xl object-cover shrink-0 ring-1 ring-outline-variant/30" data-alt="Portrait photoréaliste de profil studio néon sombre d'un jeune créateur français nommé Frete, éclairage subtil violet et bleu nocturne, style moderne élégant" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAIzW-9S3-noTBD7AY6lRpgVbG38JjR13qycgCtqX1teCUBLeTCjThSIxuVu9EWwCmi5BTwB-7Ft4FjS-O9iCe9fXHUr3qLqo1w7B4qvfnVxLP6tDzAZFa_Cgdi0iDjImC49P4SThVuhKOzFvzEmzz8F4PCn9_vZhZ387i5DXlnMMDdfls3xOdoqJJOrsLbHJTvD0vksrso1VtoCqmTfIADk7a3jY2B0nR0GdN-rdqixXZF7VBMZH13dw"/>
+<div class="flex flex-col min-w-0 flex-1">
+<div class="flex items-center gap-space-sm">
+<span class="font-title-sm text-title-sm font-bold text-primary hover:underline cursor-pointer">Frete</span>
+<span class="font-label-caps text-label-caps bg-primary-container text-on-primary-container px-1.5 py-0.5 rounded uppercase">Fondateur</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant/70">14:12</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface mt-1 leading-relaxed">
+              Bonjour à toute la communauté ! Nous déployons la mise à jour v2.4 ce soir à 21h00 CET. Au programme : fluidité audio optimisée, synchronisation multi-espaces instantanée et nouveau mode sombre feutré Obsidian. Vos retours sur ce canal sont les bienvenus !
+            </p>
+<!-- Reactions Pill Container -->
+<div class="flex items-center gap-1.5 mt-space-sm">
+<button class="flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface text-body-sm transition-all shadow-sm">
+<span>🚀</span>
+<span class="font-label-md text-label-md font-semibold text-primary">14</span>
+</button>
+<button class="flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface text-body-sm transition-all shadow-sm">
+<span>🔥</span>
+<span class="font-label-md text-label-md font-semibold text-primary">8</span>
+</button>
+<button class="flex items-center gap-1 px-1.5 py-0.5 rounded-lg bg-surface-container/50 hover:bg-surface-container text-on-surface-variant hover:text-on-surface text-body-sm transition-all">
+<span class="material-symbols-outlined text-[14px]">add_reaction</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Message Item 2: Aline Lefebvre with Interactive Poll Attachment -->
+<div class="flex gap-space-md group hover:bg-surface-container-low/40 p-space-sm -mx-space-sm rounded-xl transition-colors">
+<img class="w-10 h-10 rounded-xl object-cover shrink-0 ring-1 ring-outline-variant/30" data-alt="Portrait professionnel artistique moderne d'une directrice artistique nommée Aline dans un studio design sombre avec reflets violets feutrés et ambiance cyberpunk douce" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCcKgjOOxT_uprEv58tNv50k2AAGwy7-NDWwJ_Z9n84eqE5RjwVw0ahshyA9u5hF4Y3UzPpzQ77Cu_b5o49h9szMvlIT3ToYxGQeDHiAgv8JY-kfiHemzPu-iIWtOu_0e2tHlirPIhBn5w8GCouGuX0jxzQhxrXGYPw5gyo7U6UynmHXcdKpkfZzVAkRJPDKs5x2jV5xxhNJmQtz6LBdp5gzPUIiVXsLmD_du_i33KGiOOPMSzmnihoaA"/>
+<div class="flex flex-col min-w-0 flex-1">
+<div class="flex items-center gap-space-sm">
+<span class="font-title-sm text-title-sm font-bold text-secondary hover:underline cursor-pointer">Aline Lefebvre</span>
+<span class="font-label-caps text-label-caps bg-secondary-container text-on-secondary-container px-1.5 py-0.5 rounded uppercase">Design Lead</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant/70">14:26</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface mt-1 leading-relaxed">
+              J'ai finalisé le mockup du volet multi-communautés avec le rail unifié. Pouvez-vous voter sur votre palette de contrastes préférée pour le thème par défaut ?
+            </p>
+<!-- Embedded Poll Card -->
+<div class="mt-space-md p-space-md rounded-xl bg-surface-container-low max-w-lg shadow-md space-y-space-sm">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[18px]">how_to_vote</span>
+<span class="font-title-sm text-title-sm font-bold text-on-surface">Sondage communautaire • UI Dark Palette</span>
+</div>
+<span class="font-label-caps text-label-caps text-tertiary bg-tertiary/15 px-2 py-0.5 rounded">En cours</span>
+</div>
+<!-- Option A -->
+<div class="p-space-sm rounded-lg bg-surface-container hover:bg-surface-container-high transition-colors cursor-pointer group">
+<div class="flex justify-between items-center mb-1">
+<span class="font-body-md text-body-md font-semibold text-on-surface flex items-center gap-2">
+<span class="w-4 h-4 rounded-full bg-primary flex items-center justify-center text-on-primary text-[10px]">✓</span>
+                    Obsidian Aurora (Nuances indigo &amp; ardoise)
+                  </span>
+<span class="font-label-md text-label-md text-primary font-bold">68%</span>
+</div>
+<!-- Progress Bar -->
+<div class="w-full h-2 rounded-full bg-surface-container-highest overflow-hidden">
+<div class="h-full bg-gradient-to-r from-secondary-container to-primary rounded-full transition-all duration-500" style="width: 68%;"></div>
+</div>
+</div>
+<!-- Option B -->
+<div class="p-space-sm rounded-lg bg-surface-container hover:bg-surface-container-high transition-colors cursor-pointer group">
+<div class="flex justify-between items-center mb-1">
+<span class="font-body-md text-body-md text-on-surface flex items-center gap-2">
+<span class="w-4 h-4 rounded-full bg-surface-variant"></span>
+                    Midnight Slate (Gris neutre pur)
+                  </span>
+<span class="font-label-md text-label-md text-on-surface-variant font-bold">32%</span>
+</div>
+<div class="w-full h-2 rounded-full bg-surface-container-highest overflow-hidden">
+<div class="h-full bg-surface-variant rounded-full transition-all duration-500" style="width: 32%;"></div>
+</div>
+</div>
+<div class="flex justify-between items-center text-on-surface-variant/70 pt-1 font-body-sm text-body-sm">
+<span>94 votes enregistrés</span>
+<span>Prend fin dans 4 heures</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Message Item 3: Denis (User) Reply -->
+<div class="flex gap-space-md group hover:bg-surface-container-low/40 p-space-sm -mx-space-sm rounded-xl transition-colors">
+<div class="w-10 h-10 rounded-xl bg-secondary-container flex items-center justify-center text-on-secondary-container font-headline-md text-headline-md font-bold shrink-0 shadow-sm">
+            D
+          </div>
+<div class="flex flex-col min-w-0 flex-1">
+<div class="flex items-center gap-space-sm">
+<span class="font-title-sm text-title-sm font-bold text-on-surface hover:underline cursor-pointer">Denis (Vous)</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant/70">14:38</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface mt-1 leading-relaxed">
+              J'ai voté Obsidian Aurora sans hésiter ! La profondeur de teinte réduit considérablement la fatigue visuelle lors des sessions prolongées. Je suis actuellement connecté sur le salon vocal <span class="text-tertiary font-semibold hover:underline cursor-pointer">Lounge Studio</span> avec Frete si quelqu'un veut tester en temps réel.
+            </p>
+</div>
+</div>
+</div>
+<!-- Bottom Chat Composer -->
+<div class="p-space-lg pt-0 bg-transparent shrink-0">
+<div class="rounded-xl bg-surface-container-low p-space-sm shadow-xl focus-within:ring-1 focus-within:ring-primary/60 transition-all">
+<div class="flex items-center gap-space-sm px-space-xs">
+<!-- Add Media / Upload -->
+<button class="w-8 h-8 rounded-lg hover:bg-surface-container text-on-surface-variant hover:text-on-surface flex items-center justify-center transition-colors" title="Joindre un fichier ou média">
+<span class="material-symbols-outlined text-[20px]">add_circle</span>
+</button>
+<!-- Text Input Area -->
+<input class="flex-1 bg-transparent font-body-md text-body-md text-on-surface placeholder:text-on-surface-variant/60 focus:outline-none py-1.5" id="messageInput" placeholder="Envoyer un message dans #général..." type="text"/>
+<!-- Input Action Tools -->
+<div class="flex items-center gap-1 text-on-surface-variant">
+<button class="w-8 h-8 rounded-lg hover:bg-surface-container hover:text-on-surface flex items-center justify-center transition-colors" title="Créer un sondage">
+<span class="material-symbols-outlined text-[20px]">poll</span>
+</button>
+<button class="w-8 h-8 rounded-lg hover:bg-surface-container hover:text-on-surface flex items-center justify-center transition-colors" title="Insérer un GIF">
+<span class="material-symbols-outlined text-[20px]">gif_box</span>
+</button>
+<button class="w-8 h-8 rounded-lg hover:bg-surface-container hover:text-on-surface flex items-center justify-center transition-colors" title="Émojis">
+<span class="material-symbols-outlined text-[20px]">sentiment_satisfied</span>
+</button>
+<button class="w-8 h-8 rounded-lg bg-primary hover:bg-primary-fixed text-on-primary flex items-center justify-center transition-all shadow-md ml-1" onclick="const input = document.getElementById('messageInput'); if(input.value.trim()){ alert('Message envoyé : ' + input.value); input.value = ''; }" title="Envoyer le message">
+<span class="material-symbols-outlined text-[18px]">send</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Sidebar: Community Members Inspector (Column 4 - 240px width) -->
+<div class="w-60 shrink-0 bg-surface-container-lowest hidden xl:flex flex-col select-none shadow-sm overflow-y-auto" id="memberSidebar">
+<div class="p-space-md space-y-space-md">
+<!-- Category: Lead & Modos -->
+<div>
+<div class="flex items-center justify-between px-space-xs mb-2">
+<span class="font-label-caps text-label-caps uppercase tracking-wider text-primary font-bold">Lead &amp; Modos — 2</span>
+</div>
+<div class="space-y-1">
+<!-- Frete -->
+<div class="flex items-center gap-space-sm p-space-xs rounded-lg hover:bg-surface-container-high transition-colors cursor-pointer group">
+<div class="relative shrink-0">
+<div class="w-8 h-8 rounded-lg bg-surface-variant flex items-center justify-center font-bold text-on-surface text-label-md">F</div>
+<span class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-tertiary ring-2 ring-surface-container-lowest"></span>
+</div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-1">
+<span class="font-title-sm text-title-sm text-primary font-semibold truncate group-hover:text-primary-fixed">Frete</span>
+<span class="material-symbols-outlined text-[14px] text-primary" style="font-variation-settings: 'FILL' 1;">star</span>
+</div>
+<span class="font-body-sm text-[11px] text-on-surface-variant/70 truncate">En vocal • Lounge Studio</span>
+</div>
+</div>
+<!-- Aline Lefebvre -->
+<div class="flex items-center gap-space-sm p-space-xs rounded-lg hover:bg-surface-container-high transition-colors cursor-pointer group">
+<div class="relative shrink-0">
+<div class="w-8 h-8 rounded-lg bg-surface-variant flex items-center justify-center font-bold text-on-surface text-label-md">A</div>
+<span class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-tertiary ring-2 ring-surface-container-lowest"></span>
+</div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-1">
+<span class="font-title-sm text-title-sm text-secondary font-semibold truncate group-hover:text-secondary-fixed">Aline Lefebvre</span>
+</div>
+<span class="font-body-sm text-[11px] text-on-surface-variant/70 truncate">Figma • Prototype 2.4</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Category: Membres Actifs -->
+<div>
+<div class="flex items-center justify-between px-space-xs mb-2">
+<span class="font-label-caps text-label-caps uppercase tracking-wider text-on-surface-variant/70 font-bold">Membres Actifs — 6</span>
+</div>
+<div class="space-y-1">
+<!-- Marc Kervin -->
+<div class="flex items-center gap-space-sm p-space-xs rounded-lg hover:bg-surface-container-high transition-colors cursor-pointer group">
+<div class="relative shrink-0">
+<div class="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center font-bold text-on-surface text-label-md">MK</div>
+<span class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-tertiary ring-2 ring-surface-container-lowest"></span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-title-sm text-title-sm text-on-surface font-semibold truncate group-hover:text-primary">Marc Kervin</span>
+<span class="font-body-sm text-[11px] text-on-surface-variant/70 truncate">Écoute Spotify</span>
+</div>
+</div>
+<!-- Christ Ndong -->
+<div class="flex items-center gap-space-sm p-space-xs rounded-lg hover:bg-surface-container-high transition-colors cursor-pointer group">
+<div class="relative shrink-0">
+<div class="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center font-bold text-on-surface text-label-md">CN</div>
+<span class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-tertiary ring-2 ring-surface-container-lowest"></span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-title-sm text-title-sm text-on-surface font-semibold truncate group-hover:text-primary">Christ Ndong</span>
+<span class="font-body-sm text-[11px] text-on-surface-variant/70 truncate">Sur VS Code</span>
+</div>
+</div>
+<!-- Maya Lin -->
+<div class="flex items-center gap-space-sm p-space-xs rounded-lg hover:bg-surface-container-high transition-colors cursor-pointer group">
+<div class="relative shrink-0">
+<div class="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center font-bold text-on-surface text-label-md">ML</div>
+<span class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-surface-bright ring-2 ring-surface-container-lowest"></span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-title-sm text-title-sm text-on-surface font-semibold truncate group-hover:text-primary">Maya Lin</span>
+<span class="font-body-sm text-[11px] text-on-surface-variant/70 truncate">Absent(e)</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Category: Hors-ligne -->
+<div>
+<div class="flex items-center justify-between px-space-xs mb-2">
+<span class="font-label-caps text-label-caps uppercase tracking-wider text-on-surface-variant/50 font-bold">Hors-ligne — 142</span>
+</div>
+<div class="space-y-1 opacity-60 hover:opacity-100 transition-opacity">
+<div class="flex items-center gap-space-sm p-space-xs rounded-lg hover:bg-surface-container transition-colors cursor-pointer">
+<div class="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center font-bold text-on-surface-variant text-label-md">TL</div>
+<span class="font-title-sm text-title-sm text-on-surface-variant truncate">Théo Lefort</span>
+</div>
+<div class="flex items-center gap-space-sm p-space-xs rounded-lg hover:bg-surface-container transition-colors cursor-pointer">
+<div class="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center font-bold text-on-surface-variant text-label-md">SL</div>
+<span class="font-title-sm text-title-sm text-on-surface-variant truncate">Sarah Lambert</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></main></div></body></html>

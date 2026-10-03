@@ -16,7 +16,10 @@
     "dev:legacy": "node scripts/run-framework.mjs dev",
     "db:migrate": "node scripts/postgres-migrate.mjs",
     "mobile:start": "npm --prefix native/mobile start",
-    "mobile:check": "npm --prefix native/mobile run check"
+    "mobile:check": "npm --prefix native/mobile run check",
+    "desktop:start": "npm --prefix native/desktop start",
+    "desktop:package": "npm --prefix native/desktop run package",
+    "desktop:dist": "npm --prefix native/desktop run dist:win"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",

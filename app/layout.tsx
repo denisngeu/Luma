@@ -30,8 +30,20 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="fr" suppressHydrationWarning>
-      <head><script dangerouslySetInnerHTML={{__html:themeBootstrap}}/></head>
-      <body className="antialiased"><ThemeProvider/><AppShell>{children}</AppShell><CallInbox/></body>
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+          rel="stylesheet"
+        />
+        <script dangerouslySetInnerHTML={{ __html: themeBootstrap }} />
+      </head>
+      <body className="antialiased">
+        <ThemeProvider />
+        <AppShell>{children}</AppShell>
+        <CallInbox />
+      </body>
     </html>
   );
 }

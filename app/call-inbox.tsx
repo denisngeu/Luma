@@ -18,11 +18,25 @@ export default function CallInbox(){
   let live=true;
   const poll=async()=>{
    if(polling.current||location.pathname.startsWith('/appel/'))return;
-   if(document.hidden){if(live)setIncoming(null);return;}
+    const isDesktop=typeof window!=='undefined'&&Boolean((window as unknown as {lumaDesktop?:unknown}).lumaDesktop);
+    if(document.hidden&&!isDesktop){if(live)setIncoming(null);return;}
    polling.current=true;
    try{
     const response=await fetch('/api/calls',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'incoming'}),cache:'no-store'});
-    if(response.ok){const data=await response.json() as {calls:IncomingCall[]};if(live)setIncoming(data.calls[0]||null);}
+    if(response.ok){const data=await response.json() as {calls:IncomingCall[]};
+      if(live){
+        const nextCall=data.calls[0]||null;
+        setIncoming(nextCall);
+        if(nextCall){
+          (window as unknown as {lumaDesktop?:{flashTaskbar:()=>void}}).lumaDesktop?.flashTaskbar?.();
+          if(typeof Notification!=='undefined'&&Notification.permission==='granted'){
+            try{
+              const notif=new Notification(nextCall.name,{body:`Appel ${nextCall.mode==='video'?'vidéo':'vocal'} entrant`,icon:'/icons/icon-192.png',tag:'luma-call-'+nextCall.id});
+              notif.onclick=()=>{window.focus();};
+            }catch{}
+          }
+        }
+      }}
    }catch{}finally{polling.current=false;}
   };
   const wake=()=>{if(!document.hidden)void poll();};

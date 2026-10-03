@@ -92,12 +92,12 @@ function SimulationPanel({data,onAction,loading,onNavigate}:{data:Row;onAction:(
     </li>
     <li>
      <strong>3. Communautés & Salons vocaux</strong>
-     <p>Deux communautés ("Design & Créativité" et "Tech & Open-Source") ont été créées avec des salons de discussion, annonces et salon vocal.</p>
+     <p>Deux communautés (&quot;Design &amp; Créativité&quot; et &quot;Tech &amp; Open-Source&quot;) ont été créées avec des salons de discussion, annonces et salon vocal.</p>
      <a href="/communities" target="_blank" rel="noreferrer">Explorer les communautés <ArrowUpRight size={14}/></a>
     </li>
     <li>
      <strong>4. Fil d’actualité social</strong>
-     <p>Le fil privé affiche les publications de vos amis Clara, Alex et Sophie avec des commentaires et des mentions "J’aime".</p>
+     <p>Le fil privé affiche les publications de vos amis Clara, Alex et Sophie avec des commentaires et des mentions &quot;J’aime&quot;.</p>
      <a href="/fil" target="_blank" rel="noreferrer">Consulter le fil <ArrowUpRight size={14}/></a>
     </li>
     <li>

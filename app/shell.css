@@ -1,30 +1,641 @@
-body{background:var(--t-canvas);color:var(--t-ink)}
-.luma-shell{--nav-height:0px;min-height:100dvh;background:var(--t-canvas);color:var(--t-ink);padding-left:92px}
-.luma-shell>.social-nav{position:fixed;inset:0 auto 0 0;width:92px;z-index:40;display:flex;flex-direction:column;flex-wrap:nowrap;padding:24px 6px;gap:12px;margin:0;border-right:1px solid var(--t-line);border-bottom:0;background:var(--t-rail)}
-.luma-shell>.social-nav a{position:relative;width:100%;flex:none;flex-direction:column;gap:7px;padding:12px 3px;font-size:11px;color:#b9c0d8}
-.nav-pending{position:absolute;right:8px;top:8px;width:6px;height:6px;border-radius:999px;background:var(--luma-accent);opacity:0;transform:scale(.4);transition:opacity 120ms ease,transform 120ms ease;pointer-events:none}
-.nav-pending[data-pending]{opacity:1;transform:scale(1);animation:nav-pulse 850ms ease-in-out infinite}
-.luma-shell>.social-nav .social-logo{display:flex;font-size:20px;margin:0 0 18px;color:#e6e9f4}
-.luma-shell>.social-nav a[aria-current=page]{background:var(--luma-accent);color:var(--luma-on-accent)}
-.luma-shell>.social-nav a:last-child{margin-top:auto}
-.luma-page{animation:luma-enter 160ms ease-out;min-width:0}
-.luma-page .social-nav,.luma-page .app>.rail{display:none}
-.luma-page :is(.network,.privacy-page,.appearance,.call-room){min-height:calc(100dvh - var(--nav-height))}
-.luma-page :is(.app,.hub){height:calc(100dvh - var(--nav-height));position:relative}
-.luma-page .hub-rail>a{display:none}
-.luma-page :is(.privacy-page,.appearance){padding:28px max(24px,calc((100vw - 1180px)/2)) 64px}
-.luma-page :is(.privacy-page,.appearance)>header{margin:24px 0 28px;padding:0!important}
-.luma-page :is(.privacy-page,.appearance) h1{font-size:32px!important;letter-spacing:-1px!important;line-height:1.2}
-.luma-shell :is(button,a){transition:background-color 140ms ease,color 140ms ease,border-color 140ms ease}
-html[data-luma] .privacy-page button:not(.danger-button){background:var(--luma-accent);color:var(--luma-on-accent)}
-html[data-luma] .privacy-page :is(textarea,input,select){background:var(--t-raised);color:var(--t-ink);border-color:var(--t-line)}
-@keyframes luma-enter{from{opacity:.65;transform:translateY(3px)}to{opacity:1;transform:none}}
-@keyframes nav-pulse{50%{opacity:.35;transform:scale(.72)}}
-@media(max-width:760px){.luma-shell{padding-left:64px;padding-bottom:env(safe-area-inset-bottom,0px)}.luma-shell>.social-nav{width:64px;padding:12px 3px;gap:6px}.luma-shell>.social-nav a{min-height:48px;font-size:9px;overflow-wrap:anywhere}.luma-shell>.social-nav .social-logo{font-size:16px}.luma-page .app{padding-bottom:0}.luma-page :is(.privacy-page,.appearance){padding:20px 12px 40px}.luma-page :is(.privacy-page,.appearance) h1{font-size:28px!important}}
-@media(prefers-reduced-motion:reduce){.luma-page{animation:none}.luma-shell :is(button,a){transition:none}}
+/* Stitch Design System - Obsidian Aurora Shell */
+body {
+  background: var(--t-canvas, #0f131d);
+  color: var(--t-ink, #dfe2f1);
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
 
-.luma-shell>.social-nav .social-logo span{display:none}
-.privacy-error a{color:inherit;text-decoration:underline}
-@view-transition{navigation:auto}
-::view-transition-old(root),::view-transition-new(root){animation-duration:120ms}
-@media(prefers-reduced-motion:reduce){::view-transition-old(root),::view-transition-new(root){animation:none}}
+/* ==========================================================================
+   Desktop Top Header (Stitch Obsidian Aurora)
+   ========================================================================== */
+.luma-desktop-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 40px;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  background: rgba(10, 14, 24, 0.94);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 1px 12px rgba(0, 0, 0, 0.4);
+  -webkit-app-region: drag;
+  user-select: none;
+}
+
+.luma-desktop-header button,
+.luma-desktop-header a,
+.luma-desktop-header input {
+  -webkit-app-region: no-drag;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.window-dots {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.dot:hover {
+  transform: scale(1.08);
+}
+
+.dot-close {
+  background: #ffb4ab;
+  color: #690005;
+}
+
+.dot-minimize {
+  background: #4edea3;
+  color: #003824;
+}
+
+.dot-maximize {
+  background: #bdc2ff;
+  color: #131e8c;
+}
+
+.dot-icon {
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.dot:hover .dot-icon {
+  opacity: 1;
+}
+
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  text-decoration: none;
+}
+
+.brand-logo-glow {
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 0 8px rgba(192, 193, 255, 0.4));
+}
+
+.brand-logo-img {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+
+.brand-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+  color: #c7c4d7;
+  font-family: inherit;
+}
+
+/* Center Navigation Tabs */
+.header-nav {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.header-nav-link {
+  position: relative;
+  font-size: 13px;
+  font-weight: 600;
+  color: #c7c4d7;
+  text-decoration: none;
+  padding: 4px 6px;
+  transition: color 0.15s ease;
+}
+
+.header-nav-link:hover {
+  color: #dfe2f1;
+}
+
+.header-nav-link.active {
+  color: #c0c1ff;
+  font-weight: 700;
+}
+
+.nav-active-pill {
+  position: absolute;
+  bottom: -9px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #c0c1ff;
+  box-shadow: 0 0 8px #c0c1ff;
+  border-radius: 999px;
+}
+
+/* Right Header Actions */
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-right.win-padding {
+  padding-right: 140px; /* Leave space for native Windows titlebar overlay buttons */
+}
+
+.header-action-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #908fa0;
+  background: transparent;
+  transition: all 0.15s ease;
+  text-decoration: none;
+}
+
+.header-action-btn:hover {
+  color: #dfe2f1;
+  background: #1c1f2a;
+}
+
+.header-user-badge {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+.user-avatar-circle {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #262a35;
+  color: #c0c1ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(192, 193, 255, 0.2);
+  transition: all 0.15s ease;
+}
+
+.header-user-badge:hover .user-avatar-circle {
+  border-color: #c0c1ff;
+  box-shadow: 0 0 10px rgba(192, 193, 255, 0.3);
+}
+
+.user-online-dot {
+  position: absolute;
+  bottom: -1px;
+  right: -1px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #4edea3;
+  border: 2px solid #0a0e18;
+  box-shadow: 0 0 6px #4edea3;
+}
+
+/* ==========================================================================
+   Left Vertical Dock (Stitch Obsidian Aurora)
+   ========================================================================== */
+.social-nav {
+  position: fixed;
+  top: 40px;
+  left: 0;
+  bottom: 0;
+  width: 80px;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 0 14px;
+  background: #0a0e18;
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 1px 0 12px rgba(0, 0, 0, 0.4);
+  user-select: none;
+}
+
+.dock-top-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  gap: 12px;
+}
+
+.dock-home-btn {
+  position: relative;
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #dfe2f1;
+  text-decoration: none;
+  background: #171b26;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  transition: all 0.2s ease;
+}
+
+.dock-home-btn:hover {
+  background: #262a35;
+  color: #c0c1ff;
+  border-color: rgba(192, 193, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+.dock-home-btn.active {
+  background: #262a35;
+  color: #c0c1ff;
+  border-color: #c0c1ff;
+  box-shadow: 0 0 16px rgba(192, 193, 255, 0.25);
+}
+
+.home-icon-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dock-divider {
+  width: 32px;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+  margin: 2px 0;
+}
+
+.dock-nav-items {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  gap: 8px;
+}
+
+.dock-nav-link {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #908fa0;
+  text-decoration: none;
+  transition: all 0.18s ease;
+}
+
+.dock-nav-link:hover {
+  color: #dfe2f1;
+  background: #1c1f2a;
+}
+
+.dock-nav-link.active {
+  background: #2f3aa3;
+  color: #ffffff;
+  box-shadow: 0 0 20px rgba(128, 131, 255, 0.35);
+}
+
+.dock-active-pill {
+  position: absolute;
+  left: -16px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 22px;
+  border-radius: 0 4px 4px 0;
+  background: #c0c1ff;
+  box-shadow: 0 0 10px #c0c1ff;
+}
+
+.dock-badge {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: #8083ff;
+  color: #0d0096;
+  font-size: 10px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+
+.dock-online-dot {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #4edea3;
+  border: 2px solid #0a0e18;
+  box-shadow: 0 0 6px #4edea3;
+}
+
+.dock-tooltip {
+  position: absolute;
+  left: 68px;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 6px 12px;
+  background: #262a35;
+  color: #dfe2f1;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  white-space: nowrap;
+  z-index: 100;
+}
+
+.group:hover .dock-tooltip {
+  opacity: 1;
+  transform: translateY(-50%) translateX(2px);
+}
+
+.dock-bottom-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  gap: 12px;
+}
+
+.dock-user-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  width: 100%;
+}
+
+.dock-user-avatar-btn {
+  position: relative;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+.dock-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #1c1f2a;
+  color: #c0c1ff;
+  border: 1.5px solid rgba(192, 193, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.dock-user-avatar-btn:hover .dock-avatar {
+  border-color: #c0c1ff;
+  box-shadow: 0 0 12px rgba(192, 193, 255, 0.4);
+}
+
+.dock-user-status {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: #4edea3;
+  border: 2px solid #0a0e18;
+  box-shadow: 0 0 8px #4edea3;
+}
+
+.dock-audio-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.dock-control-btn {
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #908fa0;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.dock-control-btn:hover {
+  background: #1c1f2a;
+  color: #dfe2f1;
+}
+
+.dock-control-btn.muted {
+  color: #ffb4ab;
+  background: rgba(255, 180, 171, 0.12);
+}
+
+.nav-pending {
+  position: absolute;
+  right: 6px;
+  top: 6px;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: #c0c1ff;
+  opacity: 0;
+  transform: scale(0.4);
+  transition: opacity 120ms ease, transform 120ms ease;
+  pointer-events: none;
+}
+
+.nav-pending[data-pending] {
+  opacity: 1;
+  transform: scale(1);
+  animation: nav-pulse 850ms ease-in-out infinite;
+}
+
+/* ==========================================================================
+   Main App Container Layout
+   ========================================================================== */
+.luma-shell {
+  --nav-height: 40px;
+  min-height: 100dvh;
+  background: var(--t-canvas, #0f131d);
+  color: var(--t-ink, #dfe2f1);
+  padding-top: 40px;
+  padding-left: 80px;
+}
+
+.luma-page {
+  animation: luma-enter 160ms ease-out;
+  min-width: 0;
+}
+
+.luma-page .social-nav,
+.luma-page .app > .rail {
+  display: none !important;
+}
+
+.luma-page :is(.network, .privacy-page, .appearance, .call-room) {
+  min-height: calc(100dvh - 40px);
+}
+
+.luma-page :is(.app, .hub) {
+  height: calc(100dvh - 40px);
+  position: relative;
+}
+
+.luma-page .hub-rail > a {
+  display: none !important;
+}
+
+.luma-page :is(.privacy-page, .appearance) {
+  padding: 28px max(24px, calc((100vw - 1180px) / 2)) 64px;
+}
+
+.luma-page :is(.privacy-page, .appearance) > header {
+  margin: 24px 0 28px;
+  padding: 0 !important;
+}
+
+.luma-page :is(.privacy-page, .appearance) h1 {
+  font-size: 32px !important;
+  letter-spacing: -1px !important;
+  line-height: 1.2;
+}
+
+.luma-shell :is(button, a) {
+  transition: background-color 140ms ease, color 140ms ease, border-color 140ms ease;
+}
+
+html[data-luma] .privacy-page button:not(.danger-button) {
+  background: var(--luma-accent, #c0c1ff);
+  color: var(--luma-on-accent, #1000a9);
+}
+
+html[data-luma] .privacy-page :is(textarea, input, select) {
+  background: var(--t-raised, #1c1f2a);
+  color: var(--t-ink, #dfe2f1);
+  border-color: var(--t-line, #262a35);
+}
+
+@keyframes luma-enter {
+  from {
+    opacity: 0.65;
+    transform: translateY(3px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes nav-pulse {
+  50% {
+    opacity: 0.35;
+    transform: scale(0.72);
+  }
+}
+
+@media (max-width: 760px) {
+  .luma-desktop-header {
+    padding: 0 10px;
+  }
+  .header-nav {
+    display: none;
+  }
+  .luma-shell {
+    padding-left: 64px;
+    padding-top: 40px;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .social-nav {
+    width: 64px;
+    padding: 10px 0;
+  }
+  .dock-home-btn,
+  .dock-nav-link {
+    width: 42px;
+    height: 42px;
+  }
+  .dock-audio-controls {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .luma-page {
+    animation: none;
+  }
+  .luma-shell :is(button, a) {
+    transition: none;
+  }
+}
+
+.privacy-error a {
+  color: inherit;
+  text-decoration: underline;
+}
+
+@view-transition {
+  navigation: auto;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 120ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
+  }
+}

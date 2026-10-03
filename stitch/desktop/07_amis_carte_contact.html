@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="fr"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "primary": "#c0c1ff", "surface-bright": "#353944", "on-tertiary": "#003824", "background": "#0f131d", "secondary-fixed": "#e0e0ff", "tertiary-container": "#00885d", "error-container": "#93000a", "on-tertiary-fixed": "#002113", "primary-fixed": "#e1e0ff", "on-error-container": "#ffdad6", "primary-fixed-dim": "#c0c1ff", "surface-tint": "#c0c1ff", "surface": "#0f131d", "inverse-primary": "#494bd6", "error": "#ffb4ab", "on-tertiary-container": "#000703", "on-secondary-fixed": "#000767", "surface-container-lowest": "#0a0e18", "secondary-container": "#2f3aa3", "surface-container-high": "#262a35", "surface-dim": "#0f131d", "secondary": "#bdc2ff", "on-error": "#690005", "tertiary-fixed": "#6ffbbe", "tertiary": "#4edea3", "primary-container": "#8083ff", "surface-container": "#1c1f2a", "tertiary-fixed-dim": "#4edea3", "on-primary": "#1000a9", "surface-container-low": "#171b26", "on-primary-container": "#0d0096", "on-secondary-fixed-variant": "#2f3aa3", "on-primary-fixed": "#07006c", "on-surface": "#dfe2f1", "outline-variant": "#464554", "on-secondary": "#131e8c", "on-primary-fixed-variant": "#2f2ebe", "surface-container-highest": "#313540", "surface-variant": "#313540", "on-background": "#dfe2f1", "on-surface-variant": "#c7c4d7", "inverse-on-surface": "#2c303b", "outline": "#908fa0", "secondary-fixed-dim": "#bdc2ff", "on-tertiary-fixed-variant": "#005236", "inverse-surface": "#dfe2f1", "on-secondary-container": "#a8afff" }, "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, "spacing": { "gutter": "1rem", "space-md": "0.875rem", "space-sm": "0.5rem", "space-lg": "1.25rem", "space-xl": "2rem", "space-xs": "0.25rem", "margin": "1.5rem" }, "fontFamily": { "label-md": ["Plus Jakarta Sans"], "body-sm": ["Plus Jakarta Sans"], "headline-xl": ["Plus Jakarta Sans"], "body-md": ["Plus Jakarta Sans"], "headline-md": ["Plus Jakarta Sans"], "headline-lg": ["Plus Jakarta Sans"], "title-sm": ["Plus Jakarta Sans"], "body-lg": ["Plus Jakarta Sans"], "label-caps": ["Plus Jakarta Sans"] }, "fontSize": { "label-md": ["0.75rem", { "lineHeight": "1rem", "fontWeight": "600" }], "body-sm": ["0.8125rem", { "lineHeight": "1.25rem", "fontWeight": "400" }], "headline-xl": ["2rem", { "lineHeight": "2.5rem", "fontWeight": "700" }], "body-md": ["0.875rem", { "lineHeight": "1.375rem", "fontWeight": "400" }], "headline-md": ["1.125rem", { "lineHeight": "1.625rem", "fontWeight": "600" }], "headline-lg": ["1.5rem", { "lineHeight": "2rem", "fontWeight": "700" }], "title-sm": ["0.9375rem", { "lineHeight": "1.375rem", "fontWeight": "600" }], "body-lg": ["1rem", { "lineHeight": "1.5rem", "fontWeight": "400" }], "label-caps": ["0.6875rem", { "lineHeight": "1rem", "fontWeight": "700" }] } } } };</script></head><body class="bg-surface font-body-md text-body-md text-on-surface antialiased select-none"><header class="fixed top-0 left-0 right-0 z-50 bg-surface-container-lowest/90 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.25)]"><div class="h-10 w-full px-space-md flex items-center justify-between"><div class="flex items-center gap-space-sm"><div class="flex items-center gap-space-xs"><div class="w-3 h-3 rounded-full bg-error hover:opacity-80 transition-opacity cursor-pointer flex items-center justify-center group"><span class="material-symbols-outlined text-[8px] text-on-error opacity-0 group-hover:opacity-100">close</span></div><div class="w-3 h-3 rounded-full bg-tertiary hover:opacity-80 transition-opacity cursor-pointer flex items-center justify-center group"><span class="material-symbols-outlined text-[8px] text-on-tertiary opacity-0 group-hover:opacity-100">remove</span></div><div class="w-3 h-3 rounded-full bg-secondary hover:opacity-80 transition-opacity cursor-pointer flex items-center justify-center group"><span class="material-symbols-outlined text-[8px] text-on-secondary opacity-0 group-hover:opacity-100">fullscreen</span></div></div><div class="flex items-center gap-space-xs ml-space-sm"><img alt="Luma Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBLBbapFrAbvYKGM-iKX9i1bFIHM63fX4BzEHE5C8oz35kBpYN_mCFiAQmXuNpZkI4lVCC71q9pHUgpOYDhl-yCRJH4SOSrnANQZIoUvxfj0XTbMzJ9OIu7kXBeV922EJl-S7mIuXAKgNhqR1G3zgSVFI5ET1240LVBE9yWutzl2bsv79fDJvU0ofSNVp4A9XWAQtSCoEI0uTGx2cLEGlzUHQJV-nf1Li8DsWxRtViyjuOQy8_Qdl0Z5g"/><span class="font-label-caps text-label-caps text-on-surface-variant tracking-widest uppercase">Luma Desktop</span></div></div><nav class="hidden md:flex items-center gap-space-lg" data-active-classes="text-primary font-title-sm"><a class="font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-colors" data-path="fil" href="#">Fil</a><a class="font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-colors" data-path="messages" href="#">Messages</a><a aria-current="page" class="transition-colors text-primary font-title-sm" data-path="amis" href="#">Amis</a><a class="font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-colors" data-path="communautes" href="#">Communautés</a></nav><div class="flex items-center gap-space-md"><div class="flex items-center gap-space-xs text-on-surface-variant"><span class="material-symbols-outlined text-[16px] hover:text-on-surface cursor-pointer">search</span><span class="material-symbols-outlined text-[16px] hover:text-on-surface cursor-pointer">notifications</span></div><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><aside class="fixed left-0 top-10 bottom-0 w-20 bg-surface-container-lowest z-40 flex flex-col justify-between items-center py-space-md shadow-[0_1px_8px_rgba(0,0,0,0.3)]"><div class="flex flex-col items-center gap-space-lg w-full"><a class="group relative flex items-center justify-center p-space-xs rounded-xl hover:bg-surface-container-high transition-all" data-path="fil" href="#"><div class="relative"><div class="w-10 h-10 rounded-xl bg-surface-container flex items-center justify-center group-hover:bg-surface-container-high transition-colors"><span class="material-symbols-outlined text-on-surface group-hover:text-primary transition-colors">home</span></div><div class="absolute -left-3 top-1/2 -translate-y-1/2 w-1 h-5 bg-primary rounded-r-full opacity-0 group-hover:opacity-100 transition-opacity"></div></div></a><nav class="flex flex-col items-center gap-space-md w-full px-space-xs" data-active-classes="bg-secondary-container text-on-secondary-container"><a class="relative group flex items-center justify-center w-12 h-12 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="fil" href="#"><span class="material-symbols-outlined text-[24px]">dynamic_feed</span><span class="absolute left-16 bg-surface-container-highest text-on-surface font-label-md text-label-md px-space-sm py-space-xs rounded-lg shadow-lg opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50 whitespace-nowrap">Fil</span></a><a class="relative group flex items-center justify-center w-12 h-12 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="messages" href="#"><span class="material-symbols-outlined text-[24px]">chat_bubble</span><span class="absolute top-1.5 right-1.5 bg-secondary-container text-on-secondary-container font-label-caps text-label-caps w-4 h-4 rounded-full flex items-center justify-center shadow-md">3</span><span class="absolute left-16 bg-surface-container-highest text-on-surface font-label-md text-label-md px-space-sm py-space-xs rounded-lg shadow-lg opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50 whitespace-nowrap">Messages</span></a><a aria-current="page" class="relative group flex items-center justify-center w-12 h-12 rounded-xl transition-all bg-secondary-container text-on-secondary-container" data-path="amis" href="#"><span class="material-symbols-outlined text-[24px]">group</span><span class="absolute bottom-2 right-2 w-2 h-2 rounded-full bg-tertiary ring-2 ring-surface-container-lowest"></span><span class="absolute left-16 bg-surface-container-highest text-on-surface font-label-md text-label-md px-space-sm py-space-xs rounded-lg shadow-lg opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50 whitespace-nowrap">Amis</span></a><a class="relative group flex items-center justify-center w-12 h-12 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="communautes" href="#"><span class="material-symbols-outlined text-[24px]">tag</span><span class="absolute left-16 bg-surface-container-highest text-on-surface font-label-md text-label-md px-space-sm py-space-xs rounded-lg shadow-lg opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50 whitespace-nowrap">Communautés</span></a></nav></div><div class="flex flex-col items-center gap-space-md w-full px-space-xs"><a class="group relative flex items-center justify-center w-12 h-12 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="parametres" href="#"><span class="material-symbols-outlined text-[24px]">settings</span><span class="absolute left-16 bg-surface-container-highest text-on-surface font-label-md text-label-md px-space-sm py-space-xs rounded-lg shadow-lg opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50 whitespace-nowrap">Paramètres</span></a><div class="flex flex-col items-center gap-space-xs pt-space-xs w-full"><div class="relative group cursor-pointer"><div class="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center font-title-sm text-title-sm text-primary ring-1 ring-surface-bright"><span class="material-symbols-outlined text-[20px]">person</span></div><span class="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-tertiary ring-2 ring-surface-container-lowest"></span><span class="absolute left-16 bg-surface-container-highest text-on-surface font-label-md text-label-md px-space-sm py-space-xs rounded-lg shadow-lg opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50 whitespace-nowrap">Denis (En ligne)</span></div><div class="flex items-center gap-space-xs pt-space-xs"><button aria-label="Microphone" class="w-6 h-6 rounded flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" type="button"><span class="material-symbols-outlined text-[14px]">mic</span></button><button aria-label="Casque" class="w-6 h-6 rounded flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" type="button"><span class="material-symbols-outlined text-[14px]">headphones</span></button></div></div></div></aside><div class="pl-20"><main class="relative pt-10 min-h-screen bg-surface w-full px-space-lg"><div class="flex flex-col w-full">
+<!-- Subtle ambient glow background decoration -->
+<div class="relative w-full max-w-7xl mx-auto pb-space-xl">
+<div class="absolute top-0 right-1/4 w-96 h-96 bg-primary-container/10 rounded-full blur-3xl pointer-events-none -z-10"></div>
+<div class="absolute top-48 left-12 w-80 h-80 bg-secondary-container/15 rounded-full blur-3xl pointer-events-none -z-10"></div>
+<!-- Header Section -->
+<header class="pt-space-md pb-space-lg flex flex-col md:flex-row md:items-end justify-between gap-space-md">
+<div>
+<div class="flex items-center gap-space-xs text-primary font-label-caps text-label-caps uppercase tracking-wider mb-space-xs">
+<span class="material-symbols-outlined text-[14px]">group</span>
+<span>Espace Relationnel • Cercle Sécurisé</span>
+</div>
+<h1 class="font-headline-xl text-headline-xl text-on-surface tracking-tight">Amis &amp; Connexions</h1>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-2xl mt-1">
+          Gérez votre cercle de confiance, échangez en temps réel et partagez votre carte d'accès cryptée instantanément.
+        </p>
+</div>
+<!-- Quick Action Pill Group / Filter Tabs -->
+<div class="flex items-center gap-space-xs bg-surface-container-lowest p-1.5 rounded-xl shadow-sm self-start md:self-auto overflow-x-auto max-w-full">
+<button class="tab-btn px- space-md py-space-xs rounded-lg font-title-sm text-title-sm transition-all flex items-center gap-space-xs bg-secondary-container text-on-secondary-container shadow-md" id="tab-friends" onclick="switchTab('friends')">
+<span class="material-symbols-outlined text-[16px]">group</span>
+<span>Mes amis</span>
+<span class="ml-1 px-1.5 py-0.5 rounded-full bg-primary/20 text-primary font-label-caps text-label-caps">12</span>
+</button>
+<button class="tab-btn px-space-md py-space-xs rounded-lg font-title-sm text-title-sm transition-all flex items-center gap-space-xs text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high" id="tab-card" onclick="switchTab('card')">
+<span class="material-symbols-outlined text-[16px]">qr_code_2</span>
+<span>Ma carte</span>
+</button>
+<button class="tab-btn px-space-md py-space-xs rounded-lg font-title-sm text-title-sm transition-all flex items-center gap-space-xs text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high relative" id="tab-requests" onclick="switchTab('requests')">
+<span class="material-symbols-outlined text-[16px]">person_add</span>
+<span>En attente</span>
+<span class="w-2 h-2 rounded-full bg-error animate-pulse"></span>
+</button>
+<button class="px-space-md py-space-xs rounded-lg font-title-sm text-title-sm transition-all flex items-center gap-space-xs bg-primary text-on-primary hover:opacity-90 shadow-md" onclick="openAddModal()">
+<span class="material-symbols-outlined text-[16px]">add</span>
+<span>Ajouter</span>
+</button>
+</div>
+</header>
+<!-- Content Stage Grid -->
+<div class="grid grid-cols-1 xl:grid-cols-12 gap-space-lg items-start">
+<!-- Main Column: Friends List & Incoming Requests -->
+<div class="xl:col-span-7 flex flex-col gap-space-lg" id="section-friends-group">
+<!-- Pending Requests Card (Compact banner style) -->
+<section class="bg-surface-container-low rounded-xl p-space-md shadow-sm">
+<div class="flex items-center justify-between pb-space-sm">
+<div class="flex items-center gap-space-xs">
+<span class="w-2 h-2 rounded-full bg-tertiary"></span>
+<h2 class="font-title-sm text-title-sm text-on-surface font-semibold">Demandes d'amis reçues</h2>
+<span class="px-2 py-0.5 rounded-full bg-surface-container-highest text-on-surface-variant font-label-caps text-label-caps">2 nouvelles</span>
+</div>
+<span class="font-label-caps text-label-caps text-outline hover:text-on-surface cursor-pointer transition-colors">Tout traiter</span>
+</div>
+<div class="space-y-space-xs mt-space-xs">
+<!-- Request 1 -->
+<div class="flex items-center justify-between bg-surface-container p-space-sm rounded-lg hover:bg-surface-container-high transition-colors">
+<div class="flex items-center gap-space-sm">
+<div class="relative">
+<div class="w-10 h-10 rounded-xl bg-surface-container-highest text-secondary flex items-center justify-center font-title-sm font-bold">
+                    AL
+                  </div>
+<span class="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-tertiary rounded-full ring-2 ring-surface-container"></span>
+</div>
+<div>
+<div class="font-title-sm text-title-sm text-on-surface leading-tight">Aline Lefebvre</div>
+<div class="font-label-md text-label-md text-on-surface-variant flex items-center gap-1">
+<span class="text-tertiary font-medium">1 ami en commun</span> • il y a 2h
+                  </div>
+</div>
+</div>
+<div class="flex items-center gap-space-xs">
+<button class="w-8 h-8 rounded-lg bg-surface-container-highest text-on-surface-variant hover:text-error hover:bg-error-container/20 flex items-center justify-center transition-colors" title="Refuser" type="button">
+<span class="material-symbols-outlined text-[18px]">close</span>
+</button>
+<button class="px-space-sm py-1.5 rounded-lg bg-primary text-on-primary font-label-md text-label-md flex items-center gap-1 hover:opacity-90 shadow-sm transition-transform active:scale-95" type="button">
+<span class="material-symbols-outlined text-[16px]">check</span>
+<span>Accepter</span>
+</button>
+</div>
+</div>
+<!-- Request 2 -->
+<div class="flex items-center justify-between bg-surface-container p-space-sm rounded-lg hover:bg-surface-container-high transition-colors">
+<div class="flex items-center gap-space-sm">
+<div class="relative">
+<div class="w-10 h-10 rounded-xl bg-surface-container-highest text-primary flex items-center justify-center font-title-sm font-bold">
+                    MK
+                  </div>
+<span class="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-outline rounded-full ring-2 ring-surface-container"></span>
+</div>
+<div>
+<div class="font-title-sm text-title-sm text-on-surface leading-tight">Marc Kervin</div>
+<div class="font-label-md text-label-md text-on-surface-variant flex items-center gap-1">
+                    Scanné via votre carte de contact
+                  </div>
+</div>
+</div>
+<div class="flex items-center gap-space-xs">
+<button class="w-8 h-8 rounded-lg bg-surface-container-highest text-on-surface-variant hover:text-error hover:bg-error-container/20 flex items-center justify-center transition-colors" title="Refuser" type="button">
+<span class="material-symbols-outlined text-[18px]">close</span>
+</button>
+<button class="px-space-sm py-1.5 rounded-lg bg-primary text-on-primary font-label-md text-label-md flex items-center gap-1 hover:opacity-90 shadow-sm transition-transform active:scale-95" type="button">
+<span class="material-symbols-outlined text-[16px]">check</span>
+<span>Accepter</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+<!-- Active Friends Section & Filter Bar -->
+<section class="flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<div class="flex items-baseline gap-space-xs">
+<h2 class="font-headline-md text-headline-md text-on-surface font-semibold">Membres du cercle</h2>
+<span class="font-label-md text-label-md text-on-surface-variant">(3 en ligne)</span>
+</div>
+<div class="flex items-center gap-space-xs text-on-surface-variant">
+<div class="relative">
+<span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-[16px] text-outline">search</span>
+<input class="bg-surface-container-low text-on-surface font-body-sm text-body-sm pl-8 pr-3 py-1.5 rounded-lg focus:outline-none focus:bg-surface-container-high transition-colors w-44 md:w-56 placeholder-outline" placeholder="Filtrer mes amis..." type="text"/>
+</div>
+<button class="p-1.5 rounded-lg bg-surface-container-low hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface transition-colors" title="Trier">
+<span class="material-symbols-outlined text-[18px]">swap_vert</span>
+</button>
+</div>
+</div>
+<!-- Friends Cards Grid -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-space-md">
+<!-- Friend Card 1: Frete -->
+<div class="group relative bg-surface-container rounded-xl p-space-md flex flex-col justify-between shadow-md hover:shadow-xl hover:bg-surface-container-high transition-all duration-200">
+<div class="flex flex-col items-center text-center">
+<!-- Avatar with Status Glow -->
+<div class="relative mb-space-sm">
+<div class="w-16 h-16 rounded-2xl bg-secondary-container text-on-secondary-container font-headline-md text-headline-md flex items-center justify-center font-bold shadow-inner group-hover:scale-105 transition-transform">
+                    F
+                  </div>
+<span class="absolute -bottom-1 -right-1 w-4 h-4 bg-tertiary rounded-full ring-2 ring-surface-container flex items-center justify-center" title="En ligne">
+<span class="w-1.5 h-1.5 rounded-full bg-on-tertiary"></span>
+</span>
+</div>
+<h3 class="font-title-sm text-title-sm text-on-surface font-semibold tracking-tight">Frete</h3>
+<span class="font-label-caps text-label-caps text-tertiary uppercase tracking-wider mt-0.5">En ligne</span>
+<p class="font-label-md text-label-md text-outline mt-1">Dans votre cercle</p>
+</div>
+<!-- Quick action dock -->
+<div class="mt-space-md pt-space-xs flex flex-col gap-space-xs w-full">
+<button class="w-full py-2 px-space-sm rounded-lg bg-secondary-container text-on-secondary-container hover:bg-primary hover:text-on-primary font-title-sm text-title-sm flex items-center justify-center gap-space-xs transition-colors shadow-sm" type="button">
+<span class="material-symbols-outlined text-[18px]">chat</span>
+<span>Message</span>
+</button>
+<div class="grid grid-cols-3 gap-space-xs">
+<button class="py-1.5 rounded-lg bg-surface-container-highest text-on-surface-variant hover:text-on-surface hover:bg-surface-bright flex items-center justify-center transition-colors" title="Appel vocal" type="button">
+<span class="material-symbols-outlined text-[18px]">call</span>
+</button>
+<button class="py-1.5 rounded-lg bg-surface-container-highest text-on-surface-variant hover:text-on-surface hover:bg-surface-bright flex items-center justify-center transition-colors" title="Appel vidéo" type="button">
+<span class="material-symbols-outlined text-[18px]">videocam</span>
+</button>
+<button class="py-1.5 rounded-lg bg-surface-container-highest text-on-surface-variant hover:text-error hover:bg-error-container/30 flex items-center justify-center transition-colors" title="Gérer le contact" type="button">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Friend Card 2: Christ Ndong -->
+<div class="group relative bg-surface-container rounded-xl p-space-md flex flex-col justify-between shadow-md hover:shadow-xl hover:bg-surface-container-high transition-all duration-200">
+<div class="flex flex-col items-center text-center">
+<div class="relative mb-space-sm">
+<div class="w-16 h-16 rounded-2xl bg-primary-container text-on-primary-container font-headline-md text-headline-md flex items-center justify-center font-bold shadow-inner group-hover:scale-105 transition-transform">
+                    CN
+                  </div>
+<span class="absolute -bottom-1 -right-1 w-4 h-4 bg-tertiary rounded-full ring-2 ring-surface-container flex items-center justify-center" title="En appel vocal">
+<span class="material-symbols-outlined text-[10px] text-on-tertiary">mic</span>
+</span>
+</div>
+<h3 class="font-title-sm text-title-sm text-on-surface font-semibold tracking-tight">Christ Ndong</h3>
+<span class="font-label-caps text-label-caps text-primary uppercase tracking-wider mt-0.5">En salon vocal</span>
+<p class="font-label-md text-label-md text-outline mt-1">Dans votre cercle</p>
+</div>
+<!-- Quick action dock -->
+<div class="mt-space-md pt-space-xs flex flex-col gap-space-xs w-full">
+<button class="w-full py-2 px-space-sm rounded-lg bg-secondary-container text-on-secondary-container hover:bg-primary hover:text-on-primary font-title-sm text-title-sm flex items-center justify-center gap-space-xs transition-colors shadow-sm" type="button">
+<span class="material-symbols-outlined text-[18px]">chat</span>
+<span>Message</span>
+</button>
+<div class="grid grid-cols-3 gap-space-xs">
+<button class="py-1.5 rounded-lg bg-surface-container-highest text-on-surface-variant hover:text-on-surface hover:bg-surface-bright flex items-center justify-center transition-colors" title="Rejoindre l'appel" type="button">
+<span class="material-symbols-outlined text-[18px]">headset_mic</span>
+</button>
+<button class="py-1.5 rounded-lg bg-surface-container-highest text-on-surface-variant hover:text-on-surface hover:bg-surface-bright flex items-center justify-center transition-colors" title="Appel vidéo" type="button">
+<span class="material-symbols-outlined text-[18px]">videocam</span>
+</button>
+<button class="py-1.5 rounded-lg bg-surface-container-highest text-on-surface-variant hover:text-error hover:bg-error-container/30 flex items-center justify-center transition-colors" title="Gérer le contact" type="button">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Friend Card 3: Eric -->
+<div class="group relative bg-surface-container rounded-xl p-space-md flex flex-col justify-between shadow-md hover:shadow-xl hover:bg-surface-container-high transition-all duration-200">
+<div class="flex flex-col items-center text-center">
+<div class="relative mb-space-sm">
+<div class="w-16 h-16 rounded-2xl bg-surface-bright text-on-surface font-headline-md text-headline-md flex items-center justify-center font-bold shadow-inner group-hover:scale-105 transition-transform">
+                    E
+                  </div>
+<span class="absolute -bottom-1 -right-1 w-4 h-4 bg-outline rounded-full ring-2 ring-surface-container flex items-center justify-center" title="Absent">
+<span class="w-1.5 h-1.5 rounded-full bg-surface-container-lowest"></span>
+</span>
+</div>
+<h3 class="font-title-sm text-title-sm text-on-surface font-semibold tracking-tight">Eric</h3>
+<span class="font-label-caps text-label-caps text-outline uppercase tracking-wider mt-0.5">Absent • il y a 35m</span>
+<p class="font-label-md text-label-md text-outline mt-1">Dans votre cercle</p>
+</div>
+<!-- Quick action dock -->
+<div class="mt-space-md pt-space-xs flex flex-col gap-space-xs w-full">
+<button class="w-full py-2 px-space-sm rounded-lg bg-secondary-container text-on-secondary-container hover:bg-primary hover:text-on-primary font-title-sm text-title-sm flex items-center justify-center gap-space-xs transition-colors shadow-sm" type="button">
+<span class="material-symbols-outlined text-[18px]">chat</span>
+<span>Message</span>
+</button>
+<div class="grid grid-cols-3 gap-space-xs">
+<button class="py-1.5 rounded-lg bg-surface-container-highest text-on-surface-variant hover:text-on-surface hover:bg-surface-bright flex items-center justify-center transition-colors" title="Appel vocal" type="button">
+<span class="material-symbols-outlined text-[18px]">call</span>
+</button>
+<button class="py-1.5 rounded-lg bg-surface-container-highest text-on-surface-variant hover:text-on-surface hover:bg-surface-bright flex items-center justify-center transition-colors" title="Appel vidéo" type="button">
+<span class="material-symbols-outlined text-[18px]">videocam</span>
+</button>
+<button class="py-1.5 rounded-lg bg-surface-container-highest text-on-surface-variant hover:text-error hover:bg-error-container/30 flex items-center justify-center transition-colors" title="Gérer le contact" type="button">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Activity Feed summary in your circle -->
+<section class="bg-surface-container-low rounded-xl p-space-md flex items-center justify-between">
+<div class="flex items-center gap-space-md">
+<div class="w-10 h-10 rounded-xl bg-tertiary-container/30 text-tertiary flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">hub</span>
+</div>
+<div>
+<div class="font-title-sm text-title-sm text-on-surface">Salon Vocal Communauté activé</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant">Frete et 2 autres amis discutent dans « Espace Détente ».</div>
+</div>
+</div>
+<button class="px-space-md py-1.5 rounded-lg bg-surface-container-high hover:bg-surface-bright text-on-surface font-title-sm text-title-sm transition-colors flex items-center gap-1.5" type="button">
+<span>Rejoindre</span>
+<span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</button>
+</section>
+</div>
+<!-- Right Column: Contact Card / QR Hub (Sticky Inspiration Match) -->
+<div class="xl:col-span-5 flex flex-col gap-space-md" id="section-contact-card">
+<!-- Contact Card Container -->
+<div class="bg-surface-container-low rounded-2xl p-space-lg shadow-xl relative overflow-hidden">
+<!-- Subtle top gradient strip -->
+<div class="absolute -top-24 -right-24 w-48 h-48 bg-primary/20 rounded-full blur-2xl pointer-events-none"></div>
+<div class="flex items-center justify-between mb-space-md">
+<div>
+<span class="font-label-caps text-label-caps uppercase text-primary tracking-widest">Votre Carte Luma</span>
+<h2 class="font-headline-md text-headline-md text-on-surface font-bold">Un scan pour se retrouver</h2>
+</div>
+<span class="p-2 rounded-xl bg-surface-container text-primary">
+<span class="material-symbols-outlined text-[22px]">contact_page</span>
+</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant mb-space-lg">
+            Partagez cette carte par message ou QR code. Tout contact pourra vous ajouter instantanément à son cercle sécurisé sans révéler votre adresse e-mail.
+          </p>
+<!-- The Holographic QR Badge Card -->
+<div class="relative mx-auto w-full max-w-sm bg-gradient-to-b from-surface-container-high via-surface-container to-surface-container-lowest p-space-lg rounded-2xl shadow-2xl flex flex-col items-center text-center">
+<!-- Card Branding & User Identity -->
+<div class="w-full flex items-center justify-between pb-space-xs text-on-surface-variant">
+<div class="flex items-center gap-1 font-label-caps text-label-caps uppercase text-primary">
+<span class="material-symbols-outlined text-[14px]">token</span>
+<span>Luma Card</span>
+</div>
+<span class="font-label-caps text-label-caps text-outline font-mono">ID: #0824-DEN</span>
+</div>
+<!-- Avatar & Handle -->
+<div class="my-space-sm flex flex-col items-center">
+<div class="w-14 h-14 rounded-full bg-primary flex items-center justify-center text-on-primary font-headline-md font-bold shadow-lg mb-1 ring-4 ring-surface-container">
+                D
+              </div>
+<h3 class="font-headline-md text-headline-md text-on-surface font-bold tracking-tight">Denis</h3>
+<p class="font-label-md text-label-md text-secondary mt-0.5">Retrouvons-nous sur Luma</p>
+</div>
+<!-- Crisp QR Code Area -->
+<div class="p-3 bg-white rounded-xl shadow-lg my-space-xs relative group cursor-pointer">
+<!-- High-contrast crisp vector QR Code representation -->
+<svg class="w-44 h-44 text-surface-container-lowest" fill="currentColor" viewbox="0 0 160 160">
+<!-- Top-Left Finder -->
+<rect fill="currentColor" height="40" rx="6" width="40" x="10" y="10"></rect>
+<rect fill="white" height="24" rx="3" width="24" x="18" y="18"></rect>
+<rect fill="currentColor" height="12" rx="2" width="12" x="24" y="24"></rect>
+<!-- Top-Right Finder -->
+<rect fill="currentColor" height="40" rx="6" width="40" x="110" y="10"></rect>
+<rect fill="white" height="24" rx="3" width="24" x="118" y="18"></rect>
+<rect fill="currentColor" height="12" rx="2" width="12" x="124" y="24"></rect>
+<!-- Bottom-Left Finder -->
+<rect fill="currentColor" height="40" rx="6" width="40" x="10" y="110"></rect>
+<rect fill="white" height="24" rx="3" width="24" x="18" y="118"></rect>
+<rect fill="currentColor" height="12" rx="2" width="12" x="24" y="124"></rect>
+<!-- Timing & Data Modules -->
+<rect height="8" rx="1.5" width="8" x="60" y="15"></rect>
+<rect height="8" rx="1.5" width="8" x="76" y="15"></rect>
+<rect height="8" rx="1.5" width="8" x="92" y="15"></rect>
+<rect height="8" rx="1.5" width="16" x="60" y="32"></rect>
+<rect height="8" rx="1.5" width="16" x="84" y="32"></rect>
+<rect height="16" rx="1.5" width="8" x="60" y="48"></rect>
+<rect height="8" rx="1.5" width="16" x="76" y="56"></rect>
+<!-- Center decorative micro-dots -->
+<rect height="8" rx="1.5" width="8" x="20" y="60"></rect>
+<rect height="8" rx="1.5" width="12" x="36" y="68"></rect>
+<rect height="8" rx="1.5" width="16" x="12" y="84"></rect>
+<rect height="16" rx="1.5" width="8" x="36" y="84"></rect>
+<rect fill="#2f3aa3" height="12" rx="2" width="12" x="60" y="72"></rect>
+<rect fill="#2f3aa3" height="12" rx="2" width="12" x="80" y="72"></rect>
+<rect height="8" rx="1.5" width="18" x="70" y="90"></rect>
+<rect height="16" rx="1.5" width="8" x="100" y="64"></rect>
+<rect height="8" rx="1.5" width="16" x="116" y="60"></rect>
+<rect height="10" rx="1.5" width="10" x="140" y="68"></rect>
+<rect height="16" rx="1.5" width="8" x="108" y="84"></rect>
+<rect height="8" rx="1.5" width="24" x="124" y="84"></rect>
+<rect height="12" rx="1.5" width="12" x="136" y="100"></rect>
+<!-- Bottom data pattern -->
+<rect height="8" rx="1.5" width="16" x="60" y="112"></rect>
+<rect height="16" rx="1.5" width="8" x="84" y="112"></rect>
+<rect height="8" rx="1.5" width="20" x="100" y="112"></rect>
+<rect height="20" rx="1.5" width="8" x="60" y="128"></rect>
+<rect height="8" rx="1.5" width="16" x="76" y="136"></rect>
+<rect height="12" rx="1.5" width="12" x="100" y="128"></rect>
+<rect height="20" rx="1.5" width="8" x="120" y="128"></rect>
+<rect height="12" rx="1.5" width="14" x="136" y="136"></rect>
+</svg>
+<!-- Scan overlay indicator on hover -->
+<div class="absolute inset-0 bg-primary/10 rounded-xl opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity backdrop-blur-[1px]">
+<span class="bg-surface-container-lowest/90 text-primary font-label-caps text-label-caps px-2 py-1 rounded-md shadow-md flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">fullscreen</span> Agrandir
+                </span>
+</div>
+</div>
+<!-- Micro text -->
+<div class="mt-space-sm">
+<span class="font-title-sm text-title-sm text-on-surface font-medium block">Scannez pour m'ajouter</span>
+<span class="font-label-caps text-label-caps text-outline">Une invitation. Votre accord avant tout.</span>
+</div>
+</div>
+<!-- Sharing & Quick Export Actions -->
+<div class="mt-space-lg flex flex-col gap-space-xs">
+<button class="w-full py-space-sm px-space-md rounded-xl bg-primary text-on-primary hover:opacity-95 font-title-sm text-title-sm flex items-center justify-center gap-space-sm shadow-md transition-all active:scale-[0.99]" type="button">
+<span class="material-symbols-outlined text-[20px]">share</span>
+<span>Partager ma carte</span>
+</button>
+<div class="grid grid-cols-2 gap-space-xs">
+<button class="py-space-xs px-space-sm rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface font-title-sm text-title-sm flex items-center justify-center gap-space-xs transition-colors" type="button">
+<span class="material-symbols-outlined text-[18px]">download</span>
+<span>Télécharger</span>
+</button>
+<button class="py-space-xs px-space-sm rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface font-title-sm text-title-sm flex items-center justify-center gap-space-xs transition-colors" onclick="copyInviteLink()" type="button">
+<span class="material-symbols-outlined text-[18px]">content_copy</span>
+<span id="copy-btn-text">Copier le lien</span>
+</button>
+</div>
+<!-- Invitation Link display row -->
+<div class="mt-space-xs bg-surface-container-lowest p-space-sm rounded-xl flex items-center justify-between gap-space-sm">
+<div class="font-mono font-label-md text-label-md text-primary truncate max-w-[280px]">
+                https://luma.app/c/denis-8a0e-secure
+              </div>
+<button class="p-1 rounded-lg hover:bg-surface-container text-on-surface-variant hover:text-on-surface transition-colors" onclick="copyInviteLink()" title="Copier" type="button">
+<span class="material-symbols-outlined text-[16px]">copy_all</span>
+</button>
+</div>
+</div>
+<!-- Security note and refresh token button -->
+<div class="mt-space-md pt-space-sm flex items-center justify-between text-on-surface-variant">
+<span class="font-label-caps text-label-caps text-outline max-w-[240px] leading-tight">
+              Renouveler désactive immédiatement les QR codes partagés précédemment.
+            </span>
+<button class="font-label-md text-label-md text-secondary hover:text-primary transition-colors flex items-center gap-1" type="button">
+<span class="material-symbols-outlined text-[14px]">refresh</span>
+<span>Régénérer</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Interactive JavaScript logic for tabs, copy actions, and feedback -->
+<script>
+    function copyInviteLink() {
+      const link = "https://luma.app/c/denis-8a0e-secure";
+      navigator.clipboard.writeText(link).then(() => {
+        const btnText = document.getElementById('copy-btn-text');
+        if (btnText) {
+          const original = btnText.innerText;
+          btnText.innerText = 'Copié !';
+          setTimeout(() => { btnText.innerText = original; }, 2000);
+        }
+      });
+    }
+
+    function switchTab(tabId) {
+      const friendsTab = document.getElementById('tab-friends');
+      const cardTab = document.getElementById('tab-card');
+      const requestsTab = document.getElementById('tab-requests');
+
+      const friendsSec = document.getElementById('section-friends-group');
+      const cardSec = document.getElementById('section-contact-card');
+
+      // Reset tabs styling
+      [friendsTab, cardTab, requestsTab].forEach(btn => {
+        if (!btn) return;
+        btn.classList.remove('bg-secondary-container', 'text-on-secondary-container', 'shadow-md');
+        btn.classList.add('text-on-surface-variant', 'hover:bg-surface-container-high');
+      });
+
+      if (tabId === 'friends') {
+        friendsTab.classList.add('bg-secondary-container', 'text-on-secondary-container', 'shadow-md');
+        friendsTab.classList.remove('text-on-surface-variant', 'hover:bg-surface-container-high');
+        friendsSec.classList.remove('hidden');
+        cardSec.classList.remove('hidden');
+      } else if (tabId === 'card') {
+        cardTab.classList.add('bg-secondary-container', 'text-on-secondary-container', 'shadow-md');
+        cardTab.classList.remove('text-on-surface-variant', 'hover:bg-surface-container-high');
+        cardSec.scrollIntoView({ behavior: 'smooth' });
+      } else if (tabId === 'requests') {
+        requestsTab.classList.add('bg-secondary-container', 'text-on-secondary-container', 'shadow-md');
+        requestsTab.classList.remove('text-on-surface-variant', 'hover:bg-surface-container-high');
+        friendsSec.classList.remove('hidden');
+      }
+    }
+
+    function openAddModal() {
+      switchTab('card');
+    }
+  </script>
+</div></main></div></body></html>

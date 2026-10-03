@@ -1,4 +1,5 @@
 import { getDatabase } from './runtime';
+import type { Connection } from './postgres';
 
 function toBase64Url(bytes: Uint8Array) {
   let binary = '';
@@ -103,7 +104,7 @@ export async function getSimulationStatus() {
   }
 }
 
-async function runCleanup(c: any) {
+async function runCleanup(c: Connection) {
   // 1. Reports
   await c.query("DELETE FROM reports WHERE id LIKE 'sim_%' OR reporter LIKE 'sim_usr_%'");
 

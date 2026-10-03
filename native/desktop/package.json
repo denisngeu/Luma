@@ -10,6 +10,8 @@
     "start": "electron .",
     "package": "electron-builder --dir",
     "dist:win": "electron-builder --win nsis",
+    "dist:win:portable": "electron-builder --win portable",
+    "dist:win:all": "electron-builder --win nsis portable",
     "dist:mac": "electron-builder --mac dmg",
     "dist:linux": "electron-builder --linux AppImage"
   },
@@ -23,6 +25,7 @@
     "icon": "build/icon.png",
     "files": [
       "main.cjs",
+      "preload.cjs",
       "config.json"
     ],
     "win": {
