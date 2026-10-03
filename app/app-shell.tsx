@@ -3,7 +3,7 @@ import {usePathname} from 'next/navigation';
 import type {ReactNode} from 'react';
 import SocialNav from './social-nav';
 
-const routes=['/fil','/messages','/amis','/communities','/parametres','/apparence','/mes-donnees','/appel'];
+const routes=['/fil','/messages','/amis','/communities','/parametres','/apparence','/mes-donnees'];
 export default function AppShell({children}:{children:ReactNode}){
  const path=usePathname();
  if(!routes.some(route=>path===route||path.startsWith(route+'/')))return children;
