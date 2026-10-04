@@ -1,0 +1,22 @@
+/* Interrupteurs Luma partagés par le web, l'application Windows et l'APK. */
+button[data-slot="switch"]{
+  position:relative!important;display:inline-flex!important;align-items:center!important;
+  width:42px!important;height:24px!important;min-width:42px!important;min-height:24px!important;
+  flex:0 0 42px!important;padding:2px!important;border:1px solid var(--t-line)!important;
+  border-radius:999px!important;background:color-mix(in srgb,var(--t-muted) 24%,var(--t-raised))!important;
+  box-shadow:inset 0 1px 3px #0002!important;transition:background .18s ease,border-color .18s ease,box-shadow .18s ease!important;
+}
+button[data-slot="switch"][data-state="checked"]{
+  border-color:color-mix(in srgb,var(--luma-accent) 82%,white)!important;
+  background:var(--luma-accent)!important;box-shadow:0 0 0 3px color-mix(in srgb,var(--luma-accent) 15%,transparent)!important;
+}
+button[data-slot="switch"]:focus-visible{outline:3px solid color-mix(in srgb,var(--luma-accent) 38%,transparent)!important;outline-offset:3px!important}
+button[data-slot="switch"]:disabled{cursor:not-allowed!important;opacity:.5!important}
+button[data-slot="switch"] [data-slot="switch-thumb"]{
+  display:block!important;width:18px!important;height:18px!important;border-radius:50%!important;
+  background:#fff!important;box-shadow:0 2px 6px #0005!important;transform:translateX(0)!important;transition:transform .18s ease!important;
+}
+button[data-slot="switch"][data-state="checked"] [data-slot="switch-thumb"]{transform:translateX(18px)!important}
+.settings-switch button[data-slot="switch"],.friend-optin button[data-slot="switch"],.bot-card button[data-slot="switch"],.admin-settings button[data-slot="switch"],.room-preflight button[data-slot="switch"],.call-preflight button[data-slot="switch"]{margin-left:auto}
+.friend-optin button[data-slot="switch"]{order:2}
+@media(max-width:760px){button[data-slot="switch"]{width:44px!important;height:26px!important;min-width:44px!important;min-height:26px!important}button[data-slot="switch"] [data-slot="switch-thumb"]{width:20px!important;height:20px!important}button[data-slot="switch"][data-state="checked"] [data-slot="switch-thumb"]{transform:translateX(18px)!important}}

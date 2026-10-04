@@ -3,6 +3,7 @@ import {useEffect,useRef,useState} from 'react';
 import Link from 'next/link';
 import {ArrowLeft,Camera,CameraOff,Maximize2,Mic,MicOff,Minimize2,MonitorUp,Music2,PhoneOff,SwitchCamera,Users,Volume2} from 'lucide-react';
 import {gatherIce,mediaError,screenSharingSupported,screenSharingUnavailable} from '@/lib/call-media';
+import {Switch} from '@/components/ui/switch';
 
 type Person={user:string;name:string};
 type Signal={sender:string;type:'offer'|'answer';payload:string};
@@ -148,10 +149,10 @@ export default function Room({id}:{id:string}){
  return <main className="room-page"><header><Link href="/messages"><ArrowLeft/> Retour</Link><div><strong>{info?.room.chat_name||'Salon Luma'}</strong><span>{info?.room.kind==='voice'?'Salon vocal':'Appel de groupe'}</span></div><span><Users size={17}/>{people.length} participant{people.length!==1?'s':''}</span></header>
  {error&&<p className="room-error" role="alert">{error}</p>}
  <section className="room-stage">{!joined?<div className="room-lobby"><div><Users/></div><h1>Rejoignez la conversation</h1><p>Votre micro ne s’active qu’en rejoignant le salon.</p><section className="room-preflight">
- <label><input type="checkbox" checked={joinMuted} onChange={e=>setJoinMuted(e.target.checked)}/>Micro coupé au démarrage</label>
- <label><input type="checkbox" checked={joinCamera} onChange={e=>setJoinCamera(e.target.checked)}/>Activer ma caméra</label>
- <label><input type="checkbox" checked={noiseSuppression} onChange={e=>setNoiseSuppression(e.target.checked)}/>Réduire le bruit ambiant</label>
- <label><input type="checkbox" checked={echoCancellation} onChange={e=>setEchoCancellation(e.target.checked)}/>Éviter l’écho</label></section>
+ <label><Switch checked={joinMuted} onCheckedChange={setJoinMuted} aria-label="Micro coupé au démarrage"/>Micro coupé au démarrage</label>
+ <label><Switch checked={joinCamera} onCheckedChange={setJoinCamera} aria-label="Activer ma caméra"/>Activer ma caméra</label>
+ <label><Switch checked={noiseSuppression} onCheckedChange={setNoiseSuppression} aria-label="Réduire le bruit ambiant"/>Réduire le bruit ambiant</label>
+ <label><Switch checked={echoCancellation} onCheckedChange={setEchoCancellation} aria-label="Éviter echo"/>Éviter l’écho</label></section>
  <button disabled={busy||!info} onClick={join}>{busy?'Connexion…':'Rejoindre le salon'}</button></div>:people.map(person=><article key={person.user} className={expanded===person.user?'is-expanded':''}>
  <div className="room-avatar">{person.name.slice(0,2).toUpperCase()}</div>
  <Remote stream={streams[person.user]} self={person.user===info?.me}/>
