@@ -7,7 +7,7 @@ function Pending(){const {pending}=useLinkStatus();return <i className="nav-pend
 
 export default function SocialNav(){
  const path=usePathname();
- const items=[[House,'/fil','Fil'],[MessageCircle,'/messages','Messages'],[Users,'/amis','Amis'],[Hash,'/communities','Communautés'],[Settings,'/parametres','Paramètres']] as const;
+ const items=[[House,'/fil','Fil'],[MessageCircle,'/messages','Messages'],[Users,'/amis','Amis'],[Hash,'/communities','Salons'],[Settings,'/parametres','Réglages']] as const;
  const active=(href:string)=>path===href||(href==='/parametres'&&['/apparence','/mes-donnees'].some(p=>path.startsWith(p)));
  return <nav className="social-nav" aria-label="Navigation principale"><Link className="social-logo" href="/messages" aria-label="Accueil Luma" prefetch><Sparkles size={24}/><span>Luma</span></Link>{items.map(([Icon,href,label])=><Link key={href} href={href} aria-label={label} title={label} aria-current={active(href)?'page':undefined} prefetch><Icon size={20}/><span>{label}</span><Pending/></Link>)}</nav>;
 }

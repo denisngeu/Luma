@@ -171,6 +171,109 @@
   .settings-page>form>button{width:100%!important;background:#b4233d!important;border-radius:15px!important}
 }
 
+/* Reproduction mobile finale des écrans Stitch : la géométrie reste la même
+   dans les modes clair et sombre, seules les couleurs du thème changent. */
+@media (max-width:760px){
+  :root{--mobile-nav:66px}
+  .luma-page{height:calc(100dvh - var(--mobile-nav) - var(--mobile-safe-bottom))!important}
+  .network-layout,.privacy-page.friends-page,.privacy-page.settings-page{max-width:430px!important}
+
+  .luma-shell>.social-nav{height:calc(66px + var(--mobile-safe-bottom))!important;padding:5px 7px calc(5px + var(--mobile-safe-bottom))!important}
+  .luma-shell>.social-nav>a{height:55px!important;min-height:55px!important;border-radius:15px!important;font-size:9px!important;font-weight:650!important}
+  .luma-shell>.social-nav>a svg{width:21px!important;height:21px!important}
+
+  /* Fil */
+  .network-layout{padding:0 0 22px!important}
+  .network-sidebar{display:none!important}
+  .feed-main{padding:0!important}
+  .feed-heading{min-height:94px!important;padding:14px 20px 12px!important;position:sticky!important;top:0!important;z-index:12!important;background:color-mix(in srgb,var(--t-canvas) 94%,transparent)!important;backdrop-filter:blur(18px);display:flex!important;align-items:center!important}
+  .feed-heading span{font-size:10px!important;letter-spacing:1.45px!important;font-weight:800!important;color:var(--luma-accent)!important}
+  .feed-heading h1{font-size:25px!important;line-height:1.08!important;letter-spacing:-1.1px!important;margin:5px 0 0!important}
+  .feed-heading p{display:none!important}
+  .feed-heading-actions{display:flex!important;gap:8px!important}
+  .feed-heading-actions>*{display:grid!important;place-items:center!important;width:42px!important;height:42px!important;border-radius:14px!important;padding:0!important;background:var(--t-raised)!important;border:1px solid var(--t-line)!important;color:var(--t-ink)!important}
+  .feed-tabs{margin:0!important;padding:7px 20px 10px!important;border-radius:0!important;border-bottom:1px solid var(--t-line)!important;background:color-mix(in srgb,var(--t-canvas) 94%,transparent)!important;position:sticky!important;top:94px!important;z-index:11!important}
+  .feed-tabs a{height:44px!important;display:grid!important;place-items:center!important;padding:0 8px!important;border-radius:14px!important;font-size:12px!important}
+  .network-card.post-composer,.network-card.social-post,.network-card.feed-empty{margin:14px 16px!important;padding:16px!important;border-radius:23px!important}
+  .post-composer{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--luma-accent) 10%,transparent)!important}
+  .composer-intro{display:grid!important;grid-template-columns:40px minmax(0,1fr)!important;gap:11px!important;align-items:start!important}
+  .composer-intro>.social-avatar{width:40px!important;height:40px!important;border-radius:14px!important;background:linear-gradient(145deg,var(--luma-accent),color-mix(in srgb,var(--luma-accent) 55%,#111827))!important;color:white!important}
+  .composer-intro>div{min-width:0!important}
+  .post-composer label{margin:1px 0 2px!important;font-size:13px!important;font-weight:750!important}
+  .post-composer textarea{min-height:48px!important;padding:2px 0!important;font-size:12px!important;line-height:1.45!important}
+  .post-composer footer{grid-template-columns:auto 1fr auto!important;padding-top:10px!important;margin-top:8px!important}
+  .post-composer footer>span{grid-column:1/-1!important;justify-content:space-between!important;font-size:10px!important}
+  .post-composer footer>span b{margin-left:auto;font-weight:500}
+  .post-composer footer .media-picker,.post-composer footer .social-primary{min-height:38px!important;height:38px!important;border-radius:12px!important;font-size:11px!important}
+  .post-composer footer .media-picker{justify-self:start!important;padding:0 13px!important;border:1px solid var(--t-line)!important;background:var(--t-raised)!important}
+  .post-composer footer .social-primary{grid-column:3!important;padding:0 19px!important}
+  .social-post>header{grid-template-columns:42px minmax(0,1fr) auto!important;gap:10px!important}
+  .social-post>header .social-avatar{width:42px!important;height:42px!important;border-radius:14px!important}
+  .social-post .post-own{grid-column:3!important;width:auto!important;display:flex!important;flex-wrap:nowrap!important}
+  .social-post .post-own button{font-size:10px!important;padding:4px!important}
+  .post-body{font-size:12px!important;line-height:1.55!important;margin:15px 0!important}
+
+  /* Discussions */
+  .stitch-mobile-topbar{min-height:72px!important;padding:10px 20px!important}
+  .stitch-live-mark{width:40px!important;height:40px!important;border-radius:14px!important}
+  .stitch-mobile-topbar-copy small{font-size:13px!important;letter-spacing:.2px!important;color:var(--t-muted)!important}
+  .stitch-mobile-topbar-copy strong{font-size:15px!important}
+  .stitch-mobile-topbar>button{width:43px!important;height:43px!important;border-radius:14px!important}
+  .stitch-messenger-root aside>.p-space-lg{padding:13px 20px 6px!important}
+  .stitch-messenger-root aside>.p-space-lg>div>div:first-child{display:none!important}
+  .stitch-messenger-root aside>.p-space-lg h1{font-size:25px!important;letter-spacing:-1px!important}
+  .stitch-messenger-root aside>.px-space-lg{padding-left:20px!important;padding-right:20px!important}
+  .stitch-messenger-root aside>.px-space-lg>div{height:52px!important;border:1px solid var(--t-line)!important;border-radius:16px!important}
+  .stitch-recent-chats{padding:18px 20px 4px!important}
+  .stitch-recent-chats>header{font-size:11px!important;margin-bottom:13px!important}
+  .stitch-recent-chats>div{gap:13px!important}
+  .stitch-recent-chats button{width:58px!important}
+  .stitch-recent-chats button i{width:56px!important;height:56px!important;border-radius:18px!important}
+  .stitch-messenger-root aside>.px-space-lg.pt-space-sm{padding-top:14px!important}
+  .stitch-messenger-root aside>.px-space-lg.pt-space-md{padding:18px 20px 7px!important}
+  .stitch-messenger-root aside>.flex-1.overflow-y-auto{padding:0 20px 24px!important}
+  .stitch-messenger-root aside>.flex-1.overflow-y-auto>div[class*="group"]{min-height:86px!important;margin:9px 0!important;padding:12px 13px!important;border-radius:20px!important}
+
+  /* Amis et carte QR */
+  .friends-page>.stitch-page-topbar,.settings-page>.stitch-page-topbar{display:none!important}
+  .privacy-page.friends-page{padding:0 20px 22px!important}
+  .friends-page>header{margin:0!important;padding:17px 2px 12px!important;border:0!important}
+  .friends-page header>span{font-size:10px!important;letter-spacing:1.4px!important}
+  .friends-page h1{font-size:29px!important;letter-spacing:-1px!important;margin:13px 0 2px!important}
+  .friends-page header>p{font-size:12px!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+  .friends-page .contact-shortcuts{margin:17px 0 0!important;height:47px!important;padding:4px!important}
+  .friends-page .contact-shortcuts a{display:grid!important;place-items:center!important;padding:0 4px!important;font-size:11px!important}
+  .friends-page .contact-shortcuts a:first-child{background:var(--luma-accent)!important;color:var(--luma-on-accent)!important}
+  .friends-page>section{padding:16px!important;margin:11px 0!important;border-radius:21px!important}
+  .friends-page>section h2{font-size:15px!important;text-transform:uppercase!important;letter-spacing:.5px!important}
+  .friends-page #ma-carte{padding:18px 20px!important}
+  .friends-page #ma-carte>h2{display:none!important}
+  .contact-share-preview{max-width:260px!important;margin:0 auto 14px!important}
+  .contact-share-preview img{width:100%!important;height:auto!important;border-radius:19px!important;box-shadow:none!important}
+  .contact-share-details{text-align:center!important}
+  .contact-share-details .contact-eyebrow{display:none!important}
+  .contact-share-details h3{font-size:16px!important;margin:9px 0 3px!important}
+  .contact-share-details>p{font-size:11px!important;margin:0 0 14px!important}
+  .contact-share-actions{display:grid!important;grid-template-columns:repeat(3,1fr)!important;gap:7px!important}
+  .contact-share-actions>*{min-height:42px!important;font-size:10px!important;padding:7px!important}
+  .contact-share-actions>*:first-child{grid-column:1/-1!important;background:var(--luma-accent)!important;color:var(--luma-on-accent)!important}
+  .contact-share-details>input{font-size:9px!important;padding:10px!important}
+  .contact-share-details>small{font-size:9px!important;text-align:left!important}
+  .friends-page #ma-carte>.contact-secondary{width:100%!important;margin-top:8px!important}
+  .contact-tile{grid-template-columns:48px 1fr!important;padding:14px!important;border-radius:18px!important}
+  .contact-avatar{width:48px!important;height:48px!important;border-radius:14px!important}
+  .contact-actions{grid-template-columns:2fr 1fr 1fr!important;margin-top:10px!important}
+  .contact-actions button{min-height:38px!important;font-size:10px!important}
+
+  /* Paramètres */
+  .privacy-page.settings-page{padding:0 16px 22px!important}
+  .settings-page>header{padding:18px 0 10px!important;margin:0!important}
+  .settings-page>header>span{font-size:9px!important;letter-spacing:1.5px!important}
+  .settings-page>header h1{font-size:28px!important;margin:8px 0 3px!important}
+  .settings-page>header p{font-size:11px!important}
+  .settings-page>section,.settings-page>div>section{border-radius:17px!important}
+}
+
 @media (max-width:370px){
   .stitch-mobile-topbar{padding-inline:10px}.stitch-mobile-topbar-copy strong{font-size:11px}.stitch-mobile-topbar>button{width:38px;height:38px}
   .luma-shell>.social-nav>a{font-size:8.5px!important}.luma-shell>.social-nav>a svg{width:21px!important;height:21px!important}

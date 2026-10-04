@@ -8,16 +8,18 @@ export default function ContactCard({name,link,onNotice,onError}:{name:string;li
  useEffect(()=>{
   let cancelled=false,url='';
   async function create(){
-   const canvas=document.createElement('canvas');canvas.width=900;canvas.height=1120;
+   const canvas=document.createElement('canvas');canvas.width=900;canvas.height=1040;
    const ctx=canvas.getContext('2d')!;
-   const gradient=ctx.createLinearGradient(0,0,900,1120);gradient.addColorStop(0,'#171a36');gradient.addColorStop(1,'#30265a');ctx.fillStyle=gradient;ctx.fillRect(0,0,900,1120);
-   ctx.textAlign='center';ctx.fillStyle='#b6aaff';ctx.font='bold 34px sans-serif';ctx.fillText('LUMA / MA CARTE DE CONTACT',450,100);
-   ctx.fillStyle='#ffffff';let size=64;do{ctx.font=`bold ${size}px sans-serif`;size-=2;}while(ctx.measureText(name).width>770&&size>24);let title=name;while(ctx.measureText(title).width>770)title=title.slice(0,-2);if(title!==name)title+='…';ctx.fillText(title,450,220);
-   ctx.font='28px sans-serif';ctx.fillStyle='#d9d5ee';ctx.fillText('Retrouvons-nous sur Luma.',450,278);
-   const qr=document.createElement('canvas');await QRCode.toCanvas(qr,link,{width:520,margin:4,errorCorrectionLevel:'M',color:{dark:'#171a36',light:'#ffffff'}});
-   ctx.fillStyle='#ffffff';ctx.beginPath();ctx.roundRect(160,338,580,580,32);ctx.fill();ctx.drawImage(qr,190,368);
-   ctx.fillStyle='#ffffff';ctx.font='bold 30px sans-serif';ctx.fillText('Scannez pour m’ajouter',450,990);
-   ctx.fillStyle='#c7c1e2';ctx.font='22px sans-serif';ctx.fillText('Une invitation. Votre accord avant tout.',450,1040);
+   const gradient=ctx.createLinearGradient(0,0,900,1040);gradient.addColorStop(0,'#111827');gradient.addColorStop(1,'#15162f');ctx.fillStyle=gradient;ctx.fillRect(0,0,900,1040);
+   ctx.textAlign='left';ctx.fillStyle='#ffffff';ctx.beginPath();ctx.roundRect(54,50,96,96,28);ctx.fillStyle='#171a36';ctx.fill();ctx.strokeStyle='#6366f1';ctx.lineWidth=5;ctx.stroke();ctx.fillStyle='#ffffff';ctx.font='bold 42px sans-serif';ctx.textAlign='center';ctx.fillText(name.trim().charAt(0).toUpperCase()||'L',102,114);
+   ctx.textAlign='left';ctx.fillStyle='#ffffff';let size=50;do{ctx.font=`bold ${size}px sans-serif`;size-=2;}while(ctx.measureText(name).width>610&&size>24);let title=name;while(ctx.measureText(title).width>610)title=title.slice(0,-2);if(title!==name)title+='…';ctx.fillText(title,180,94);
+   ctx.font='25px sans-serif';ctx.fillStyle='#94a3b8';ctx.fillText('Retrouvons-nous sur Luma',180,132);
+   ctx.strokeStyle='#2b3550';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(54,180);ctx.lineTo(846,180);ctx.stroke();
+   const qr=document.createElement('canvas');await QRCode.toCanvas(qr,link,{width:540,margin:4,errorCorrectionLevel:'M',color:{dark:'#0b0f17',light:'#ffffff'}});
+   ctx.fillStyle='#ffffff';ctx.beginPath();ctx.roundRect(150,225,600,600,30);ctx.fill();ctx.drawImage(qr,180,255);
+   ctx.textAlign='center';ctx.fillStyle='#ffffff';ctx.font='bold 30px sans-serif';ctx.fillText('Scannez pour m’ajouter',450,900);
+   ctx.fillStyle='#94a3b8';ctx.font='23px sans-serif';ctx.fillText('Une invitation • Votre accord avant tout',450,946);
+   ctx.fillStyle='#6366f1';ctx.beginPath();ctx.arc(450,790,42,0,Math.PI*2);ctx.fill();ctx.fillStyle='#ffffff';ctx.font='bold 46px sans-serif';ctx.fillText('L',450,807);
    const blob=await new Promise<Blob>((resolve,reject)=>canvas.toBlob(value=>value?resolve(value):reject(Error('Création de la carte impossible.')),'image/png'));
    if(cancelled)return;url=URL.createObjectURL(blob);setCard({url,blob});
   }
