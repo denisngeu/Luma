@@ -2,6 +2,8 @@
 .stitch-mobile-topbar,.stitch-recent-chats,.stitch-page-topbar{display:none}
 
 @media (max-width:760px){
+  .settings-mobile-title{display:inline!important}
+  .settings-page>header h1>span:first-child{display:none!important}
   :root{--mobile-nav:72px}
   html,body{overscroll-behavior-y:none}
   .luma-page{height:calc(100dvh - var(--mobile-nav) - var(--mobile-safe-bottom))!important;background:var(--t-canvas);overflow-x:hidden!important}
@@ -334,10 +336,9 @@
   .settings-content>#appels{order:2}
   .settings-content>#notifications{order:3}
   .settings-content>.settings-section:not([id]){order:4}
-  .settings-content>#apparence{order:5}
-  .settings-content>.settings-links{order:6}
-  .settings-content>#sessions{order:7}
-  .settings-content>form{order:8;margin:0!important}
+  .settings-content>.settings-links{order:5}
+  .settings-content>#sessions{order:6}
+  .settings-content>form{order:7;margin:0!important}
   .settings-heading{
     gap:11px!important;
     padding:15px 16px 13px!important;
@@ -454,4 +455,17 @@
     background:color-mix(in srgb,#ef476f 12%,var(--t-surface))!important;
     color:#ef476f!important;
   }
+
+  /* Amis : les trois onglets déplacent réellement la page vers leur contenu. */
+  .privacy-page.friends-page{display:flex!important;flex-direction:column!important}
+  .friends-page>header{order:0!important}
+  .friends-page>[role="alert"],.friends-page>[role="status"]{order:1!important}
+  .friends-page>section{order:6!important;width:100%!important;scroll-margin-top:12px!important}
+  .friends-page>#ma-carte{order:2!important}
+  .friends-page>#mes-amis{order:3!important}
+  .friends-page>.contact-add{order:4!important}
+  .friends-page>#ajouter-email{order:7!important}
+  .friends-page .contact-shortcuts a{background:transparent!important;color:var(--t-muted)!important}
+  .friends-page .contact-shortcuts a[aria-current="page"]{background:var(--luma-accent)!important;color:var(--luma-on-accent)!important;box-shadow:0 7px 18px color-mix(in srgb,var(--luma-accent) 24%,transparent)!important}
+  .friends-page .contact-grid{grid-template-columns:1fr!important}
 }

@@ -1,5 +1,6 @@
 /* Reproduction desktop des maquettes Stitch Obsidian Aurora. */
 @media (min-width:761px){
+  .settings-mobile-title{display:none!important}
   .luma-desktop-header{height:50px;padding:0 18px;background:color-mix(in srgb,var(--t-rail) 96%,transparent);border-bottom:1px solid color-mix(in srgb,var(--t-line) 78%,transparent);box-shadow:none}
   .header-left{gap:13px}.window-dots{gap:6px}.dot{width:11px;height:11px}.brand-logo-glow{width:30px;height:30px;padding:5px;background:color-mix(in srgb,var(--luma-accent) 13%,var(--t-raised));border:1px solid var(--t-line)}.brand-logo-img{width:20px;height:20px}.brand-title{font-size:11px;letter-spacing:1.25px}
   .header-nav{gap:25px}.header-nav-link{font-size:12px;padding:6px 2px}.nav-active-pill{bottom:-11px}
