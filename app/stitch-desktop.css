@@ -66,7 +66,7 @@
   .network-about{color:var(--t-ink)!important}.network-about>span{color:var(--luma-accent)!important}.network-about>a{display:flex!important;width:100%;margin-top:18px;padding:12px;border-radius:10px;background:var(--t-raised)!important}
 
   /* Amis : liste à gauche et carte QR fixe à droite. */
-  .privacy-page.friends-page{height:100%;overflow-y:auto;display:grid!important;grid-template-columns:minmax(520px,1.35fr) minmax(360px,.9fr)!important;grid-auto-flow:row;align-content:start;gap:0 24px!important;max-width:1480px!important;margin:0 auto!important;padding:22px 26px 60px!important;background:var(--t-canvas)!important}
+  .privacy-page.friends-page{height:100%;overflow-y:auto;overflow-x:hidden;display:grid!important;grid-template-columns:minmax(520px,1.35fr) minmax(360px,.9fr)!important;grid-auto-flow:row;align-content:start;gap:0 24px!important;max-width:1480px!important;margin:0 auto!important;padding:22px 26px 60px!important;background:var(--t-canvas)!important}
   .friends-page>header{grid-column:1/-1!important;margin:0 0 18px!important;padding:0!important}.friends-page>header h1{font-size:34px!important;margin:9px 0 4px!important}.friends-page>header p{margin:0!important}.friends-page .contact-shortcuts{position:absolute;right:28px;top:28px;margin:0!important;padding:4px!important;background:var(--t-surface);border:1px solid var(--t-line);border-radius:13px}
   .friends-page .contact-shortcuts a{min-width:105px;justify-content:center;padding:10px 14px!important;border:0!important}.friends-page .contact-shortcuts a:first-child{background:color-mix(in srgb,var(--luma-accent) 18%,var(--t-raised))}
   .friends-page>section{padding:18px!important;margin:0 0 18px!important;border-radius:16px!important;box-shadow:none!important;background:var(--t-surface)!important}
@@ -92,7 +92,7 @@
 @media (min-width:761px) and (max-width:1180px){
   .stitch-messenger-root>div{grid-template-columns:310px minmax(0,1fr)!important}.stitch-messenger-root>div>aside{width:310px!important}
   .network-layout{grid-template-columns:240px minmax(460px,1fr)!important;max-width:1030px!important}.network-about{display:none!important}
-  .privacy-page.friends-page{grid-template-columns:minmax(470px,1fr) 340px!important;padding-inline:20px!important}.friends-page .contact-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .privacy-page.friends-page{grid-template-columns:minmax(0,1fr) 320px!important;padding-inline:18px!important}.friends-page .contact-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
   .hub{grid-template-columns:330px minmax(0,1fr)!important}.hub-channels{width:330px!important}
   .settings-desktop-layout{grid-template-columns:220px minmax(0,1fr)}
 }
