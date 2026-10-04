@@ -18,6 +18,13 @@
 
   /* Messagerie : rail 80 px, liste contextuelle fixe, scène flexible. */
   .stitch-messenger-root{height:100%!important;background:var(--t-canvas)!important}
+  .stitch-messenger-root [class*="text-on-surface"]{color:var(--t-ink)!important}
+  .stitch-messenger-root [class*="text-outline"]{color:var(--t-muted)!important}
+  .stitch-messenger-root [class*="text-primary"]{color:var(--luma-accent)!important}
+  .stitch-messenger-root [class*="bg-surface-container-lowest"]{background:var(--t-canvas)!important}
+  .stitch-messenger-root [class*="bg-surface-container-low"]{background:color-mix(in srgb,var(--t-surface) 94%,var(--t-canvas))!important}
+  .stitch-messenger-root [class*="bg-surface-container-high"]{background:var(--t-raised)!important}
+  .stitch-messenger-root [class*="border-white"]{border-color:var(--t-line)!important}
   .stitch-messenger-root>div{display:grid!important;grid-template-columns:360px minmax(0,1fr)!important;height:100%!important;background:var(--t-canvas)!important}
   .stitch-messenger-root>div>aside{grid-column:auto!important;width:360px!important;background:color-mix(in srgb,var(--t-surface) 94%,var(--t-canvas))!important;border-right:1px solid var(--t-line)!important}
   .stitch-messenger-root>div>main{grid-column:auto!important;width:auto!important;background:var(--t-canvas)!important}
