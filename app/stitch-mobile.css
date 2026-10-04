@@ -278,3 +278,180 @@
   .stitch-mobile-topbar{padding-inline:10px}.stitch-mobile-topbar-copy strong{font-size:11px}.stitch-mobile-topbar>button{width:38px;height:38px}
   .luma-shell>.social-nav>a{font-size:8.5px!important}.luma-shell>.social-nav>a svg{width:21px!important;height:21px!important}
 }
+
+/* Paramètres Android — reproduction de la maquette Stitch.
+   Le sommaire latéral appartient au bureau ; sur mobile les rubriques sont
+   présentées directement sous forme de cartes tactiles. */
+@media (max-width:760px){
+  .privacy-page.settings-page{
+    width:100%!important;
+    max-width:430px!important;
+    min-height:100%!important;
+    margin:0 auto!important;
+    padding:0 16px 28px!important;
+    overflow:visible!important;
+  }
+  .settings-page>header{
+    margin:0!important;
+    padding:17px 0 13px!important;
+    border-bottom:0!important;
+  }
+  .settings-page>header h1{
+    margin:8px 0 4px!important;
+    font-size:28px!important;
+    line-height:1.05!important;
+  }
+  .settings-page>header p{
+    max-width:100%!important;
+    overflow:hidden!important;
+    color:var(--t-muted)!important;
+    font-size:10px!important;
+    line-height:1.4!important;
+    text-overflow:ellipsis!important;
+    white-space:nowrap!important;
+  }
+  .settings-desktop-layout{display:block!important;min-width:0!important}
+  .settings-context-nav{display:none!important}
+  .settings-content{
+    display:flex!important;
+    min-width:0!important;
+    flex-direction:column!important;
+    gap:12px!important;
+  }
+  .settings-content>.settings-section,
+  .settings-content>div>.settings-section,
+  .settings-content>.settings-links,
+  .settings-content>div>.account-sessions{
+    width:100%!important;
+    margin:0!important;
+    overflow:hidden!important;
+    border:1px solid var(--t-line)!important;
+    border-radius:16px!important;
+    background:var(--t-surface)!important;
+    box-shadow:none!important;
+  }
+  .settings-content>#profil{order:1}
+  .settings-content>#appels{order:2}
+  .settings-content>#notifications{order:3}
+  .settings-content>.settings-section:not([id]){order:4}
+  .settings-content>#apparence{order:5}
+  .settings-content>.settings-links{order:6}
+  .settings-content>#sessions{order:7}
+  .settings-content>form{order:8;margin:0!important}
+  .settings-heading{
+    gap:11px!important;
+    padding:15px 16px 13px!important;
+    align-items:flex-start!important;
+  }
+  .settings-heading>svg{
+    width:17px!important;
+    height:17px!important;
+    padding:8px!important;
+    flex:0 0 auto!important;
+    border-radius:11px!important;
+  }
+  .settings-heading h2{font-size:16px!important;line-height:1.2!important}
+  .settings-heading p{margin-top:2px!important;font-size:10px!important;line-height:1.35!important}
+  .settings-profile{
+    display:grid!important;
+    grid-template-columns:68px minmax(0,1fr)!important;
+    gap:12px!important;
+    padding:14px 16px 16px!important;
+    border-top:1px solid var(--t-line)!important;
+  }
+  .settings-profile .settings-avatar{
+    grid-column:1/-1!important;
+    display:flex!important;
+    min-width:0!important;
+    flex-direction:row!important;
+    gap:12px!important;
+    align-items:center!important;
+    text-align:left!important;
+  }
+  .settings-avatar>span{
+    width:64px!important;
+    height:64px!important;
+    flex:0 0 64px!important;
+    border-radius:18px!important;
+  }
+  .settings-avatar strong{
+    display:inline-flex!important;
+    min-height:38px!important;
+    align-items:center!important;
+    padding:0 13px!important;
+    border:1px solid var(--t-line)!important;
+    border-radius:12px!important;
+    background:var(--t-raised)!important;
+    font-size:11px!important;
+  }
+  .settings-profile>label:not(.settings-avatar){grid-column:1/-1!important;font-size:11px!important}
+  .settings-profile :is(input,textarea){
+    width:100%!important;
+    margin-top:7px!important;
+    padding:11px 12px!important;
+    border:1px solid var(--t-line)!important;
+    border-radius:11px!important;
+    background:var(--t-raised)!important;
+    color:var(--t-ink)!important;
+    font-size:12px!important;
+  }
+  .settings-profile textarea{min-height:82px!important;resize:vertical!important}
+  .settings-profile>button{
+    grid-column:1/-1!important;
+    width:100%!important;
+    min-height:43px!important;
+    justify-content:center!important;
+    border-radius:11px!important;
+  }
+  .settings-choice,.settings-switch{
+    min-height:58px!important;
+    padding:12px 16px!important;
+    gap:12px!important;
+    align-items:center!important;
+  }
+  .settings-choice{flex-direction:column!important;align-items:stretch!important;font-size:11px!important}
+  .settings-choice select{
+    width:100%!important;
+    max-width:none!important;
+    min-height:40px!important;
+    padding:0 11px!important;
+    border-radius:10px!important;
+    font-size:11px!important;
+  }
+  .settings-switch>span{font-size:11px!important;line-height:1.25!important}
+  .settings-switch small{margin-top:2px!important;font-size:9px!important;line-height:1.35!important}
+  .settings-switch input{width:32px!important;height:20px!important;flex:0 0 auto!important}
+  .settings-section>button{
+    width:calc(100% - 32px)!important;
+    min-height:41px!important;
+    justify-content:center!important;
+    margin:13px 16px 16px!important;
+    border-radius:11px!important;
+  }
+  .theme-quick-options{padding:13px 16px 16px!important;gap:7px!important}
+  .privacy-page .theme-quick-options button{min-height:49px!important;border-radius:11px!important;font-size:10px!important}
+  .settings-links{padding:5px!important}
+  .settings-links>a{
+    display:grid!important;
+    grid-template-columns:auto minmax(0,1fr) auto!important;
+    min-height:62px!important;
+    gap:11px!important;
+    align-items:center!important;
+    padding:9px 10px!important;
+    border-radius:11px!important;
+  }
+  .settings-links>a>svg:first-child{width:17px!important;height:17px!important;padding:8px!important;border-radius:10px!important}
+  .settings-links strong{font-size:12px!important}.settings-links small{font-size:9px!important;line-height:1.35!important}
+  .account-sessions{padding:14px 16px!important}
+  .account-sessions>div{gap:10px!important}.account-sessions strong{font-size:12px!important}.account-sessions small{font-size:9px!important}
+  .account-sessions>button{width:100%!important;justify-content:center!important;margin-top:12px!important;border-radius:11px!important}
+  .settings-content>form>button{
+    width:100%!important;
+    min-height:46px!important;
+    margin:0!important;
+    border:1px solid color-mix(in srgb,#ef476f 45%,var(--t-line))!important;
+    border-radius:12px!important;
+    background:color-mix(in srgb,#ef476f 12%,var(--t-surface))!important;
+    color:#ef476f!important;
+  }
+}
