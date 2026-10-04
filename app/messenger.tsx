@@ -286,6 +286,13 @@ export default function Messenger() {
           {/* Ambient Glow */}
           <div className="absolute -top-16 -left-16 w-56 h-56 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
 
+          <div className="stitch-mobile-topbar" aria-label="En-tête de la messagerie">
+            <span className="stitch-live-mark" aria-hidden="true"><i /></span>
+            <span className="stitch-mobile-topbar-copy"><small>LUMA <b>•</b> MESSAGERIE</small><strong>Messages &amp; Discussions</strong></span>
+            <button type="button" aria-label="Rechercher" onClick={() => searchInput.current?.focus()}><span className="material-symbols-outlined">search</span></button>
+            <button type="button" aria-label="Nouvelle discussion" onClick={() => setModal('new')}><span className="material-symbols-outlined">edit_square</span></button>
+          </div>
+
           {/* Header: Title + Action */}
           <div className="p-space-lg pb-space-sm flex items-center justify-between">
             <div>
@@ -323,6 +330,31 @@ export default function Messenger() {
               </kbd>
             </div>
           </div>
+
+          {!loading && chats.length > 0 && (
+            <section className="stitch-recent-chats" aria-label="Contacts récents">
+              <header><span>CONTACTS RÉCENTS</span><small>{chats.length} discussion{chats.length > 1 ? 's' : ''}</small></header>
+              <div>
+                {chats.slice(0, 6).map((chat) => (
+                  <button
+                    type="button"
+                    key={chat.id}
+                    onClick={() => {
+                      setActive(chat.id);
+                      setReply(null);
+                      setText('');
+                      setSchedule('');
+                      setDetail(false);
+                      setMobile(true);
+                    }}
+                  >
+                    <i>{chat.kind === 'group' ? <span className="material-symbols-outlined">groups</span> : initials(chat.name)}</i>
+                    <span>{chat.name}</span>
+                  </button>
+                ))}
+              </div>
+            </section>
+          )}
 
           {/* Filter Tabs */}
           <div className="px-space-lg pt-space-sm pb-space-xs flex items-center gap-space-xs">
