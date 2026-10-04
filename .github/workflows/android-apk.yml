@@ -36,7 +36,7 @@ jobs:
         working-directory: native/mobile/android
       - uses: actions/upload-artifact@v4
         with:
-          name: Luma-0.3.9-test-apk
+          name: Luma-0.3.13-test-apk
           path: native/mobile/android/app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
           retention-days: 14

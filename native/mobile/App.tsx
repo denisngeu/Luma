@@ -1,5 +1,5 @@
 import React,{useCallback,useEffect,useRef,useState} from 'react';
-import {ActivityIndicator,Alert,AppState,BackHandler,Linking,LogBox,Pressable,StyleSheet,Text,Vibration,View} from 'react-native';
+import {ActivityIndicator,Alert,AppState,BackHandler,Linking,LogBox,PermissionsAndroid,Platform,Pressable,StyleSheet,Text,Vibration,View} from 'react-native';
 import {setAudioModeAsync,useAudioPlayer} from 'expo-audio';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
@@ -10,7 +10,7 @@ LogBox.ignoreLogs(['Cannot connect to Expo CLI']);
 
 const DEFAULT_SERVER='https://cx9tpuja8iqkelk0zci4vlbs.app.luma-sas.fr';
 const SERVER=(process.env.EXPO_PUBLIC_LUMA_URL||'').trim()||DEFAULT_SERVER;
-const MOBILE_RELEASE='0.3.12';
+const MOBILE_RELEASE='0.3.13';
 const themeBridge=`(()=>{const send=()=>window.ReactNativeWebView.postMessage(JSON.stringify({theme:document.documentElement.dataset.luma}));new MutationObserver(send).observe(document.documentElement,{attributes:true,attributeFilter:['data-luma']});send()})();true;`;
 // One persistent WebView keeps cookies, theme preferences and navigation together.
 class NativeErrorBoundary extends React.Component<React.PropsWithChildren,{failed:boolean}>{
@@ -68,6 +68,22 @@ function LumaApp(){
    ringing.current=null;Vibration.cancel();ringtone?.pause?.();void ringtone?.seekTo?.(0)?.catch?.(()=>{});
   }catch{ringing.current=null;Vibration.cancel();}
  },[ringtone]);
+ const requestMediaPermissions=useCallback(async(requestId:unknown,camera:unknown)=>{
+  if(typeof requestId!=='string'||requestId.length>120)return;
+  let granted=true,permanentlyDenied=false;
+  try{
+   if(Platform.OS==='android'){
+    const requested=[PermissionsAndroid.PERMISSIONS.RECORD_AUDIO];
+    if(camera)requested.push(PermissionsAndroid.PERMISSIONS.CAMERA);
+    const results=await PermissionsAndroid.requestMultiple(requested);
+    granted=requested.every(permission=>results[permission]===PermissionsAndroid.RESULTS.GRANTED);
+    permanentlyDenied=requested.some(permission=>results[permission]===PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN);
+   }
+  }catch{granted=false;}
+  const message=granted?'':permanentlyDenied?'Le micro ou la caméra est bloqué. Ouvrez les réglages Android de Luma pour l’autoriser.':'Le micro ou la caméra est nécessaire pour rejoindre cet appel.';
+  web.current?.injectJavaScript(`window.dispatchEvent(new CustomEvent('luma-native-permissions',{detail:${JSON.stringify({requestId,granted,permanentlyDenied,message})}}));true;`);
+  if(!granted&&permanentlyDenied)Alert.alert('Autorisation nécessaire',message,[{text:'Plus tard',style:'cancel'},{text:'Ouvrir les réglages',onPress:()=>void Linking.openSettings()}]);
+ },[]);
  let origin='';
  try{const url=new URL(SERVER);if(url.protocol==='https:'||url.protocol==='http:')origin=url.origin;}catch{}
  if(!origin)return <SafeAreaView edges={['top','left','right']} style={styles.screen}><Text style={styles.text}>Configurez l’adresse du serveur Luma (http:// ou https://) avant de lancer l’application.</Text></SafeAreaView>;
@@ -75,7 +91,7 @@ function LumaApp(){
  return <SafeAreaView edges={['top','left','right']} style={[styles.screen,{backgroundColor:dark?'#121623':'#f4f5fb'}]}>
    {webMounted&&<WebView key={webKey} ref={web} style={styles.web} source={{uri:origin+'/messages?native=android&release='+MOBILE_RELEASE}} originWhitelist={[origin,'http://*','https://*']} sharedCookiesEnabled thirdPartyCookiesEnabled domStorageEnabled javaScriptEnabled allowsInlineMediaPlayback mediaPlaybackRequiresUserAction={false} mediaCapturePermissionGrantType="prompt" mixedContentMode="compatibility" cacheEnabled cacheMode="LOAD_DEFAULT" setSupportMultipleWindows={false} overScrollMode="never" scrollEnabled nestedScrollEnabled
      onNavigationStateChange={state=>{back.current=state.canGoBack;}}
-     injectedJavaScriptBeforeContentLoaded={safeAreaBridge} injectedJavaScript={safeAreaBridge+themeBridge} onMessage={event=>{try{const url=new URL(event.nativeEvent.url);if(url.origin!==origin)return;const message=JSON.parse(event.nativeEvent.data);if(message.theme==='dark'||message.theme==='light')setDark(message.theme==='dark');if(message.type==='share-contact-card'&&url.pathname==='/amis')void shareCard(message.image);if(message.type==='incoming-call')updateRingtone(message.id);}catch{}}}
+     injectedJavaScriptBeforeContentLoaded={safeAreaBridge} injectedJavaScript={safeAreaBridge+themeBridge} onMessage={event=>{try{const url=new URL(event.nativeEvent.url);if(url.origin!==origin)return;const message=JSON.parse(event.nativeEvent.data);if(message.theme==='dark'||message.theme==='light')setDark(message.theme==='dark');if(message.type==='share-contact-card'&&url.pathname==='/amis')void shareCard(message.image);if(message.type==='incoming-call')updateRingtone(message.id);if(message.type==='request-media-permissions')void requestMediaPermissions(message.requestId,message.camera);}catch{}}}
      onLoadStart={beginLoad} onLoadEnd={finishLoad} onError={event=>recover(`Connexion impossible au serveur (${event.nativeEvent.description||'erreur réseau'}).`)} onHttpError={event=>recover('Le serveur Luma répond avec une erreur ('+event.nativeEvent.statusCode+').')}
      onRenderProcessGone={recoverRenderer} onContentProcessDidTerminate={recoverRenderer}
      onShouldStartLoadWithRequest={request=>{try{const url=new URL(request.url);if(url.origin===origin)return true;if(['https:','http:','mailto:'].includes(url.protocol))void Linking.openURL(request.url);return false;}catch{return false;}}}
