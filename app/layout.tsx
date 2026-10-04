@@ -14,6 +14,7 @@ import './shell.css';
 import './mobile.css';
 import './stitch-design.css';
 import './stitch-mobile.css';
+import './stitch-desktop.css';
 
 export const metadata: Metadata = {
   title: "Luma — Votre cercle",

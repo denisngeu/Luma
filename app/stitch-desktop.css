@@ -1,0 +1,91 @@
+/* Reproduction desktop des maquettes Stitch Obsidian Aurora. */
+@media (min-width:761px){
+  .luma-desktop-header{height:50px;padding:0 18px;background:color-mix(in srgb,var(--t-rail) 96%,transparent);border-bottom:1px solid color-mix(in srgb,var(--t-line) 78%,transparent);box-shadow:none}
+  .header-left{gap:13px}.window-dots{gap:6px}.dot{width:11px;height:11px}.brand-logo-glow{width:30px;height:30px;padding:5px;background:color-mix(in srgb,var(--luma-accent) 13%,var(--t-raised));border:1px solid var(--t-line)}.brand-logo-img{width:20px;height:20px}.brand-title{font-size:11px;letter-spacing:1.25px}
+  .header-nav{gap:25px}.header-nav-link{font-size:12px;padding:6px 2px}.nav-active-pill{bottom:-11px}
+  .header-right{gap:9px}.header-action-btn{width:29px;height:29px}.header-user-badge{width:34px;height:34px}
+  .luma-shell{padding-top:50px;padding-left:80px;min-height:100dvh}
+  .luma-shell>.social-nav{position:fixed;left:0;top:50px;bottom:0;width:80px;z-index:40;padding:18px 12px 12px!important;background:var(--t-rail)!important;border-right:1px solid color-mix(in srgb,var(--t-line) 72%,transparent)!important;gap:10px!important}
+  .luma-shell>.social-nav .social-logo{display:none!important}
+  .luma-shell>.social-nav>a{width:52px!important;height:52px!important;min-height:52px!important;padding:0!important;border-radius:15px!important;color:var(--t-muted)!important}
+  .luma-shell>.social-nav>a span{display:none!important}
+  .luma-shell>.social-nav>a svg{width:22px;height:22px;stroke-width:2}
+  .luma-shell>.social-nav>a[aria-current=page]{background:linear-gradient(145deg,#4f46e5,#3730a3)!important;color:#fff!important;box-shadow:0 0 24px rgba(99,102,241,.22)!important}
+  .luma-shell>.social-nav>a:last-child{margin-top:auto!important}
+  .luma-page{height:calc(100dvh - 50px);overflow:hidden}
+  .luma-page :is(.app,.hub){height:calc(100dvh - 50px)}
+  .luma-page :is(.network,.privacy-page,.appearance,.call-room){min-height:calc(100dvh - 50px)}
+
+  /* Messagerie : rail 80 px, liste contextuelle fixe, scène flexible. */
+  .stitch-messenger-root{height:100%!important;background:var(--t-canvas)!important}
+  .stitch-messenger-root>div{display:grid!important;grid-template-columns:360px minmax(0,1fr)!important;height:100%!important;background:var(--t-canvas)!important}
+  .stitch-messenger-root>div>aside{grid-column:auto!important;width:360px!important;background:color-mix(in srgb,var(--t-surface) 94%,var(--t-canvas))!important;border-right:1px solid var(--t-line)!important}
+  .stitch-messenger-root>div>main{grid-column:auto!important;width:auto!important;background:var(--t-canvas)!important}
+  .stitch-messenger-root aside>.p-space-lg{padding:27px 22px 10px!important}
+  .stitch-messenger-root aside>.p-space-lg h1{font-size:27px!important;line-height:1.15!important;letter-spacing:-1px!important;margin-top:7px!important}
+  .stitch-messenger-root aside>.p-space-lg>button{width:46px!important;height:46px!important;border-radius:14px!important}
+  .stitch-messenger-root aside>.px-space-lg{padding-inline:22px!important}
+  .stitch-messenger-root aside>.px-space-lg>div{height:47px!important;border-radius:13px!important;background:var(--t-canvas)!important;border:1px solid color-mix(in srgb,var(--t-line) 72%,transparent)!important}
+  .stitch-messenger-root aside>.px-space-lg.pt-space-sm{padding-top:15px!important;padding-bottom:7px!important;gap:7px!important}
+  .stitch-messenger-root aside>.px-space-lg.pt-space-sm button{padding:8px 16px!important;border-radius:10px!important}
+  .stitch-messenger-root aside>.px-space-lg.pt-space-md{padding-top:15px!important;padding-bottom:7px!important}
+  .stitch-messenger-root aside>.flex-1.overflow-y-auto{padding:0 12px 24px!important}
+  .stitch-messenger-root aside>.flex-1.overflow-y-auto>div[class*="group"]{min-height:76px!important;margin:4px 0!important;padding:11px 12px!important;border-radius:15px!important}
+  .stitch-messenger-root aside>.flex-1.overflow-y-auto>div[class*="group"]:hover{background:var(--t-raised)!important}
+  .stitch-messenger-root aside>.flex-1.overflow-y-auto>div[class*="group"] .w-11{width:46px!important;height:46px!important;border-radius:14px!important}
+  .stitch-messenger-root main>header{height:80px!important;padding:0 25px!important;background:color-mix(in srgb,var(--t-surface) 96%,transparent)!important;border-bottom:1px solid var(--t-line)!important}
+  .stitch-messenger-root main>header button{width:45px!important;height:45px!important;border-radius:14px!important;background:var(--t-raised)!important}
+  .stitch-messenger-root main>section{padding:28px clamp(24px,6vw,105px) 18px!important;background:var(--t-canvas)!important}
+  .stitch-messenger-root main>footer{padding:14px 24px 18px!important;background:var(--t-canvas)!important}
+  .stitch-messenger-root main>footer>div{border-radius:16px!important;background:color-mix(in srgb,var(--t-surface) 95%,transparent)!important;border:1px solid var(--t-line)!important;box-shadow:0 15px 35px rgba(0,0,0,.15)!important}
+  .stitch-mobile-topbar,.stitch-recent-chats{display:none!important}
+
+  /* Fil : trois panneaux comme la maquette, sans contenu simulé. */
+  .network{height:100%;overflow-y:auto;background:var(--t-canvas)!important}
+  .network-layout{display:grid!important;grid-template-columns:290px minmax(520px,720px) 290px!important;justify-content:center!important;align-items:start!important;gap:22px!important;max-width:1370px!important;padding:34px 20px 60px!important}
+  .network-sidebar{display:block!important;padding:0!important;position:sticky;top:24px}
+  .network-about{display:block!important;padding-top:0!important;position:sticky;top:24px}
+  .network-card{padding:18px!important;margin-bottom:14px!important;border-radius:16px!important;background:var(--t-surface)!important;box-shadow:none!important}
+  .my-profile{padding-top:0!important}.profile-cover{height:86px;margin:0 -18px;background:linear-gradient(120deg,color-mix(in srgb,var(--luma-accent) 52%,#111827),#1a2234)}
+  .my-profile>.social-avatar{width:62px;height:62px;margin-top:-31px;border-radius:18px!important}
+  .feed-heading{display:flex!important;align-items:center!important;min-height:104px!important;padding:18px!important;border-radius:16px!important;background:var(--t-surface)!important;border:1px solid var(--t-line)!important}
+  .feed-heading h1{font-size:25px!important;margin:5px 0 2px!important}.feed-heading p{font-size:13px!important;margin:0!important}
+  .feed-heading-actions{display:flex!important;gap:8px!important}.feed-heading-actions>*{display:grid!important;place-items:center!important;width:42px!important;height:42px!important;border-radius:13px!important;background:var(--t-raised)!important;border:1px solid var(--t-line)!important}
+  .feed-tabs{display:grid!important;grid-template-columns:1fr 1fr!important;gap:4px!important;margin:10px 0 18px!important;padding:4px!important;border:0!important;border-radius:13px!important;background:var(--t-raised)!important}
+  .feed-tabs a{padding:12px!important;text-align:center!important;border:0!important;border-radius:10px!important}.feed-tabs a[aria-current=page]{background:color-mix(in srgb,var(--luma-accent) 18%,var(--t-surface))!important;box-shadow:inset 0 -2px var(--luma-accent)!important}
+  .composer-intro{display:grid!important;grid-template-columns:42px minmax(0,1fr)!important;gap:12px!important}.composer-intro>div{min-width:0}.composer-intro .social-avatar{width:42px;height:42px}
+  .post-composer textarea{min-height:88px!important}.post-composer footer .media-picker{display:inline-flex!important;align-items:center!important;gap:7px!important;padding:10px 12px!important;border-radius:10px!important;background:var(--t-raised)!important}
+  .social-post{padding:18px!important}.post-media{border-radius:13px;overflow:hidden}.post-body{font-size:14px;line-height:1.65}
+  .network-about{color:var(--t-ink)!important}.network-about>span{color:var(--luma-accent)!important}.network-about>a{display:flex!important;width:100%;margin-top:18px;padding:12px;border-radius:10px;background:var(--t-raised)!important}
+
+  /* Amis : liste à gauche et carte QR fixe à droite. */
+  .privacy-page.friends-page{height:100%;overflow-y:auto;display:grid!important;grid-template-columns:minmax(520px,1.35fr) minmax(360px,.9fr)!important;grid-auto-flow:row;align-content:start;gap:0 24px!important;max-width:1480px!important;margin:0 auto!important;padding:22px 26px 60px!important;background:var(--t-canvas)!important}
+  .friends-page>header{grid-column:1/-1!important;margin:0 0 18px!important;padding:0!important}.friends-page>header h1{font-size:34px!important;margin:9px 0 4px!important}.friends-page>header p{margin:0!important}.friends-page .contact-shortcuts{position:absolute;right:28px;top:28px;margin:0!important;padding:4px!important;background:var(--t-surface);border:1px solid var(--t-line);border-radius:13px}
+  .friends-page .contact-shortcuts a{min-width:105px;justify-content:center;padding:10px 14px!important;border:0!important}.friends-page .contact-shortcuts a:first-child{background:color-mix(in srgb,var(--luma-accent) 18%,var(--t-raised))}
+  .friends-page>section{padding:18px!important;margin:0 0 18px!important;border-radius:16px!important;box-shadow:none!important;background:var(--t-surface)!important}
+  .friends-page>section:nth-of-type(1){grid-column:1;grid-row:3}.friends-page>section:nth-of-type(2){grid-column:1;grid-row:2}.friends-page>section:nth-of-type(3){grid-column:1;grid-row:4}.friends-page>section:nth-of-type(4){grid-column:1;grid-row:5}.friends-page>section:nth-of-type(5){grid-column:2;grid-row:2/span 4;position:sticky;top:22px}.friends-page>section:nth-of-type(6){grid-column:1;grid-row:6}
+  .friends-page>[role=alert],.friends-page>[role=status]{grid-column:1/-1}
+  .friends-page .contact-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:14px!important}.contact-tile{min-height:252px;padding:20px 15px 15px!important;border-radius:16px!important}.contact-avatar{width:70px;height:70px;border-radius:20px!important}.contact-actions{display:grid!important;grid-template-columns:repeat(3,1fr)!important}.contact-actions button:first-child{grid-column:1/-1!important}.contact-actions .contact-secondary{grid-column:1/-1!important}
+  .friends-page #ma-carte>h2{display:none}.contact-share{display:block!important;margin:0!important}.contact-share-preview{max-width:310px;margin:0 auto 18px}.contact-share-details{text-align:center}.contact-share-details h3{font-size:24px!important}.contact-share-actions{grid-template-columns:1fr 1fr!important}.contact-share-actions>*:first-child{grid-column:1/-1}.contact-share-details>input{text-align:left}
+
+  /* Communautés : panneau de salons de 400 px, scène centrale. */
+  .hub{display:grid!important;grid-template-columns:400px minmax(0,1fr)!important;background:var(--t-canvas)!important}.hub-rail{display:none!important}.hub-channels{grid-column:1!important;width:400px!important;background:var(--t-surface)!important;border-right:1px solid var(--t-line)!important}.hub-conversation{grid-column:2!important}.hub-channels>header{padding:22px 18px 14px!important}.community-title h1{font-size:23px!important}.hub-channel-tools{padding:0 17px 12px!important}.community-switcher{padding:0 17px 14px!important}.channel-list{padding:4px 12px!important}.channel{min-height:52px!important;margin:3px 0!important;border-radius:12px!important}.hub-invite{margin:12px 16px!important;border-radius:15px!important}.hub-header{height:70px!important;padding:0 28px!important}.hub-messages{padding:28px clamp(30px,7vw,100px)!important}.hub-composer-wrap{padding:12px clamp(24px,6vw,84px) 18px!important}.hub-composer{border-radius:14px!important}
+
+  /* Paramètres : navigation contextuelle et contenu alignés sur Stitch. */
+  .privacy-page.settings-page{height:100%;overflow-y:auto;max-width:none!important;padding:24px 28px 70px!important;background:var(--t-canvas)!important}
+  .settings-page>header{margin:0 0 22px!important;padding:0!important}.settings-page>header h1{font-size:31px!important;margin:8px 0 3px!important}.settings-page>header p{margin:0!important;font-size:12px!important}
+  .settings-desktop-layout{display:grid;grid-template-columns:260px minmax(0,960px);gap:24px;max-width:1240px;margin:0 auto}
+  .settings-context-nav{position:sticky;top:0;align-self:start;display:grid;gap:4px;padding:2px}.settings-context-nav a{display:flex;align-items:center;gap:11px;padding:12px 13px;border-radius:10px;color:var(--t-ink)!important;text-decoration:none!important;font-size:13px;font-weight:650}.settings-context-nav a:first-child{background:linear-gradient(90deg,#4338ca,#3730a3);color:white!important}.settings-context-nav a svg{width:18px;height:18px;color:var(--luma-accent)}
+  .settings-content{min-width:0}.settings-content>.settings-section,.settings-content>div>.settings-section,.settings-content>.settings-links,.settings-content>div>.account-sessions{margin:0 0 22px!important;border-radius:16px!important;box-shadow:none!important;background:var(--t-surface)!important;border:1px solid var(--t-line)!important}
+  .settings-content>.settings-section:nth-of-type(2){order:3}.settings-content>.settings-section:nth-of-type(3){order:2}
+  .settings-heading{padding:18px 20px!important}.settings-heading h2{font-size:17px!important}.settings-heading p{font-size:11px!important}.settings-profile{padding:20px!important;grid-template-columns:120px 1fr 1fr!important}.settings-avatar>span{width:82px!important;height:82px!important;border-radius:20px!important}
+  .settings-choice,.settings-switch{padding:14px 20px!important}.settings-switch small{font-size:10px}.theme-quick-options{padding:16px 20px!important}.settings-links{padding:10px!important}.settings-links>a{min-height:58px!important}.account-sessions{padding:17px 20px!important}.settings-content>form>button{width:auto!important;background:#3d1722!important;color:#ffb4ab!important}
+}
+
+@media (min-width:761px) and (max-width:1180px){
+  .stitch-messenger-root>div{grid-template-columns:310px minmax(0,1fr)!important}.stitch-messenger-root>div>aside{width:310px!important}
+  .network-layout{grid-template-columns:240px minmax(460px,1fr)!important;max-width:1030px!important}.network-about{display:none!important}
+  .privacy-page.friends-page{grid-template-columns:minmax(470px,1fr) 340px!important;padding-inline:20px!important}.friends-page .contact-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .hub{grid-template-columns:330px minmax(0,1fr)!important}.hub-channels{width:330px!important}
+  .settings-desktop-layout{grid-template-columns:220px minmax(0,1fr)}
+}
