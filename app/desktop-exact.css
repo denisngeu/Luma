@@ -128,6 +128,8 @@
   .social-post .post-author { font-size: 11px; }
   .social-post header small { font-size: 8px; }
   .post-actions { padding: 7px 10px !important; }
+  .post-media { display: grid; place-items: center; max-height: 590px; overflow: hidden; background: #070b16; }
+  .post-media img, .post-media video { width: 100%; max-height: 590px; object-fit: contain; }
   .network .post-actions > a, .network .post-actions > button { min-height: 30px !important; padding: 6px 8px !important; font-size: 9px !important; }
   .network-about { display: grid !important; gap: 12px; }
   .network-about > section { padding: 14px; }
@@ -154,7 +156,7 @@
   .friends-page > header h1 { margin: 4px 0 2px !important; font-size: 27px !important; letter-spacing: -.8px !important; }
   .friends-page > header p { margin: 0 !important; font-size: 10px !important; }
   .friends-page .contact-shortcuts { top: 2px !important; right: 0 !important; min-height: 42px; padding: 4px !important; }
-  .friends-page .contact-shortcuts a { min-width: 106px !important; padding: 8px 11px !important; font-size: 9px !important; }
+  .friends-page .contact-shortcuts a { min-width: 106px !important; padding: 8px 11px !important; font-size: 9px !important; background: transparent !important; color: var(--t-ink) !important; }
   .friends-page .contact-shortcuts a[aria-selected='true'] { background: var(--desktop-accent) !important; color: var(--luma-on-accent) !important; }
   .friends-page > section { padding: 13px !important; margin: 0 0 12px !important; border-radius: 11px !important; background: var(--desktop-panel) !important; }
   .friends-page > section:nth-of-type(1) { grid-column: 1; grid-row: 3; }
@@ -162,7 +164,7 @@
   .friends-page > section:nth-of-type(3) { grid-column: 1; grid-row: 4; }
   .friends-page > section:nth-of-type(4) { grid-column: 1; grid-row: 5; }
   .friends-page > section:nth-of-type(5) { grid-column: 2; grid-row: 2 / span 4; top: 16px; }
-  .friends-page > section:nth-of-type(6) { grid-column: 1 / -1; grid-row: 6; }
+  .friends-page > section:nth-of-type(6) { grid-column: 1; grid-row: 6; }
   .friends-page > section > h2 { margin: 0 0 8px !important; font-size: 12px !important; }
   .friend-row { min-height: 44px; padding: 7px 0 !important; font-size: 9px; }
   .friend-row button { min-height: 30px !important; padding: 6px 9px !important; font-size: 8px !important; }
@@ -192,7 +194,9 @@
   .settings-desktop-layout { grid-template-columns: 240px minmax(0, 930px) !important; gap: 20px !important; max-width: 1190px !important; }
   .settings-context-nav { top: 14px !important; gap: 2px !important; }
   .settings-context-nav a { min-height: 38px; padding: 9px 10px !important; border-radius: 8px !important; font-size: 10px !important; }
-  .settings-context-nav a:first-child { background: var(--desktop-accent) !important; }
+  .settings-context-nav a:first-child { background: transparent !important; color: var(--t-ink) !important; }
+  .settings-context-nav a[aria-current='page'] { background: var(--desktop-accent) !important; color: var(--luma-on-accent) !important; }
+  .settings-context-nav a[aria-current='page'] svg { color: currentColor; }
   .settings-context-nav a svg { width: 15px; height: 15px; }
   .settings-content { display: flex; flex-direction: column; }
   .settings-content #profil { order: 1; }
@@ -207,31 +211,31 @@
   .settings-content > .settings-links { margin-bottom: 14px !important; border-radius: 11px !important; }
   .settings-heading { gap: 10px !important; padding: 13px 15px !important; }
   .settings-heading > svg { width: 18px; height: 18px; }
-  .settings-heading h2 { font-size: 13px !important; }
-  .settings-heading p { font-size: 8.5px !important; }
+  .settings-heading h2 { font-size: 15px !important; }
+  .settings-heading p { font-size: 10px !important; }
   .settings-profile { grid-template-columns: 92px 1fr 1fr !important; gap: 11px !important; padding: 14px !important; }
   .settings-avatar > span { width: 68px !important; height: 68px !important; border-radius: 999px !important; }
-  .settings-avatar strong { font-size: 8px !important; }
-  .settings-profile label { font-size: 8px !important; }
-  .settings-profile input, .settings-profile textarea { min-height: 36px; padding: 9px !important; font-size: 9px !important; }
+  .settings-avatar strong { font-size: 10px !important; }
+  .settings-profile label { font-size: 10px !important; }
+  .settings-profile input, .settings-profile textarea { min-height: 38px; padding: 9px !important; font-size: 11px !important; }
   .settings-profile textarea { min-height: 60px !important; }
   .settings-profile > button { min-height: 34px !important; padding: 7px !important; font-size: 9px !important; }
   .settings-devices { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; padding: 13px 15px; border-bottom: 1px solid var(--desktop-line); }
-  .settings-devices label { max-width: none; gap: 5px; font-size: 8px; }
+  .settings-devices label { max-width: none; gap: 5px; font-size: 10px; }
   .settings-devices label > span { display: flex; align-items: center; gap: 6px; font-weight: 700; }
   .settings-devices label svg { width: 13px; height: 13px; color: var(--desktop-accent); }
-  .settings-devices select { min-height: 36px; padding: 7px 9px !important; font-size: 9px; }
-  .microphone-test { grid-column: 1 / -1; display: grid; grid-template-columns: 150px 1fr auto; align-items: center; gap: 10px; font-size: 8px; }
+  .settings-devices select { min-height: 38px; padding: 7px 9px !important; font-size: 10px; }
+  .microphone-test { grid-column: 1 / -1; display: grid; grid-template-columns: 170px 1fr auto; align-items: center; gap: 10px; font-size: 10px; }
   .microphone-test > span { display: flex; align-items: center; gap: 6px; font-weight: 700; }
   .microphone-test > div { height: 7px; overflow: hidden; border-radius: 99px; background: var(--desktop-raised); }
   .microphone-test > div i { display: block; height: 100%; border-radius: inherit; background: var(--desktop-live); transition: width 80ms linear; }
   .microphone-test button { min-height: 30px !important; padding: 6px 9px !important; font-size: 8px !important; background: var(--desktop-raised) !important; }
   .settings-signal { padding: 10px 15px 4px; }
-  .settings-signal h3 { margin: 0; padding: 2px 0 7px; color: var(--desktop-accent); font-size: 9px; }
+  .settings-signal h3 { margin: 0; padding: 2px 0 7px; color: var(--desktop-accent); font-size: 11px; }
   .settings-signal .settings-switch { padding-inline: 0 !important; }
   .settings-choice, .settings-switch { min-height: 52px; padding: 10px 15px !important; }
-  .settings-switch span, .settings-choice { font-size: 9px !important; }
-  .settings-switch small { font-size: 8px !important; }
+  .settings-switch span, .settings-choice { font-size: 10px !important; }
+  .settings-switch small { font-size: 9px !important; }
   .settings-choice select { min-height: 34px; font-size: 9px; }
   .account-sessions { min-height: 74px; margin: 0 !important; padding: 14px !important; }
   .account-sessions strong { font-size: 11px; }
