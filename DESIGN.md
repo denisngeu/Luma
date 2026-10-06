@@ -1,7 +1,7 @@
-# Design System: Luma Social Messenger
+# Design System: Luma Desktop Social Messenger
 
 ## 1. Visual Theme & Atmosphere
-Luma uses a cockpit-dense mobile layout with restrained motion and clear spatial separation. Community navigation resembles a focused collaboration console: a narrow space rail, a compact channel panel, and a dedicated conversation scene. Every displayed member, community, channel, message, and activity state comes from production data.
+Luma desktop follows the three supplied production references: a compact 44px application bar, a 64px icon rail, dense real-time work areas, and small rounded cards on an obsidian canvas. Mobile remains its own touch-first product layout. Every displayed member, community, channel, message, count, and activity state comes from production data.
 
 ## 2. Color Palette & Roles
 - **Deep Obsidian** (`#0B0F17`) — application canvas.
@@ -10,7 +10,7 @@ Luma uses a cockpit-dense mobile layout with restrained motion and clear spatial
 - **Soft White** (`#F8FAFC`) — primary text.
 - **Muted Steel** (`#94A3B8`) — descriptions and metadata.
 - **Whisper Border** (`rgba(255,255,255,.08)`) — structural separation.
-- **Luma Indigo** (`#5F5CE6`) — the single interactive accent for selected tabs, primary actions, and focus rings.
+- **Luma Indigo** (`#7068FF`) — the single interactive accent for selected tabs, primary actions, and focus rings.
 - **Live Mint** (`#35D6A4`) — semantic live/connected status only.
 
 ## 3. Typography Rules
@@ -28,8 +28,11 @@ Luma uses a cockpit-dense mobile layout with restrained motion and clear spatial
 - **Loading:** layout-matched skeletons instead of circular spinners.
 
 ## 5. Layout Principles
-- Mobile communities use a 50px space rail plus a fluid channel panel.
-- Desktop keeps the 400px contextual panel and flexible conversation scene.
+- Mobile communities use a bottom navigation and touch-sized, single-column scenes.
+- Desktop uses a 44px top bar, a 64px icon rail, and the exact three-column proportions shown in the supplied Fil and Amis references.
+- Feed: 282px identity column, a flexible 530–680px publication column, and a 276px activity column.
+- Friends: flexible members column with the real QR contact card pinned on the right.
+- Settings: 240px contextual navigation and a flexible settings canvas.
 - No horizontal page scrolling and no overlapping content.
 - Bottom navigation remains reachable above the device safe area.
 - Real empty states explain how to create or join content.

@@ -1,0 +1,257 @@
+/* Luma desktop — transcription fidèle des écrans de référence, sans contenu simulé. */
+@media (min-width: 761px) {
+  :root {
+    --desktop-canvas: var(--t-canvas);
+    --desktop-panel: color-mix(in srgb, var(--t-surface) 96%, var(--t-canvas));
+    --desktop-raised: color-mix(in srgb, var(--t-raised) 94%, var(--t-surface));
+    --desktop-line: color-mix(in srgb, var(--t-line) 86%, transparent);
+    --desktop-accent: var(--luma-accent);
+    --desktop-live: #20d99a;
+  }
+
+  html[data-luma='dark'] {
+    --t-canvas: #090e19;
+    --t-surface: #111827;
+    --t-raised: #182132;
+    --t-raised-high: #222c40;
+    --t-rail: #080d17;
+    --t-ink: #f5f7fc;
+    --t-muted: #8f9bb0;
+    --t-line: #242e42;
+    --luma-accent: #7068ff;
+    --luma-on-accent: #fff;
+  }
+
+  .luma-desktop-header {
+    height: 44px !important;
+    background: color-mix(in srgb, var(--t-rail) 98%, transparent) !important;
+    border-color: var(--desktop-line) !important;
+  }
+  .luma-shell { padding-top: 44px !important; padding-left: 64px !important; }
+  .luma-shell > .social-nav {
+    top: 44px !important;
+    width: 64px !important;
+    padding: 14px 9px 10px !important;
+    background: var(--t-rail) !important;
+  }
+  .luma-shell > .social-nav > a {
+    width: 44px !important;
+    height: 44px !important;
+    min-height: 44px !important;
+    border-radius: 11px !important;
+  }
+  .luma-shell > .social-nav > a[aria-current='page'] {
+    background: var(--desktop-accent) !important;
+    box-shadow: 0 10px 25px color-mix(in srgb, var(--desktop-accent) 24%, transparent) !important;
+  }
+  .luma-page,
+  .luma-page :is(.network, .privacy-page, .appearance, .call-room) {
+    min-height: calc(100dvh - 44px) !important;
+  }
+
+  /* Fil */
+  .network { background: var(--desktop-canvas) !important; }
+  .network-layout {
+    grid-template-columns: 282px minmax(530px, 680px) 276px !important;
+    gap: 18px !important;
+    max-width: 1294px !important;
+    padding: 22px 18px 64px !important;
+  }
+  .network-card,
+  .network-about > section {
+    margin: 0 0 12px !important;
+    border: 1px solid var(--desktop-line) !important;
+    border-radius: 11px !important;
+    background: var(--desktop-panel) !important;
+    box-shadow: none !important;
+  }
+  .network-sidebar, .network-about { top: 16px !important; }
+  .my-profile { position: relative; padding: 12px !important; }
+  .profile-cover {
+    height: 76px !important;
+    margin: -12px -12px 0 !important;
+    border-radius: 10px 10px 0 0 !important;
+    background: linear-gradient(125deg, color-mix(in srgb, var(--desktop-accent) 62%, #17213a), #293252) !important;
+  }
+  .my-profile > .social-avatar {
+    width: 58px !important; height: 58px !important; margin-top: -29px !important;
+    border: 3px solid var(--desktop-panel) !important; border-radius: 13px !important;
+  }
+  .profile-badge {
+    position: absolute; top: 11px; right: 11px; padding: 3px 7px; border-radius: 5px;
+    background: #090e19cc; color: #bec3ff; font: 750 8px/1.2 inherit; letter-spacing: .5px;
+  }
+  .my-profile h2 { margin: 8px 0 2px !important; font-size: 16px !important; }
+  .my-profile p { min-height: 34px; margin: 0 0 10px !important; font-size: 10.5px !important; line-height: 1.55 !important; }
+  .profile-stats { display: grid; grid-template-columns: 1fr 1fr; margin: 8px 0 12px; border-block: 1px solid var(--desktop-line); }
+  .profile-stats span { display: grid; gap: 1px; padding: 9px 5px; color: var(--t-muted); font-size: 8px; text-align: center; text-transform: uppercase; }
+  .profile-stats span + span { border-left: 1px solid var(--desktop-line); }
+  .profile-stats strong { color: var(--t-ink); font-size: 14px; }
+  .my-profile > button { width: 100%; min-height: 34px !important; font-size: 10px !important; background: var(--desktop-raised) !important; }
+  .circle-shortcut { padding: 14px !important; }
+  .circle-shortcut > svg { float: left; margin: 1px 9px 14px 0; color: var(--desktop-accent); }
+  .circle-shortcut h2 { margin: 0 0 3px !important; font-size: 13px !important; }
+  .circle-shortcut p { margin: 0 0 12px !important; font-size: 10px !important; line-height: 1.55 !important; }
+  .circle-shortcut a { display: flex; justify-content: space-between; align-items: center; padding: 9px 11px; border-radius: 8px; background: var(--desktop-accent); color: var(--luma-on-accent) !important; font-size: 10px; text-decoration: none; }
+  .social-privacy { display: block; padding: 6px 3px; color: var(--desktop-live) !important; font-size: 9px !important; text-decoration: none !important; }
+
+  .feed-main { display: grid; grid-template-columns: minmax(0, 1fr) 218px; gap: 0 10px; align-items: stretch; }
+  .feed-heading {
+    grid-column: 1; min-height: 84px !important; padding: 14px 15px !important;
+    border-radius: 11px 0 0 11px !important; border-right: 0 !important; background: var(--desktop-panel) !important;
+  }
+  .feed-heading h1 { margin: 3px 0 2px !important; font-size: 21px !important; letter-spacing: -.7px !important; }
+  .feed-heading p { font-size: 10px !important; }
+  .feed-heading span { color: var(--desktop-accent) !important; font-size: 8px !important; letter-spacing: 1px; }
+  .feed-heading-actions { gap: 5px !important; }
+  .feed-heading-actions > * { width: 31px !important; height: 31px !important; border-radius: 8px !important; }
+  .feed-tabs {
+    grid-column: 2; min-height: 84px !important; margin: 0 0 12px !important; padding: 5px !important;
+    align-items: stretch; border: 1px solid var(--desktop-line) !important; border-left: 0 !important;
+    border-radius: 0 11px 11px 0 !important; background: var(--desktop-panel) !important;
+  }
+  .feed-tabs a { display: grid; place-items: center; padding: 8px !important; border-radius: 8px !important; font-size: 10px !important; line-height: 1.25; text-decoration: none; }
+  .feed-tabs a[aria-current='page'] { background: var(--desktop-accent) !important; color: var(--luma-on-accent) !important; box-shadow: none !important; }
+  .post-composer, .social-error, .social-notice, .feed-empty, .social-post, .feed-more, .feed-main > [role='status'] { grid-column: 1 / -1; }
+  .post-composer { padding: 12px !important; margin-bottom: 12px !important; }
+  .composer-intro { grid-template-columns: 34px minmax(0,1fr) !important; gap: 9px !important; }
+  .composer-intro .social-avatar { width: 34px !important; height: 34px !important; border-radius: 10px !important; }
+  .post-composer > div label { font-size: 11px !important; }
+  .post-composer textarea { min-height: 64px !important; font-size: 10.5px !important; }
+  .post-composer footer { padding-top: 9px !important; }
+  .post-composer footer span { font-size: 9px !important; }
+  .post-composer footer .media-picker, .post-composer footer button { min-height: 32px !important; padding: 7px 10px !important; font-size: 9px !important; }
+  .social-post { padding: 0 !important; overflow: hidden; }
+  .social-post > header { padding: 12px 13px 0 !important; }
+  .social-post > .post-body { margin: 10px 13px !important; font-size: 11px !important; line-height: 1.55 !important; }
+  .social-post .social-avatar { width: 36px; height: 36px; border-radius: 10px; }
+  .social-post .post-author { font-size: 11px; }
+  .social-post header small { font-size: 8px; }
+  .post-actions { padding: 7px 10px !important; }
+  .network .post-actions > a, .network .post-actions > button { min-height: 30px !important; padding: 6px 8px !important; font-size: 9px !important; }
+  .network-about { display: grid !important; gap: 12px; }
+  .network-about > section { padding: 14px; }
+  .network-about h2 { margin: 4px 0 7px !important; font-size: 14px !important; }
+  .network-about p { margin: 8px 0 !important; font-size: 9.5px !important; line-height: 1.55 !important; }
+  .network-about > section > a { display: flex; justify-content: space-between; margin-top: 12px; padding: 9px 10px; border-radius: 8px; background: var(--desktop-raised); font-size: 9px; text-decoration: none; }
+  .network-about section > header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .network-about section > header h2 { margin: 0 !important; }
+  .network-about section > header span, .network-about section > header b { color: var(--desktop-live); font-size: 8px; }
+  .live-circle > a, .friend-requests > a { display: flex; align-items: center; gap: 8px; min-height: 38px; border-top: 1px solid var(--desktop-line); text-decoration: none; }
+  .live-circle .social-avatar, .friend-requests .social-avatar { width: 26px; height: 26px; border-radius: 8px; font-size: 8px; }
+  .live-circle > a > span { display: grid; }
+  .live-circle strong, .friend-requests strong { font-size: 9px; }
+  .live-circle small { color: var(--t-muted); font-size: 7.5px; }
+  .friend-requests > a > svg { margin-left: auto; }
+
+  /* Amis & connexions */
+  .privacy-page.friends-page {
+    grid-template-columns: minmax(620px, 1.55fr) minmax(360px, .9fr) !important;
+    max-width: 1370px !important; padding: 18px 22px 64px !important; gap: 0 18px !important;
+  }
+  .friends-page > header { min-height: 78px !important; margin: 0 0 12px !important; padding: 0 390px 0 0 !important; }
+  .friends-page > header > span { color: var(--desktop-accent) !important; font-size: 8px !important; }
+  .friends-page > header h1 { margin: 4px 0 2px !important; font-size: 27px !important; letter-spacing: -.8px !important; }
+  .friends-page > header p { margin: 0 !important; font-size: 10px !important; }
+  .friends-page .contact-shortcuts { top: 2px !important; right: 0 !important; min-height: 42px; padding: 4px !important; }
+  .friends-page .contact-shortcuts a { min-width: 106px !important; padding: 8px 11px !important; font-size: 9px !important; }
+  .friends-page .contact-shortcuts a[aria-selected='true'] { background: var(--desktop-accent) !important; color: var(--luma-on-accent) !important; }
+  .friends-page > section { padding: 13px !important; margin: 0 0 12px !important; border-radius: 11px !important; background: var(--desktop-panel) !important; }
+  .friends-page > section:nth-of-type(1) { grid-column: 1; grid-row: 3; }
+  .friends-page > section:nth-of-type(2) { grid-column: 1; grid-row: 2; }
+  .friends-page > section:nth-of-type(3) { grid-column: 1; grid-row: 4; }
+  .friends-page > section:nth-of-type(4) { grid-column: 1; grid-row: 5; }
+  .friends-page > section:nth-of-type(5) { grid-column: 2; grid-row: 2 / span 4; top: 16px; }
+  .friends-page > section:nth-of-type(6) { grid-column: 1 / -1; grid-row: 6; }
+  .friends-page > section > h2 { margin: 0 0 8px !important; font-size: 12px !important; }
+  .friend-row { min-height: 44px; padding: 7px 0 !important; font-size: 9px; }
+  .friend-row button { min-height: 30px !important; padding: 6px 9px !important; font-size: 8px !important; }
+  .friends-page .contact-grid { grid-template-columns: repeat(3, minmax(0,1fr)) !important; gap: 9px !important; }
+  .contact-tile { min-height: 190px !important; padding: 15px 10px 10px !important; gap: 7px !important; border-radius: 10px !important; }
+  .contact-tile::before { height: 47px !important; }
+  .contact-avatar { width: 48px !important; height: 48px !important; border-radius: 12px !important; font-size: 14px !important; }
+  .contact-tile > strong { font-size: 11px !important; }
+  .contact-status { font-size: 7.5px !important; text-transform: uppercase; color: var(--desktop-live) !important; }
+  .friends-page .contact-actions button { min-height: 29px !important; padding: 6px !important; font-size: 8px !important; }
+  .friends-page #ma-carte { padding: 13px !important; }
+  .contact-share-preview { max-width: 246px !important; }
+  .contact-share-preview img { border-radius: 12px !important; }
+  .contact-share-details h3 { margin: 6px 0 !important; font-size: 18px !important; }
+  .contact-share-details p, .contact-share-details small { font-size: 8.5px !important; line-height: 1.5 !important; }
+  .contact-share-actions { margin: 10px 0 !important; gap: 6px !important; }
+  .contact-share-actions button, .friends-page .contact-download { min-height: 32px !important; padding: 7px !important; font-size: 8px !important; }
+  .contact-share-details > input { padding: 8px !important; font-size: 8px !important; }
+
+  /* Paramètres */
+  .privacy-page.settings-page { padding: 16px 24px 64px !important; }
+  .settings-page > header { position: relative; max-width: 1190px; margin: 0 auto 16px !important; }
+  .settings-page > header > span { color: var(--desktop-accent); font-size: 8px !important; }
+  .settings-page > header h1 { margin: 4px 0 1px !important; font-size: 27px !important; letter-spacing: -.9px !important; }
+  .settings-page > header p { margin: 0 !important; font-size: 9px !important; }
+  .settings-online { position: absolute; right: 0; bottom: 4px; padding: 6px 10px; border: 1px solid var(--desktop-line); border-radius: 999px; color: var(--desktop-live); background: var(--desktop-panel); font-size: 8px; }
+  .settings-desktop-layout { grid-template-columns: 240px minmax(0, 930px) !important; gap: 20px !important; max-width: 1190px !important; }
+  .settings-context-nav { top: 14px !important; gap: 2px !important; }
+  .settings-context-nav a { min-height: 38px; padding: 9px 10px !important; border-radius: 8px !important; font-size: 10px !important; }
+  .settings-context-nav a:first-child { background: var(--desktop-accent) !important; }
+  .settings-context-nav a svg { width: 15px; height: 15px; }
+  .settings-content { display: flex; flex-direction: column; }
+  .settings-content #profil { order: 1; }
+  .settings-content #appels { order: 2; }
+  .settings-content #sessions { order: 3; }
+  .settings-content .settings-links { order: 4; }
+  .settings-content #notifications { order: 5; }
+  .settings-content > .settings-section:not(#profil):not(#appels):not(#notifications) { order: 6; }
+  .settings-content .settings-signout { order: 7; }
+  .settings-content > .settings-section,
+  .settings-content > div > .account-sessions,
+  .settings-content > .settings-links { margin-bottom: 14px !important; border-radius: 11px !important; }
+  .settings-heading { gap: 10px !important; padding: 13px 15px !important; }
+  .settings-heading > svg { width: 18px; height: 18px; }
+  .settings-heading h2 { font-size: 13px !important; }
+  .settings-heading p { font-size: 8.5px !important; }
+  .settings-profile { grid-template-columns: 92px 1fr 1fr !important; gap: 11px !important; padding: 14px !important; }
+  .settings-avatar > span { width: 68px !important; height: 68px !important; border-radius: 999px !important; }
+  .settings-avatar strong { font-size: 8px !important; }
+  .settings-profile label { font-size: 8px !important; }
+  .settings-profile input, .settings-profile textarea { min-height: 36px; padding: 9px !important; font-size: 9px !important; }
+  .settings-profile textarea { min-height: 60px !important; }
+  .settings-profile > button { min-height: 34px !important; padding: 7px !important; font-size: 9px !important; }
+  .settings-devices { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; padding: 13px 15px; border-bottom: 1px solid var(--desktop-line); }
+  .settings-devices label { max-width: none; gap: 5px; font-size: 8px; }
+  .settings-devices label > span { display: flex; align-items: center; gap: 6px; font-weight: 700; }
+  .settings-devices label svg { width: 13px; height: 13px; color: var(--desktop-accent); }
+  .settings-devices select { min-height: 36px; padding: 7px 9px !important; font-size: 9px; }
+  .microphone-test { grid-column: 1 / -1; display: grid; grid-template-columns: 150px 1fr auto; align-items: center; gap: 10px; font-size: 8px; }
+  .microphone-test > span { display: flex; align-items: center; gap: 6px; font-weight: 700; }
+  .microphone-test > div { height: 7px; overflow: hidden; border-radius: 99px; background: var(--desktop-raised); }
+  .microphone-test > div i { display: block; height: 100%; border-radius: inherit; background: var(--desktop-live); transition: width 80ms linear; }
+  .microphone-test button { min-height: 30px !important; padding: 6px 9px !important; font-size: 8px !important; background: var(--desktop-raised) !important; }
+  .settings-signal { padding: 10px 15px 4px; }
+  .settings-signal h3 { margin: 0; padding: 2px 0 7px; color: var(--desktop-accent); font-size: 9px; }
+  .settings-signal .settings-switch { padding-inline: 0 !important; }
+  .settings-choice, .settings-switch { min-height: 52px; padding: 10px 15px !important; }
+  .settings-switch span, .settings-choice { font-size: 9px !important; }
+  .settings-switch small { font-size: 8px !important; }
+  .settings-choice select { min-height: 34px; font-size: 9px; }
+  .account-sessions { min-height: 74px; margin: 0 !important; padding: 14px !important; }
+  .account-sessions strong { font-size: 11px; }
+  .account-sessions small, .account-sessions p { font-size: 8px; }
+  .account-sessions button { min-height: 32px !important; padding: 7px 10px !important; font-size: 8px !important; }
+  .settings-links { padding: 6px 14px !important; }
+  .settings-links > a { min-height: 45px; padding: 8px 0 !important; gap: 10px !important; }
+  .settings-links > a > svg { width: 15px; height: 15px; }
+  .settings-links strong { font-size: 9px; }
+  .settings-links small { margin-top: 1px !important; font-size: 8px !important; }
+  .settings-signout button { min-height: 34px !important; padding: 8px 12px !important; color: #ff7188 !important; background: transparent !important; font-size: 9px !important; }
+
+  /* Appels et salons vocaux : même langage visuel que le reste du client PC. */
+  .call-room { max-width: none !important; padding: 18px 24px 32px !important; background: var(--desktop-canvas) !important; }
+  .call-room header { max-width: 1180px; }
+  .call-room header h1 { font-size: 25px !important; }
+  .call-videos { max-width: 1180px !important; gap: 12px !important; }
+  .call-videos > div { min-height: 280px; border-radius: 13px !important; background: var(--desktop-panel) !important; box-shadow: none !important; }
+  .call-controls { padding: 8px !important; border-radius: 13px !important; background: var(--desktop-panel) !important; }
+  .call-controls button { min-height: 42px; border-radius: 10px !important; }
+  .soundboard { max-width: 1180px; margin-inline: auto; border-radius: 12px !important; background: var(--desktop-panel) !important; }
+  .soundboard-grid button { background: var(--desktop-raised) !important; box-shadow: none !important; }
+}
