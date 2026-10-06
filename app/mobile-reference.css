@@ -1,0 +1,177 @@
+/* Mobile layout matched to the approved screens in /ref.
+   This file is loaded last and never changes the desktop composition. */
+@media (max-width:760px){
+  :root{--mobile-nav:58px}
+  html,body{width:100%;min-height:100%;overflow-x:hidden}
+  body{font-size:13px}
+  .luma-shell{height:100dvh;min-height:100dvh;padding-bottom:calc(var(--mobile-nav) + var(--mobile-safe-bottom))!important;overflow:hidden}
+  .luma-page{height:calc(100dvh - var(--mobile-nav) - var(--mobile-safe-bottom))!important;min-height:0!important;overflow-x:hidden!important;overflow-y:auto!important;scrollbar-width:none;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch}
+  .luma-page::-webkit-scrollbar{display:none}
+
+  /* Barre inférieure compacte, toujours accessible. */
+  .luma-shell>.social-nav{height:calc(var(--mobile-nav) + var(--mobile-safe-bottom))!important;padding:3px 5px calc(3px + var(--mobile-safe-bottom))!important;gap:1px!important;background:color-mix(in srgb,var(--t-rail) 96%,transparent)!important;box-shadow:0 -6px 24px #05081724!important}
+  .luma-shell>.social-nav>a{height:51px!important;min-height:51px!important;padding:4px 2px!important;gap:2px!important;border-radius:12px!important;font-size:7.5px!important;font-weight:700!important}
+  .luma-shell>.social-nav>a svg{width:19px!important;height:19px!important}
+  .luma-shell>.social-nav>a[aria-current=page]{background:color-mix(in srgb,var(--luma-accent) 20%,var(--t-raised))!important;color:var(--luma-accent)!important}
+
+  /* Messages & Discussions */
+  .stitch-messenger-root,.stitch-messenger-root>div{height:100%!important;min-height:0!important}
+  .stitch-messenger-root>div{display:block!important}
+  .stitch-messenger-root>div>aside{width:100%!important;height:100%!important;overflow:hidden!important}
+  .stitch-messenger-root:not(.mobile-chat)>div>main{display:none!important}
+  .stitch-messenger-root.mobile-chat>div>aside{display:none!important}
+  .stitch-messenger-root.mobile-chat>div>main{display:flex!important;width:100%!important;height:100%!important}
+  .stitch-mobile-topbar{min-height:52px!important;height:52px!important;padding:6px 12px!important;gap:8px!important}
+  .stitch-live-mark{width:30px!important;height:30px!important;border-radius:10px!important}
+  .stitch-mobile-topbar-copy small{font-size:7px!important;letter-spacing:1.15px!important;color:var(--luma-accent)!important}
+  .stitch-mobile-topbar-copy strong{font-size:11px!important}
+  .stitch-mobile-topbar>button{width:32px!important;height:32px!important;border-radius:10px!important}
+  .stitch-mobile-topbar>button .material-symbols-outlined{font-size:17px!important}
+  .stitch-messenger-root aside>.p-space-lg{padding:8px 13px 3px!important}
+  .stitch-messenger-root aside>.p-space-lg>div>div:first-child{display:none!important}
+  .stitch-messenger-root aside>.p-space-lg h1{margin:0!important;font-size:21px!important;line-height:1.1!important;letter-spacing:-.8px!important}
+  .stitch-messenger-root aside>.p-space-lg>button{width:34px!important;height:34px!important;border-radius:11px!important}
+  .stitch-messenger-root aside>.px-space-lg{padding-left:13px!important;padding-right:13px!important}
+  .stitch-messenger-root aside>.px-space-lg>div{height:38px!important;padding:0 10px!important;border-radius:11px!important}
+  .stitch-messenger-root aside>.px-space-lg input{font-size:12px!important}
+  .stitch-recent-chats{padding:9px 13px 2px!important}
+  .stitch-recent-chats>header{margin-bottom:7px!important;font-size:7px!important;letter-spacing:.9px!important}
+  .stitch-recent-chats>header small{font-size:7px!important}
+  .stitch-recent-chats>div{gap:9px!important;padding-bottom:2px!important}
+  .stitch-recent-chats button{width:45px!important;flex-basis:45px!important;gap:3px!important}
+  .stitch-recent-chats button i{width:42px!important;height:42px!important;border-radius:13px!important;font-size:10px!important}
+  .stitch-recent-chats button>span{max-width:45px!important;font-size:7.5px!important}
+  .stitch-messenger-root aside>.px-space-lg.pt-space-sm{padding-top:7px!important;padding-bottom:2px!important;gap:4px!important}
+  .stitch-messenger-root aside>.px-space-lg.pt-space-sm button{min-height:27px!important;padding:4px 10px!important;border-radius:8px!important;font-size:9px!important}
+  .stitch-messenger-root aside>.px-space-lg.pt-space-md{padding:8px 14px 4px!important;font-size:7px!important;letter-spacing:.8px!important}
+  .stitch-messenger-root aside>.flex-1.overflow-y-auto{padding:0 10px 9px!important}
+  .stitch-messenger-root aside>.flex-1.overflow-y-auto>div[class*="group"]{min-height:58px!important;margin:4px 0!important;padding:8px 9px!important;border-radius:13px!important;gap:9px!important}
+  .stitch-messenger-root aside>.flex-1.overflow-y-auto .w-11{width:39px!important;height:39px!important;border-radius:12px!important}
+  .stitch-messenger-root aside>.flex-1.overflow-y-auto .font-title-sm{font-size:11px!important}
+  .stitch-messenger-root aside>.flex-1.overflow-y-auto .text-body-sm{font-size:9px!important}
+  .stitch-messenger-root aside>.flex-1.overflow-y-auto .text-label-caps{font-size:7px!important}
+  .stitch-messenger-root.mobile-chat main>header{height:54px!important;min-height:54px!important;padding:6px 8px!important}
+  .stitch-messenger-root.mobile-chat main>header .w-10{width:34px!important;height:34px!important;border-radius:11px!important}
+  .stitch-messenger-root.mobile-chat main>header h2{font-size:12px!important}
+  .stitch-messenger-root.mobile-chat main>header>div:last-child button{width:32px!important;height:32px!important;border-radius:10px!important}
+  .stitch-messenger-root.mobile-chat main>section{padding:10px 8px!important;gap:9px!important}
+  .stitch-messenger-root.mobile-chat main>section>div{max-width:88%!important}
+  .stitch-messenger-root.mobile-chat main>section p{font-size:11px!important;line-height:1.45!important}
+  .stitch-messenger-root.mobile-chat main>footer{padding:5px 7px 7px!important}
+  .stitch-messenger-root.mobile-chat main>footer>div{padding:5px!important;border-radius:14px!important}
+  .stitch-messenger-root.mobile-chat main>footer button{width:31px!important;height:31px!important;border-radius:9px!important}
+  .stitch-messenger-root.mobile-chat main>footer input{font-size:12px!important}
+  .stitch-messenger-root.mobile-chat main>footer>div>div:last-child{display:none!important}
+
+  /* Fil : en-tête, publication et cartes à la densité de la référence. */
+  .network{min-height:100%!important}
+  .network-layout{max-width:430px!important;padding:0 0 10px!important}
+  .network-sidebar{display:none!important}
+  .feed-heading{min-height:58px!important;padding:9px 12px 7px!important;display:flex!important;align-items:center!important}
+  .feed-heading span{display:block!important;font-size:7px!important;letter-spacing:1.05px!important}
+  .feed-heading h1{font-size:21px!important;line-height:1.05!important;margin:3px 0 1px!important;letter-spacing:-.8px!important}
+  .feed-heading p{font-size:9px!important}
+  .feed-heading-actions{gap:5px!important}
+  .feed-heading-actions>*{width:32px!important;height:32px!important;border-radius:10px!important;padding:0!important}
+  .feed-tabs{position:relative!important;top:auto!important;margin:6px 11px 8px!important;padding:3px!important;border-radius:11px!important}
+  .feed-tabs a{min-height:31px!important;padding:7px 4px!important;border-radius:8px!important;font-size:9px!important}
+  .network-card.post-composer,.network-card.social-post,.network-card.feed-empty{margin:0 10px 8px!important;padding:11px!important;border-radius:14px!important}
+  .composer-intro{gap:8px!important}
+  .composer-intro .social-avatar,.social-post>header .social-avatar{width:35px!important;height:35px!important;border-radius:11px!important}
+  .post-composer label{font-size:11px!important}
+  .post-composer textarea{min-height:54px!important;padding:4px 0!important;font-size:11px!important;line-height:1.4!important}
+  .post-composer footer{grid-template-columns:1fr auto auto!important;align-items:center!important;gap:5px!important}
+  .post-composer footer>span{grid-column:auto!important;font-size:8px!important}
+  .post-composer footer .media-picker,.post-composer footer .social-primary{min-height:32px!important;padding:6px 9px!important;font-size:9px!important;border-radius:9px!important}
+  .social-post>header{grid-template-columns:35px minmax(0,1fr) auto!important;padding:0!important;gap:7px!important}
+  .social-post .post-author{font-size:11px!important}.social-post header small{font-size:7.5px!important}
+  .social-post .post-own{grid-column:3!important;margin:0!important;gap:2px!important}
+  .social-post .post-own button{min-height:25px!important;padding:3px 4px!important;font-size:7.5px!important}
+  .social-post>.post-body{margin:10px 0!important;font-size:10.5px!important;line-height:1.45!important}
+  .post-media{margin-inline:-2px!important;border-radius:11px!important}.post-media img,.post-media video{max-height:360px!important}
+  .post-actions{grid-template-columns:repeat(2,1fr)!important;padding:6px 0 0!important;gap:4px!important}
+  .post-actions>*{min-height:30px!important;padding:5px!important;font-size:8px!important}.post-actions svg{width:14px!important}
+  .post-comments{padding:8px 0 0!important}.post-comments textarea{min-height:46px!important;font-size:11px!important}
+
+  /* Amis & QR */
+  .privacy-page.friends-page{max-width:430px!important;padding:0 12px 16px!important}
+  .friends-page>header{margin:0!important;padding:10px 1px 7px!important}
+  .friends-page header>span{font-size:7px!important;letter-spacing:1.1px!important}.friends-page header>span svg{width:13px!important}
+  .friends-page h1{font-size:22px!important;margin:5px 0 1px!important;letter-spacing:-.8px!important}
+  .friends-page header>p{font-size:9px!important}
+  .friends-page .contact-shortcuts{height:37px!important;margin:8px 0 0!important;padding:3px!important;border-radius:10px!important}
+  .friends-page .contact-shortcuts a{padding:0 3px!important;border-radius:8px!important;font-size:9px!important}
+  .friends-page>section{margin:7px 0!important;padding:11px!important;border-radius:14px!important}
+  .friends-page>section h2{margin:0 0 8px!important;font-size:11px!important;letter-spacing:.35px!important}
+  .friends-page #ma-carte{padding:11px 13px!important}
+  .contact-share{margin:0!important;gap:7px!important}
+  .contact-share-preview{max-width:208px!important;margin:0 auto 7px!important}
+  .contact-share-preview img{border-radius:13px!important}
+  .contact-share-details h3{font-size:13px!important;margin:5px 0 2px!important}.contact-share-details>p{font-size:8px!important;margin-bottom:8px!important}
+  .contact-share-actions{margin:8px 0!important;gap:4px!important}.contact-share-actions>*{min-height:32px!important;padding:5px!important;font-size:8px!important;border-radius:8px!important}
+  .contact-share-details>input{min-height:32px!important;padding:7px!important;font-size:7px!important}.contact-share-details>small{margin-top:6px!important;font-size:7px!important}
+  .friends-page #ma-carte>.contact-secondary{min-height:31px!important;margin-top:5px!important;font-size:8px!important}
+  .friends-page .contact-grid{gap:6px!important}
+  .contact-tile{grid-template-columns:39px minmax(0,1fr)!important;padding:9px!important;gap:2px 8px!important;border-radius:12px!important}
+  .contact-avatar{width:39px!important;height:39px!important;border-radius:11px!important;font-size:12px!important}
+  .contact-tile>strong{font-size:11px!important}.contact-status{font-size:8px!important}
+  .contact-actions{margin-top:6px!important;gap:4px!important}.friends-page .contact-actions button{min-height:30px!important;padding:5px!important;font-size:8px!important;border-radius:8px!important}.contact-actions svg{width:14px!important}
+  .friend-row{min-height:38px!important;padding:7px!important;font-size:9px!important}.friend-row button{min-height:28px!important;padding:5px 7px!important}
+  .contact-add-heading{gap:7px!important}.contact-add-heading p{font-size:9px!important}.contact-add-heading>a{width:auto!important;padding:6px 8px!important;font-size:8px!important}
+  .contact-add-options{gap:6px!important;margin-top:8px!important}.contact-add-option{padding:9px!important;border-radius:10px!important}.contact-add-option h3{margin-bottom:7px!important;font-size:10px!important}.contact-add-option p,.contact-add-option label{font-size:8px!important}
+  .friends-page :is(input,select,textarea){min-height:35px!important;padding:7px 9px!important;font-size:10px!important}.friends-page .contact-add-option button{min-height:33px!important;font-size:9px!important}
+  .friend-optin{font-size:9px!important;gap:8px!important}
+
+  /* Communautés : rail serveur, catégories et salons comme la référence. */
+  .hub{height:100%!important;min-height:0!important}
+  .hub-channels{grid-template-columns:45px minmax(0,1fr)!important;max-width:none!important;height:100%!important;overflow:hidden!important}
+  .community-mobile-rail{padding:8px 4px 6px!important;gap:7px!important}
+  .community-mobile-rail button{width:31px!important;height:31px!important;min-height:31px!important;flex-basis:31px!important;border-radius:10px!important}
+  .community-mobile-panel>header{padding:9px 10px 5px!important}
+  .community-title{margin-top:0!important}.community-title h1{font-size:14px!important}.community-title p{max-width:210px!important;font-size:8px!important}.community-title>button{width:29px!important;height:29px!important;border-radius:9px!important}
+  .hub-channel-tools{padding:3px 9px 5px!important;gap:5px!important}.hub-channel-tools button{min-height:30px!important;padding:5px!important;border-radius:8px!important;font-size:8px!important}
+  .channel-list{padding:0 7px 5px!important}.channel-section{margin-bottom:6px!important}.channel-section+.channel-section{margin-top:6px!important;padding-top:6px!important}
+  .channel-label{margin:3px 4px 4px!important;padding:0!important;font-size:6.5px!important;letter-spacing:.6px!important}.channel-label b{min-height:13px!important;padding:1px 4px!important;font-size:6px!important}
+  .channel-label button{width:24px!important;height:24px!important}.channel{min-height:37px!important;margin:3px 0!important;padding:6px 7px!important;gap:6px!important;border-radius:10px!important;font-size:9px!important}.channel svg{width:14px!important}.channel small{padding:1px 4px!important;font-size:5.5px!important}.voice-channel{min-height:39px!important}
+  .hub-profile{min-height:47px!important;padding:6px 9px!important}.hub-profile .hub-avatar{width:29px!important;height:29px!important;border-radius:9px!important}.hub-profile strong{font-size:8px!important}.hub-profile small{font-size:6.5px!important}.hub-profile>a{width:29px!important;height:29px!important}
+  .hub-conversation{height:100%!important}.hub-header{height:51px!important;min-height:51px!important;padding:5px 7px!important}.hub-header h2{font-size:12px!important}.hub-header p{font-size:7px!important}.hub-header-actions button{width:31px!important;height:31px!important}.hub-header-actions .voice-join{width:auto!important;padding:5px 7px!important;font-size:8px!important}
+  .hub-search{height:34px!important;margin:5px!important;padding:5px 8px!important}.hub-search input,.hub-search button{font-size:8px!important}
+  .hub-pinned-banner{min-height:30px!important;margin:0 6px!important;padding:5px 7px!important;font-size:7px!important}
+  .hub-messages{padding:7px!important;gap:7px!important}.hub-channel-intro{padding:8px!important}.hub-channel-intro h3{font-size:15px!important}.hub-channel-intro p{font-size:9px!important}
+  .hub-message{gap:6px!important;padding:4px 2px!important}.hub-message>.hub-avatar{width:29px!important;height:29px!important;border-radius:9px!important;font-size:9px!important}.hub-byline strong{font-size:9px!important}.hub-byline time,.hub-byline small{font-size:6.5px!important}.hub-message-main>p{font-size:10px!important;line-height:1.45!important}
+  .hub-composer-wrap{padding:5px 6px!important}.hub-composer{min-height:41px!important;padding:4px!important;border-radius:12px!important}.hub-composer input{font-size:11px!important}.hub-composer button{width:30px!important;height:30px!important}.hub-composer-hint{display:none!important}
+
+  /* Paramètres : cartes compactes, interrupteurs réels et toutes les rubriques accessibles. */
+  .privacy-page.settings-page{max-width:430px!important;padding:0 12px 16px!important}
+  .settings-page>header{padding:10px 1px 7px!important}.settings-page>header>span{font-size:7px!important}.settings-page>header h1{font-size:22px!important;margin:4px 0 2px!important}.settings-page>header p{font-size:8px!important}.settings-online{font-size:7px!important}
+  .settings-content{gap:7px!important}
+  .settings-content>.settings-section,.settings-content>div>.settings-section,.settings-content>.settings-links,.settings-content>div>.account-sessions{border-radius:12px!important}
+  .settings-heading{gap:8px!important;padding:10px 11px 8px!important}.settings-heading>svg{width:14px!important;height:14px!important;padding:6px!important;border-radius:8px!important}.settings-heading h2{font-size:12px!important}.settings-heading p{font-size:8px!important}
+  .settings-profile{grid-template-columns:48px minmax(0,1fr)!important;gap:7px!important;padding:8px 11px 10px!important}.settings-avatar>span{width:46px!important;height:46px!important;flex-basis:46px!important;border-radius:13px!important}.settings-avatar strong{min-height:30px!important;padding:0 9px!important;border-radius:8px!important;font-size:8px!important}
+  .settings-profile>label:not(.settings-avatar){font-size:8px!important}.settings-profile :is(input,textarea){min-height:33px!important;margin-top:3px!important;padding:7px 8px!important;border-radius:8px!important;font-size:9px!important}.settings-profile textarea{min-height:54px!important}.settings-profile>button{min-height:32px!important;border-radius:8px!important;font-size:9px!important}
+  .settings-devices{padding:8px 11px!important;gap:7px!important}.settings-devices label{font-size:8px!important}.settings-devices select{min-height:32px!important;padding:5px 7px!important;font-size:8px!important}.microphone-test{font-size:8px!important}.microphone-test button{min-height:29px!important;font-size:7px!important}
+  .settings-signal h3{padding:8px 11px!important;font-size:9px!important}.settings-choice,.settings-switch{min-height:42px!important;padding:8px 11px!important;gap:8px!important}.settings-choice{font-size:8px!important}.settings-choice select{min-height:32px!important;font-size:8px!important}.settings-switch>span{font-size:9px!important}.settings-switch small{font-size:7px!important}
+  button[data-slot="switch"]{width:36px!important;height:21px!important;min-width:36px!important;min-height:21px!important;padding:2px!important;flex-basis:36px!important}button[data-slot="switch"] [data-slot="switch-thumb"]{width:15px!important;height:15px!important}button[data-slot="switch"][data-state="checked"] [data-slot="switch-thumb"]{transform:translateX(15px)!important}
+  .settings-section>button{width:calc(100% - 22px)!important;min-height:32px!important;margin:8px 11px 10px!important;border-radius:8px!important;font-size:8px!important}
+  .settings-links{padding:4px!important}.settings-links>a{min-height:45px!important;padding:6px 7px!important;gap:7px!important;border-radius:8px!important}.settings-links>a>svg:first-child{width:14px!important;height:14px!important;padding:6px!important;border-radius:8px!important}.settings-links strong{font-size:9px!important}.settings-links small{font-size:7px!important}
+  .account-sessions{padding:9px 11px!important}.account-sessions strong{font-size:9px!important}.account-sessions small,.account-sessions p{font-size:7px!important}.account-sessions button{min-height:31px!important;margin-top:7px!important;font-size:8px!important}
+  .settings-content>form>button{min-height:34px!important;font-size:9px!important}
+
+  /* Appels privés et salons vocaux : scène plein écran, contrôles utilisables. */
+  .call-room,.room-page{height:100%!important;min-height:100%!important;overflow-y:auto!important}
+  .call-room{padding:9px 8px 12px!important}.call-room header h1{font-size:19px!important}.call-preflight{margin:8px auto!important;padding:9px!important;gap:7px!important;border-radius:11px!important;font-size:9px!important}
+  .call-videos{margin:8px 0!important}.call-videos>div:first-child{height:clamp(220px,45dvh,390px)!important;min-height:220px!important;border-radius:14px!important}.call-videos>div:last-child{width:27%!important;min-height:78px!important;max-height:108px!important;border-radius:10px!important}
+  .call-controls{bottom:5px!important;padding:5px!important;gap:4px!important;border-radius:13px!important}.call-controls button{min-height:42px!important;padding:6px 3px!important;border-radius:10px!important;font-size:8px!important}.call-controls svg{width:17px!important}
+  .soundboard{margin:7px auto!important;padding:9px!important;border-radius:11px!important}.soundboard summary{min-height:28px!important;font-size:9px!important}.soundboard-grid{gap:5px!important;margin:7px 0!important}.soundboard-grid button{min-height:43px!important;font-size:8px!important}.soundboard-grid button>span{font-size:16px!important}
+  .room-page>header{min-height:49px!important;padding:6px 9px!important;gap:8px!important}.room-page>header a,.room-page>header strong{font-size:9px!important}.room-page>header span{font-size:7px!important}
+  .room-stage{grid-template-columns:repeat(2,minmax(0,1fr))!important;align-content:start!important;gap:6px!important;padding:8px!important}.room-stage article{min-height:145px!important;border-radius:13px!important}.room-stage article b{left:7px!important;bottom:7px!important;padding:4px 6px!important;font-size:8px!important}.room-avatar{width:56px!important;height:56px!important;border-radius:18px!important;font-size:18px!important}
+  .room-lobby{padding:9px!important}.room-lobby>div{width:55px!important;height:55px!important;border-radius:17px!important}.room-lobby h1{margin:10px 0 4px!important;font-size:20px!important}.room-lobby p{font-size:9px!important;line-height:1.45!important}.room-preflight{margin:9px auto 0!important;padding:9px!important;gap:6px!important;border-radius:10px!important;font-size:9px!important}.room-lobby button{margin-top:9px!important;padding:9px 13px!important;font-size:9px!important}
+  .room-page>footer{padding:5px 6px max(5px,var(--native-safe-bottom,0px),env(safe-area-inset-bottom,0px))!important;gap:4px!important}.room-page>footer button{min-width:0!important;min-height:45px!important;padding:5px 3px!important;border-radius:10px!important}.room-page>footer button span{font-size:7px!important}.room-page>footer svg{width:17px!important}
+  .call-expand,.room-stage .call-expand{width:32px!important;height:32px!important;min-width:32px!important;top:7px!important;right:7px!important;border-radius:9px!important}
+}
+
+@media (max-width:360px){
+  .stitch-mobile-topbar-copy strong{font-size:10px!important}
+  .stitch-mobile-topbar>button{width:30px!important;height:30px!important}
+  .feed-heading h1,.friends-page h1,.settings-page>header h1{font-size:20px!important}
+}
