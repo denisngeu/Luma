@@ -10,7 +10,7 @@ LogBox.ignoreLogs(['Cannot connect to Expo CLI']);
 
 const DEFAULT_SERVER='https://cx9tpuja8iqkelk0zci4vlbs.app.luma-sas.fr';
 const SERVER=(process.env.EXPO_PUBLIC_LUMA_URL||'').trim()||DEFAULT_SERVER;
-const MOBILE_RELEASE='0.3.13';
+const MOBILE_RELEASE='0.3.14';
 const themeBridge=`(()=>{const send=()=>window.ReactNativeWebView.postMessage(JSON.stringify({theme:document.documentElement.dataset.luma}));new MutationObserver(send).observe(document.documentElement,{attributes:true,attributeFilter:['data-luma']});send()})();true;`;
 // One persistent WebView keeps cookies, theme preferences and navigation together.
 class NativeErrorBoundary extends React.Component<React.PropsWithChildren,{failed:boolean}>{
@@ -89,7 +89,7 @@ function LumaApp(){
  if(!origin)return <SafeAreaView edges={['top','left','right']} style={styles.screen}><Text style={styles.text}>Configurez l’adresse du serveur Luma (http:// ou https://) avant de lancer l’application.</Text></SafeAreaView>;
  const safeAreaBridge=`document.documentElement.style.setProperty('--native-safe-bottom','${insets.bottom}px');true;`;
  return <SafeAreaView edges={['top','left','right']} style={[styles.screen,{backgroundColor:dark?'#121623':'#f4f5fb'}]}>
-   {webMounted&&<WebView key={webKey} ref={web} style={styles.web} source={{uri:origin+'/messages?native=android&release='+MOBILE_RELEASE}} originWhitelist={[origin,'http://*','https://*']} sharedCookiesEnabled thirdPartyCookiesEnabled domStorageEnabled javaScriptEnabled allowsInlineMediaPlayback mediaPlaybackRequiresUserAction={false} mediaCapturePermissionGrantType="prompt" mixedContentMode="compatibility" cacheEnabled cacheMode="LOAD_DEFAULT" setSupportMultipleWindows={false} overScrollMode="never" scrollEnabled nestedScrollEnabled
+   {webMounted&&<WebView key={webKey} ref={web} style={styles.web} source={{uri:origin+'/messages?native=android&release='+MOBILE_RELEASE}} originWhitelist={[origin,'http://*','https://*']} sharedCookiesEnabled thirdPartyCookiesEnabled domStorageEnabled javaScriptEnabled allowsInlineMediaPlayback mediaPlaybackRequiresUserAction={false} mediaCapturePermissionGrantType="grantIfSameHostElsePrompt" mixedContentMode="compatibility" cacheEnabled cacheMode="LOAD_DEFAULT" setSupportMultipleWindows={false} overScrollMode="never" scrollEnabled nestedScrollEnabled
      onNavigationStateChange={state=>{back.current=state.canGoBack;}}
      injectedJavaScriptBeforeContentLoaded={safeAreaBridge} injectedJavaScript={safeAreaBridge+themeBridge} onMessage={event=>{try{const url=new URL(event.nativeEvent.url);if(url.origin!==origin)return;const message=JSON.parse(event.nativeEvent.data);if(message.theme==='dark'||message.theme==='light')setDark(message.theme==='dark');if(message.type==='share-contact-card'&&url.pathname==='/amis')void shareCard(message.image);if(message.type==='incoming-call')updateRingtone(message.id);if(message.type==='request-media-permissions')void requestMediaPermissions(message.requestId,message.camera);}catch{}}}
      onLoadStart={beginLoad} onLoadEnd={finishLoad} onError={event=>recover(`Connexion impossible au serveur (${event.nativeEvent.description||'erreur réseau'}).`)} onHttpError={event=>recover('Le serveur Luma répond avec une erreur ('+event.nativeEvent.statusCode+').')}

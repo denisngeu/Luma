@@ -8,6 +8,31 @@ export function mediaError(error: unknown): string {
   return error instanceof Error ? error.message : 'Impossible d’accéder aux appareils.';
 }
 
+export async function getUserMediaWithTimeout(constraints: MediaStreamConstraints, timeoutMs = 12000) {
+  let finished = false;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const capture = navigator.mediaDevices.getUserMedia(constraints).then((stream) => {
+    if (finished) {
+      stream.getTracks().forEach((track) => track.stop());
+      throw Error('La demande d’autorisation a expiré.');
+    }
+    finished = true;
+    return stream;
+  });
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => {
+      if (finished) return;
+      finished = true;
+      reject(Error('L’autorisation du micro tarde à répondre. Vérifiez les autorisations de Luma puis réessayez.'));
+    }, timeoutMs);
+  });
+  try {
+    return await Promise.race([capture, timeout]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
 export async function gatherIce(peer: RTCPeerConnection) {
   if (peer.iceGatheringState === 'complete') return;
   await new Promise<void>((resolve, reject) => {

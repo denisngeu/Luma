@@ -2,7 +2,7 @@
 import {useEffect,useRef,useState} from 'react';
 import Link from 'next/link';
 import {ArrowLeft,Camera,CameraOff,Maximize2,Mic,MicOff,Minimize2,MonitorUp,Music2,PhoneOff,SwitchCamera,Users,Volume2} from 'lucide-react';
-import {gatherIce,mediaError,screenSharingSupported,screenSharingUnavailable} from '@/lib/call-media';
+import {gatherIce,getUserMediaWithTimeout,mediaError,screenSharingSupported,screenSharingUnavailable} from '@/lib/call-media';
 import {Switch} from '@/components/ui/switch';
 import {requestNativeMediaPermissions} from '@/lib/native-permissions';
 
@@ -63,7 +63,7 @@ export default function Room({id}:{id:string}){
   try{
    if(!navigator.mediaDevices?.getUserMedia)throw Error('Micro indisponible. Ouvrez Luma en HTTPS et autorisez son utilisation.');
     await requestNativeMediaPermissions(joinCamera);
-    const stream=await navigator.mediaDevices.getUserMedia({audio:{noiseSuppression,echoCancellation},video:joinCamera?{width:{ideal:1280},height:{ideal:720},facingMode:{ideal:facing}}:false});
+     const stream=await getUserMediaWithTimeout({audio:{noiseSuppression,echoCancellation},video:joinCamera?{width:{ideal:1280},height:{ideal:720},facingMode:{ideal:facing}}:false});
    if(epoch.current!==generation){stream.getTracks().forEach(t=>t.stop());return;}local.current=stream;
    stream.getAudioTracks().forEach(t=>t.enabled=!joinMuted);
    const d=await request('join',{id}) as Info;registered=true;
@@ -99,7 +99,7 @@ export default function Room({id}:{id:string}){
   finally{lock.current=false;setBusy(false);}
  }
  async function replaceVideo(track:MediaStreamTrack|null){await Promise.all([...videoSenders.current.values()].map(sender=>sender.replaceTrack(track)));}
- async function captureCamera(nextFacing=facing){await requestNativeMediaPermissions(true);try{return await navigator.mediaDevices.getUserMedia({video:{width:{ideal:1280},height:{ideal:720},facingMode:{exact:nextFacing}},audio:false});}catch{return navigator.mediaDevices.getUserMedia({video:{width:{ideal:1280},height:{ideal:720},facingMode:{ideal:nextFacing}},audio:false});}}
+  async function captureCamera(nextFacing=facing){await requestNativeMediaPermissions(true);try{return await getUserMediaWithTimeout({video:{width:{ideal:1280},height:{ideal:720},facingMode:{exact:nextFacing}},audio:false});}catch{return getUserMediaWithTimeout({video:{width:{ideal:1280},height:{ideal:720},facingMode:{ideal:nextFacing}},audio:false});}}
  async function installCamera(stream:MediaStream,nextFacing=facing){const track=stream.getVideoTracks()[0];if(!track)throw Error('Aucune caméra disponible.');const previous=local.current?.getVideoTracks()[0];await replaceVideo(track);if(previous){local.current?.removeTrack(previous);previous.stop();}local.current?.addTrack(track);setFacing(nextFacing);setCamera(true);if(info)setStreams(s=>({...s,[info.me]:new MediaStream(local.current!.getTracks())}));}
  async function toggleVideo(){
   if(lock.current||sharing||!local.current)return;lock.current=true;setBusy(true);setError('');const generation=epoch.current;let captured:MediaStream|null=null;
