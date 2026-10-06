@@ -28,6 +28,8 @@ type Msg = {
   starred?: number;
 };
 
+type ActiveRoom = { id: string; participants: number; mode: string };
+
 export default function Messenger() {
   const router = useRouter();
   const [chats, setChats] = useState<Chat[]>([]);
@@ -51,6 +53,7 @@ export default function Messenger() {
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [messagesLoading, setMessagesLoading] = useState(false);
+  const [activeRooms, setActiveRooms] = useState<Record<string, ActiveRoom>>({});
 
   const bottom = useRef<HTMLDivElement>(null);
   const file = useRef<HTMLInputElement>(null);
@@ -132,6 +135,29 @@ export default function Messenger() {
       mounted = false;
     };
   }, [load]);
+
+  useEffect(() => {
+    const groups = chats.filter((chat) => chat.kind === 'group').slice(0, 12);
+    if (!groups.length) {
+      queueMicrotask(() => setActiveRooms({}));
+      return;
+    }
+    let live = true;
+    const refresh = async () => {
+      const rows = await Promise.all(groups.map(async (chat) => {
+        try {
+          const response = await fetch('/api/rooms', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'active', chat: chat.id }), cache: 'no-store' });
+          if (!response.ok) return [chat.id, null] as const;
+          const data = await response.json() as { room: ActiveRoom | null };
+          return [chat.id, data.room] as const;
+        } catch { return [chat.id, null] as const; }
+      }));
+      if (live) setActiveRooms(Object.fromEntries(rows.filter((row): row is readonly [string, ActiveRoom] => !!row[1])));
+    };
+    void refresh();
+    const timer = setInterval(refresh, 8000);
+    return () => { live = false; clearInterval(timer); };
+  }, [chats]);
 
   useEffect(() => {
     let live = true;
@@ -273,6 +299,20 @@ export default function Messenger() {
     if (filter === 'unread') return matchesSearch && (c.unread || 0) > 0;
     return matchesSearch;
   });
+  const shownMessages = view === 'saved' ? msgs.filter((message) => Boolean(message.starred)) : msgs;
+
+  function attachment(message: Msg) {
+    if (!message.file) return null;
+    const href = `/api/files?id=${encodeURIComponent(message.file)}`;
+    const filename = message.filename || 'Pièce jointe';
+    return (
+      <a className="stitch-message-file" href={href} target="_blank" rel="noreferrer">
+        <span className="material-symbols-outlined">attach_file</span>
+        <span>{filename}</span>
+        <span className="material-symbols-outlined">open_in_new</span>
+      </a>
+    );
+  }
 
   return (
     <div className={`stitch-messenger-root flex flex-col w-full h-[calc(100vh-2.5rem)] select-none ${mobile ? 'mobile-chat' : ''}`}>
@@ -332,8 +372,8 @@ export default function Messenger() {
           </div>
 
           {!loading && chats.length > 0 && (
-            <section className="stitch-recent-chats" aria-label="Contacts récents">
-              <header><span>CONTACTS RÉCENTS</span><small>{chats.length} discussion{chats.length > 1 ? 's' : ''}</small></header>
+            <section className="stitch-recent-chats" aria-label="Contacts et groupes récents">
+              <header><span>CONTACTS &amp; GROUPES</span><small>{chats.length} actif{chats.length > 1 ? 's' : ''}</small></header>
               <div>
                 {chats.slice(0, 6).map((chat) => (
                   <button
@@ -348,7 +388,7 @@ export default function Messenger() {
                       setMobile(true);
                     }}
                   >
-                    <i>{chat.kind === 'group' ? <span className="material-symbols-outlined">groups</span> : initials(chat.name)}</i>
+                    <i>{chat.kind === 'group' ? <span className="material-symbols-outlined">groups</span> : initials(chat.name)}{activeRooms[chat.id]&&<b className="stitch-live-dot"/>}</i>
                     <span>{chat.name}</span>
                   </button>
                 ))}
@@ -364,9 +404,19 @@ export default function Messenger() {
                   ? 'bg-surface-container-high text-primary shadow-sm font-bold'
                   : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container'
               }`}
-              onClick={() => setFilter('all')}
+              onClick={() => { setFilter('all'); setView('chat'); }}
             >
               Toutes
+            </button>
+            <button
+              className={`px-space-md py-1 rounded-lg font-label-md text-label-md transition-all cursor-pointer ${
+                filter === 'unread'
+                  ? 'bg-surface-container-high text-primary shadow-sm font-bold'
+                  : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container'
+              }`}
+              onClick={() => { setFilter('unread'); setView('chat'); }}
+            >
+              <span>Non lus</span>
             </button>
             <button
               className={`px-space-md py-1 rounded-lg font-label-md text-label-md transition-all cursor-pointer ${
@@ -374,20 +424,19 @@ export default function Messenger() {
                   ? 'bg-surface-container-high text-primary shadow-sm font-bold'
                   : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container'
               }`}
-              onClick={() => setFilter('groups')}
+              onClick={() => { setFilter('groups'); setView('chat'); }}
             >
               Groupes
             </button>
             <button
-              className={`px-space-md py-1 rounded-lg font-label-md text-label-md transition-all flex items-center gap-space-xs cursor-pointer ${
-                filter === 'unread'
+              className={`px-space-md py-1 rounded-lg font-label-md text-label-md transition-all cursor-pointer ${
+                view === 'saved'
                   ? 'bg-surface-container-high text-primary shadow-sm font-bold'
                   : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container'
               }`}
-              onClick={() => setFilter('unread')}
+              onClick={() => setView(view === 'saved' ? 'chat' : 'saved')}
             >
-              <span>Non lus</span>
-              <span className="w-2 h-2 rounded-full bg-secondary-container" />
+              Favoris
             </button>
           </div>
 
@@ -479,6 +528,11 @@ export default function Messenger() {
             })}
           </div>
 
+          {Object.entries(activeRooms).slice(0,1).map(([chatId,room])=>{
+            const chat=chats.find(item=>item.id===chatId);
+            return <button type="button" className="stitch-live-room" key={room.id} onClick={()=>router.push('/salle/'+encodeURIComponent(room.id))}><span className="material-symbols-outlined">graphic_eq</span><span><strong>{chat?.name||'Salon vocal'}</strong><small>{room.participants} participant{room.participants!==1?'s':''} en direct</small></span><b>Rejoindre</b></button>;
+          })}
+
         </aside>
 
         {/* =========================================================================
@@ -535,9 +589,10 @@ export default function Messenger() {
                 <span className="material-symbols-outlined text-[18px]">videocam</span>
               </button>
               <button
-                className="w-9 h-9 rounded-xl bg-surface-container hover:bg-surface-container-high hover:text-primary flex items-center justify-center transition-all cursor-pointer"
+                className={`w-9 h-9 rounded-xl bg-surface-container hover:bg-surface-container-high hover:text-primary flex items-center justify-center transition-all cursor-pointer ${view === 'saved' ? 'text-primary ring-1 ring-primary' : ''}`}
                 title="Messages favoris"
                 type="button"
+                aria-pressed={view === 'saved'}
                 onClick={() => setView(view === 'saved' ? 'chat' : 'saved')}
               >
                 <span className="material-symbols-outlined text-[18px]">push_pin</span>
@@ -581,7 +636,14 @@ export default function Messenger() {
             </div>
 
             {/* Message Stream */}
-            {msgs.map((m) => {
+            {view === 'saved' && !shownMessages.length && !messagesLoading && (
+              <div className="stitch-saved-empty">
+                <span className="material-symbols-outlined">bookmark</span>
+                <strong>Aucun message favori</strong>
+                <small>Utilisez l’étoile sous un message pour le retrouver ici.</small>
+              </div>
+            )}
+            {shownMessages.map((m) => {
               const isMine = m.author === me;
               const formattedTime = new Date(m.created).toLocaleTimeString('fr-FR', {
                 hour: '2-digit',
@@ -611,6 +673,7 @@ export default function Messenger() {
                           <span className="material-symbols-outlined text-[15px]">content_copy</span>
                         </button>
                       </div>
+                      {attachment(m)}
 
                       <div className="flex items-center justify-end gap-1 mt-1 text-primary-fixed-dim">
                         <span className="font-label-caps text-label-caps">{formattedTime}</span>
@@ -638,7 +701,7 @@ export default function Messenger() {
                         onClick={() => star(m)}
                         type="button"
                       >
-                        <span className="material-symbols-outlined text-[13px]">star</span> Épingler
+                        <span className="material-symbols-outlined text-[13px]">star</span> {m.starred ? 'Retirer' : 'Favori'}
                       </button>
                       <Link
                         href={`/signaler?kind=message&target=${encodeURIComponent(m.id)}`}
@@ -665,7 +728,18 @@ export default function Messenger() {
 
                     <div className="relative group/bubble bg-surface-container-high text-on-surface px-space-md py-space-sm rounded-2xl rounded-tl-sm shadow-md transition-all hover:bg-surface-variant">
                       <p className="font-body-md text-body-md">{m.body}</p>
-
+                      {attachment(m)}
+                    </div>
+                    <div className="flex items-center gap-space-md pl-1 opacity-0 group-hover:opacity-100 transition-opacity text-outline font-label-caps text-label-caps">
+                      <button className="hover:text-on-surface flex items-center gap-0.5 transition-colors cursor-pointer" onClick={() => setReply(m)} type="button">
+                        <span className="material-symbols-outlined text-[13px]">reply</span> Répondre
+                      </button>
+                      <button className="hover:text-on-surface flex items-center gap-0.5 transition-colors cursor-pointer" onClick={() => star(m)} type="button">
+                        <span className="material-symbols-outlined text-[13px]">star</span> {m.starred ? 'Retirer' : 'Favori'}
+                      </button>
+                      <Link href={`/signaler?kind=message&target=${encodeURIComponent(m.id)}`} className="hover:text-error flex items-center gap-0.5 transition-colors">
+                        <span className="material-symbols-outlined text-[13px]">flag</span> Signaler
+                      </Link>
                     </div>
                   </div>
                 </div>
