@@ -24,6 +24,7 @@ if (!gotTheLock) {
 let win = null;
 let tray = null;
 let isQuitting = false;
+const DESKTOP_RELEASE = '0.3.6';
 
 function safeUrl(raw) {
   try {
@@ -51,6 +52,10 @@ app.on('before-quit', () => {
 });
 
 app.whenReady().then(async () => {
+  // Luma is a hosted app. Discard the HTTP cache on startup so an installed
+  // desktop client never remains pinned to an older deployment.
+  await session.defaultSession.clearCache();
+
   let server = null;
   if (process.env.LUMA_URL) {
     server = safeUrl(process.env.LUMA_URL);
@@ -417,7 +422,12 @@ app.whenReady().then(async () => {
       win = null;
     });
 
-    win.loadURL(server.href);
+    const startupUrl = new URL(server.href);
+    startupUrl.searchParams.set('native', 'windows');
+    startupUrl.searchParams.set('release', DESKTOP_RELEASE);
+    win.loadURL(startupUrl.href, {
+      extraHeaders: 'Cache-Control: no-cache\r\nPragma: no-cache\r\n',
+    });
   }
 
   ipcMain.on('luma:flash-frame', () => {
