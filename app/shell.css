@@ -766,3 +766,4 @@ html[data-luma] .privacy-page :is(textarea, input, select) {
 @media(max-width:760px){.messenger-details{top:50%!important;left:50%!important;right:auto!important;bottom:auto;transform:translate(-50%,-50%)!important;width:calc(100vw - 24px)!important;height:auto;max-height:calc(100dvh - 40px);border-radius:18px!important}}
 .stitch-messenger-root [role=button]:focus-visible{outline:3px solid var(--luma-accent);outline-offset:-3px}
 .messenger-details{translate:none!important}
+.stitch-messenger-root .messenger-jump-latest{position:absolute;right:16px;bottom:100px;z-index:15;display:flex;align-items:center;gap:8px;min-height:44px;padding:10px 14px;border:1px solid var(--t-line);border-radius:24px;background:var(--t-surface);color:var(--t-ink);font-size:13px;box-shadow:0 5px 20px #0003}.messenger-jump-latest svg{color:var(--luma-accent);flex-shrink:0}.messenger-jump-latest:focus-visible{outline:3px solid var(--luma-accent);outline-offset:3px}

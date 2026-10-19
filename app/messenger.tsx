@@ -2,6 +2,11 @@
 import { useCallback, useState, useEffect, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import {ClientRequestError,requestJson} from '@/lib/client-request';
+import {isAppVisible,watchAppVisibility} from '@/lib/app-visibility';
+import {useChatRead} from '@/hooks/use-chat-read';
+import type {ReadCursor} from '@/lib/chat-reads';
+import {ArrowDown} from 'lucide-react';
 import { Dialog, DialogClose, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -22,6 +27,8 @@ type Msg = {
   name: string;
   created: number;
   scheduled: number;
+  activity_at?:number;
+  scheduled_pending?:number;
   file?: string;
   filename?: string;
   reply?: string;
@@ -53,9 +60,12 @@ export default function Messenger() {
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [messagesLoading, setMessagesLoading] = useState(false);
+  const [readSnapshot,setReadSnapshot]=useState('');
+  const [atLatest,setAtLatest]=useState(true);
+  const listEpoch=useRef(0);
   const [activeRooms, setActiveRooms] = useState<Record<string, ActiveRoom>>({});
 
-  const bottom = useRef<HTMLDivElement>(null);
+  const history=useRef<HTMLElement>(null),followLatest=useRef(true),firstHistory=useRef(true);
   const file = useRef<HTMLInputElement>(null);
   const searchInput = useRef<HTMLInputElement>(null);
   const mobileMenu=useRef<HTMLDetailsElement>(null);
@@ -80,22 +90,32 @@ export default function Messenger() {
     return chats.find((c) => c.id === active) || chats[0];
   }, [chats, active]);
 
-  const api = useCallback(async (action: string, data: Record<string, unknown> = {}) => {
-    const r = await fetch('/api/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action, ...data }),
-    });
-    const d = (await r.json()) as {
-      error?: string;
-      chats: Chat[];
-      user: { id: string; name: string };
-      messages: Msg[];
-      id: string;
+  const api = useCallback(async (action:string,data:Record<string,unknown>={},signal?:AbortSignal) => requestJson<{
+    error?:string;chats:Chat[];user:{id:string;name:string};messages:Msg[];id:string;readCursor?:ReadCursor;unread?:number;
+  }>('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,...data}),signal}),[]);
+
+  const confirmRead=useCallback((chat:string,unread:number)=>{
+    listEpoch.current++;
+    setChats(current=>current.map(item=>item.id===chat?{...item,unread}:item));
+  },[]);
+  useChatRead({active,mobile,blocked:view!=='chat'||detail||!!modal,snapshot:readSnapshot,viewport:history,api,onRead:confirmRead});
+  useEffect(()=>{
+    let live=true,pending=false;const controller=new AbortController();
+    const refresh=async()=>{
+      if(!live||pending||!isAppVisible())return;pending=true;const epoch=listEpoch.current;
+      try{
+        const result=await api('list',{},controller.signal);
+        if(live&&epoch===listEpoch.current&&Array.isArray(result.chats)){
+          const rows=result.chats;setChats(current=>JSON.stringify(current)===JSON.stringify(rows)?current:rows);
+          setActive(current=>!current||rows.some(chat=>chat.id===current)?current:rows[0]?.id||'');
+        }
+      }catch(error){if(live&&error instanceof ClientRequestError&&error.status===401){setChats([]);setActive('');setMe('');setError('Votre session a expiré. Reconnectez-vous.');}}
+      finally{pending=false;if(live&&epoch!==listEpoch.current)queueMicrotask(()=>void refresh());}
     };
-    if (!r.ok) throw Error(d.error || 'Service indisponible');
-    return d;
-  }, []);
+    const update=()=>{void refresh();};const timer=setInterval(update,4000);
+    window.addEventListener('luma-chat-list-refresh',update);const unwatch=watchAppVisibility(update);
+    return()=>{live=false;controller.abort();clearInterval(timer);window.removeEventListener('luma-chat-list-refresh',update);unwatch();};
+  },[api]);
 
   async function startCall(mode: 'audio' | 'video') {
     if (busy || !activeChat) return;
@@ -177,39 +197,30 @@ export default function Messenger() {
   }, [chats]);
 
   useEffect(() => {
-    let live = true;
-
-    if (!active) {
-      return;
-    }
-
-    const update = async () => {
-      if(live)setMessagesLoading(true);
-      try {
-        const d = await api('messages', { chat: active });
-        if (live && d.messages) {
-          setMsgs(d.messages);
-          setError('');
+    let live=true,pending=false,initial=true;const controller=new AbortController();
+    followLatest.current=true;firstHistory.current=true;
+    queueMicrotask(()=>{if(live){setMsgs([]);setReadSnapshot('');setAtLatest(true);if(!active)setMessagesLoading(false);}});
+    if(!active)return()=>{live=false;controller.abort();};
+    const update=async()=>{
+      if(!live||pending||!isAppVisible())return;pending=true;if(initial)setMessagesLoading(true);
+      try{
+        const result=await api('messages',{chat:active},controller.signal);
+        if(live&&Array.isArray(result.messages)){
+          setMsgs(result.messages);setReadSnapshot(result.readCursor?JSON.stringify({chat:active,cursor:result.readCursor}):'');setError('');initial=false;
         }
-      } catch (e) {
-        if (live) setError((e as Error).message || 'Impossible de charger les messages.');
-      } finally {
-        if (live) setMessagesLoading(false);
-      }
+      }catch(error){if(live)setError(error instanceof Error?error.message:'Impossible de charger les messages.');}
+      finally{pending=false;if(live)setMessagesLoading(false);}
     };
+    const resume=()=>{void update();};void update();const timer=setInterval(resume,3500);
+    const unwatch=watchAppVisibility(resume);
+    return()=>{live=false;controller.abort();clearInterval(timer);unwatch();};
+  },[active,api]);
 
-    void update();
-    const t = setInterval(update, 3500);
-
-    return () => {
-      live = false;
-      clearInterval(t);
-    };
-  }, [active, api]);
-
-  useEffect(() => {
-    bottom.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [msgs.length]);
+  const lastMessage=msgs[msgs.length-1]?.id||'';
+  useEffect(()=>{
+    if(!lastMessage||!followLatest.current||!history.current)return;
+    history.current.scrollTo({top:history.current.scrollHeight,behavior:firstHistory.current||document.documentElement.dataset.motion==='reduced'?'auto':'smooth'});firstHistory.current=false;
+  },[lastMessage,active,view]);
 
   useEffect(() => {
     if (notice) {
@@ -238,7 +249,7 @@ export default function Messenger() {
       setSchedule('');
       setModal('');
       const res = await api('messages', { chat: active });
-      setMsgs(res.messages);
+      followLatest.current=true;setMsgs(res.messages);
     } catch (e) {
       setText(msgText);
       setError((e as Error).message || 'Le message n’a pas été envoyé.');
@@ -278,7 +289,7 @@ export default function Messenger() {
       const d = (await r.json()) as { error?: string };
       if (!r.ok) throw Error(d.error);
       const res = await api('messages', { chat: active });
-      setMsgs(res.messages);
+      followLatest.current=true;setMsgs(res.messages);
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -391,7 +402,7 @@ export default function Messenger() {
 
           {!loading && chats.length > 0 && (
             <section className="stitch-recent-chats" aria-label="Contacts et groupes récents">
-              <header><span>CONTACTS &amp; GROUPES</span><small>{chats.length} actif{chats.length > 1 ? 's' : ''}</small></header>
+              <header><span>CONTACTS &amp; GROUPES</span><small>{chats.length} discussion{chats.length > 1 ? 's' : ''}</small></header>
               <div>
                 {chats.slice(0, 6).map((chat) => (
                   <button
@@ -468,7 +479,7 @@ export default function Messenger() {
           <div className="flex-1 overflow-y-auto px-space-sm space-y-1 py-space-xs">
             {loading&&<p className="p-space-md text-body-sm text-outline">Chargement de vos discussions…</p>}
             {!loading&&error&&<p className="p-space-md text-body-sm text-error" role="alert">{error}</p>}
-            {!loading&&!error&&!shownChats.length&&<p className="p-space-md text-body-sm text-outline">Aucune discussion. Utilisez le bouton + pour en créer une ou rejoindre un groupe.</p>}
+            {!loading&&!error&&!shownChats.length&&<p className="p-space-md text-body-sm text-outline">{search?'Aucune discussion ne correspond à votre recherche.':filter==='unread'?'Aucune discussion non lue.':filter==='groups'?'Aucun groupe dans vos discussions.':'Aucune discussion. Utilisez le bouton + pour en créer une ou rejoindre un groupe.'}</p>}
             {shownChats.map((c, i) => {
               const isSelected = c.id === active;
               const isGroup = c.kind === 'group';
@@ -534,12 +545,8 @@ export default function Messenger() {
                       <p className={`font-body-sm text-body-sm truncate ${isSelected ? 'text-on-surface-variant' : 'text-outline'}`}>
                         {c.preview || 'Commencez la conversation'}
                       </p>
-                      {isSelected ? (
-                        <span className="material-symbols-outlined text-[15px] text-tertiary flex-shrink-0" style={{ fontVariationSettings: "'FILL' 1" }}>
-                          done_all
-                        </span>
-                      ) : c.unread ? (
-                        <span className="font-label-caps text-label-caps px-1.5 py-0.5 rounded-full bg-primary-container text-on-primary-container font-bold flex-shrink-0">
+                      {c.unread ? (
+                        <span className="font-label-caps text-label-caps px-1.5 py-0.5 rounded-full bg-primary-container text-on-primary-container font-bold flex-shrink-0" aria-label={c.unread+' message'+(c.unread!==1?'s':'')+' non lu'+(c.unread!==1?'s':'')}>
                           {c.unread}
                         </span>
                       ) : null}
@@ -654,7 +661,8 @@ export default function Messenger() {
           </header>
 
           {/* Message History Canvas */}
-          <section className="flex-1 overflow-y-auto p-space-lg space-y-space-lg flex flex-col justify-end">
+          <section ref={history} onScroll={event=>{const pane=event.currentTarget;const latest=pane.scrollHeight-pane.scrollTop-pane.clientHeight<=64;followLatest.current=latest;setAtLatest(latest);}} className="flex-1 overflow-y-auto p-space-lg space-y-space-lg flex flex-col">
+            <div className="mt-auto shrink-0" aria-hidden="true"/>
             {messagesLoading&&<p className="mx-auto text-body-sm text-outline">Actualisation…</p>}
             {/* Day Timestamp Divider */}
             <div className="flex items-center justify-center my-space-sm">
@@ -680,7 +688,7 @@ export default function Messenger() {
             )}
             {shownMessages.map((m) => {
               const isMine = m.author === me;
-              const formattedTime = new Date(m.created).toLocaleTimeString('fr-FR', {
+              const formattedTime = new Date(m.activity_at??m.created).toLocaleTimeString('fr-FR', {
                 hour: '2-digit',
                 minute: '2-digit',
               });
@@ -695,6 +703,7 @@ export default function Messenger() {
                     </div>
 
                     <div className="relative group/bubble bg-secondary-container text-on-secondary-container px-space-md py-space-sm rounded-2xl rounded-tr-sm shadow-lg shadow-secondary-container/20">
+                      {!!m.scheduled_pending&&<p className="text-label-caps font-label-caps mb-2">Programmé pour {new Date(m.scheduled).toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'})}</p>}
                       <div className="flex items-center gap-space-sm">
                         <p className="font-body-md text-body-md tracking-wide font-mono text-primary-fixed select-all">
                           {m.body}
@@ -714,9 +723,10 @@ export default function Messenger() {
                         <span className="font-label-caps text-label-caps">{formattedTime}</span>
                         <span
                           className="material-symbols-outlined text-[15px] text-tertiary"
+                          aria-label={m.scheduled_pending?'Message programmé':'Envoyé'} title={m.scheduled_pending?'Message programmé':'Envoyé'}
                           style={{ fontVariationSettings: "'FILL' 1" }}
                         >
-                          done_all
+                          {m.scheduled_pending?'schedule':'check'}
                         </span>
                       </div>
 
@@ -781,9 +791,10 @@ export default function Messenger() {
               );
             })}
 
-            <div ref={bottom} />
+            <div aria-hidden="true" />
           </section>
 
+          {!atLatest&&<button type="button" className="messenger-jump-latest" aria-label="Aller aux derniers messages" onClick={()=>{followLatest.current=true;history.current?.scrollTo({top:history.current.scrollHeight,behavior:document.documentElement.dataset.motion==='reduced'?'auto':'smooth'});}}><ArrowDown size={18}/><span>{(activeChat?.unread||0)>0?`${activeChat!.unread} non lu${activeChat!.unread!==1?'s':''}`:'Derniers messages'}</span></button>}
           {/* Message Composer Footer */}
           <footer className="p-space-lg pt-space-xs pb-space-lg flex-shrink-0 z-20">
             <div className="relative bg-surface-container-low/90 backdrop-blur-xl rounded-2xl shadow-xl p-space-sm flex flex-col gap-space-xs border border-white/5">
