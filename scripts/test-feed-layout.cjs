@@ -13,7 +13,7 @@ const run=(win,code)=>win.webContents.executeJavaScript(code,true);
 let server,win;
 app.whenReady().then(async()=>{
  try{
-  writeFileSync(path.join(dir,'navigation.ts'),"export const usePathname=()=>'/fil';export const useSearchParams=()=>new URLSearchParams();");
+  writeFileSync(path.join(dir,'navigation.ts'),"export const useRouter=()=>({push(url){location.assign(url);}});export const usePathname=()=>'/fil';export const useSearchParams=()=>new URLSearchParams();");
   writeFileSync(path.join(dir,'image.tsx'),"import React from 'react';export default function Image({src,alt,width,height,className}){return <img src={src} alt={alt} width={width} height={height} className={className}/>;}");
   writeFileSync(path.join(dir,'entry.tsx'),"import React from 'react';import {createRoot} from 'react-dom/client';import Feed from '../../app/fil/feed';import Shell from '../../app/app-shell';import Theme from '../../app/theme-provider';createRoot(document.getElementById('root')).render(<React.StrictMode><Theme/><Shell><Feed/></Shell></React.StrictMode>);");
   await build({entryPoints:[path.join(dir,'entry.tsx')],outfile:path.join(dir,'app.js'),bundle:true,platform:'browser',jsx:'automatic',alias:{'@':process.cwd(),'next/navigation':path.join(dir,'navigation.ts'),'next/image':path.join(dir,'image.tsx')},define:{'process.env.NODE_ENV':'"development"','process.env':'{}'}});

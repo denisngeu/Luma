@@ -189,3 +189,11 @@
   .stitch-mobile-topbar>button{width:30px!important;height:30px!important}
   .feed-heading h1,.friends-page h1,.settings-page>header h1{font-size:20px!important}
 }
+@media(max-width:760px){
+ .stitch-messenger-root.mobile-chat main>header .messenger-mobile-menu{display:block;position:relative;flex-shrink:0;color:var(--t-ink)}
+ .messenger-mobile-menu summary{display:grid;place-items:center;list-style:none;width:36px;height:36px;border-radius:10px;background:var(--t-raised);cursor:pointer}
+ .messenger-mobile-menu summary::-webkit-details-marker{display:none}
+ .messenger-mobile-menu[open]>div{position:absolute;right:0;top:calc(100% + 8px);z-index:30;width:230px;max-width:calc(100vw - 24px);padding:6px;border:1px solid var(--t-line);border-radius:12px;background:var(--t-surface);box-shadow:0 10px 30px #0005}
+ .stitch-messenger-root.mobile-chat main>header .messenger-mobile-menu .messenger-menu-action{display:flex!important;justify-content:flex-start!important;width:100%!important;height:auto!important;min-height:44px!important;padding:10px!important;font-size:13px!important;text-align:left!important;border-radius:8px!important;background:transparent!important}
+ .messenger-mobile-menu :is(summary,button):focus-visible{outline:2px solid var(--luma-accent);outline-offset:2px}
+}

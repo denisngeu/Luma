@@ -68,7 +68,7 @@
   .stitch-messenger-root.mobile-chat main>header .w-10{width:38px!important;height:38px!important;border-radius:13px!important}
   .stitch-messenger-root.mobile-chat main>header>div:last-child{gap:3px!important}
   .stitch-messenger-root.mobile-chat main>header>div:last-child button{width:37px!important;height:37px!important}
-  .stitch-messenger-root.mobile-chat main>header>div:last-child button:nth-of-type(n+3),.stitch-messenger-root.mobile-chat main>header>div:last-child>div{display:none!important}
+  .stitch-messenger-root.mobile-chat main>header>div:last-child button:nth-of-type(n+3):not(.messenger-menu-action),.stitch-messenger-root.mobile-chat main>header>div:last-child>div{display:none!important}
   .stitch-messenger-root.mobile-chat main>section{padding:15px 12px!important;background:var(--t-canvas)}
   .stitch-messenger-root.mobile-chat main>footer{padding:8px 9px 9px!important;background:var(--t-canvas)}
   .stitch-messenger-root.mobile-chat main>footer>div{border-radius:19px!important;background:var(--t-surface)!important;border:1px solid var(--t-line)!important}

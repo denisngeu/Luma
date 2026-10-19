@@ -1,9 +1,10 @@
 'use client';
-import { useEffect, useState } from 'react';
-import { usePathname } from 'next/navigation';
+import { useCallback, useEffect, useState } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Search, Bell, User, Minus, Square, X } from 'lucide-react';
+import { Search, User, Minus, Square, X } from 'lucide-react';
+import NotificationCenter from './notification-center';
 
 interface LumaDesktopBridge {
   isDesktop?: boolean;
@@ -17,6 +18,21 @@ interface LumaDesktopBridge {
 
 export default function DesktopHeader() {
   const path = usePathname();
+  const router = useRouter();
+  const focusSearch = useCallback(() => {
+    window.dispatchEvent(new Event('luma-search-discussions'));
+    if (path !== '/messages') router.push('/messages?recherche=1');
+  }, [path, router]);
+  useEffect(() => {
+    const shortcut = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && !event.altKey && event.key.toLowerCase() === 'k') {
+        event.preventDefault();
+        if (!event.repeat) focusSearch();
+      }
+    };
+    window.addEventListener('keydown', shortcut);
+    return () => window.removeEventListener('keydown', shortcut);
+  }, [focusSearch]);
   const [isDesktop, setIsDesktop] = useState(false);
   const [isWindows, setIsWindows] = useState(false);
 
@@ -124,22 +140,16 @@ export default function DesktopHeader() {
 
       {/* Right: Quick actions (Search, Notifications, Profile) */}
       <div className={`header-right ${isWindows ? 'win-padding' : ''}`}>
-        <Link
-          href="/messages"
+        <button
+          type="button"
+          onClick={focusSearch}
           className="header-action-btn"
-          title="Recherche (⌘K)"
+          title="Rechercher une discussion (Ctrl+K / ⌘K)"
           aria-label="Rechercher"
         >
           <Search size={16} />
-        </Link>
-        <Link
-          href="/fil"
-          className="header-action-btn"
-          title="Notifications"
-          aria-label="Notifications"
-        >
-          <Bell size={16} />
-        </Link>
+        </button>
+        <NotificationCenter/>
         <Link
           href="/parametres"
           className="header-user-badge"

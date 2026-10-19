@@ -2,7 +2,7 @@
 import { useCallback, useState, useEffect, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Dialog, DialogClose, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 type Chat = {
@@ -58,6 +58,23 @@ export default function Messenger() {
   const bottom = useRef<HTMLDivElement>(null);
   const file = useRef<HTMLInputElement>(null);
   const searchInput = useRef<HTMLInputElement>(null);
+  const mobileMenu=useRef<HTMLDetailsElement>(null);
+  const searchFrame = useRef<number|null>(null);
+  const focusDiscussions = useCallback(() => {
+    setMobile(false);
+    setFilter('all');
+    if(searchFrame.current!==null)cancelAnimationFrame(searchFrame.current);
+    searchFrame.current=requestAnimationFrame(()=>{searchFrame.current=null;searchInput.current?.focus();searchInput.current?.select();});
+  },[]);
+  useEffect(()=>{
+    const focus=()=>focusDiscussions();
+    window.addEventListener('luma-search-discussions',focus);
+    const dismiss=(event:PointerEvent)=>{if(mobileMenu.current?.open&&event.target instanceof Node&&!mobileMenu.current.contains(event.target))mobileMenu.current.open=false;};
+    window.addEventListener('pointerdown',dismiss);
+    let live=true;
+    if(new URLSearchParams(window.location.search).get('recherche')==='1')queueMicrotask(()=>{if(live)focus();});
+    return()=>{live=false;window.removeEventListener('luma-search-discussions',focus);window.removeEventListener('pointerdown',dismiss);if(searchFrame.current!==null)cancelAnimationFrame(searchFrame.current);};
+  },[focusDiscussions]);
 
   const activeChat = useMemo(() => {
     return chats.find((c) => c.id === active) || chats[0];
@@ -329,7 +346,7 @@ export default function Messenger() {
           <div className="stitch-mobile-topbar" aria-label="En-tête de la messagerie">
             <span className="stitch-live-mark" aria-hidden="true"><i /></span>
             <span className="stitch-mobile-topbar-copy"><small>LUMA <b>•</b> MESSAGERIE</small><strong>Messages &amp; Discussions</strong></span>
-            <button type="button" aria-label="Rechercher" onClick={() => searchInput.current?.focus()}><span className="material-symbols-outlined">search</span></button>
+            <button type="button" aria-label="Rechercher" onClick={focusDiscussions}><span className="material-symbols-outlined">search</span></button>
             <button type="button" aria-label="Nouvelle discussion" onClick={() => setModal('new')}><span className="material-symbols-outlined">edit_square</span></button>
           </div>
 
@@ -361,12 +378,13 @@ export default function Messenger() {
                 ref={searchInput}
                 className="w-full bg-transparent text-body-sm font-body-sm text-on-surface placeholder:text-outline focus:outline-none pl-space-sm pr-space-md py-1"
                 placeholder="Rechercher une discussion..."
+                aria-label="Rechercher une discussion"
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
               <kbd className="font-label-caps text-label-caps px-1.5 py-0.5 rounded bg-surface-container-high text-on-surface-variant shadow-inner">
-                ⌘K
+                Ctrl/⌘ K
               </kbd>
             </div>
           </div>
@@ -468,6 +486,10 @@ export default function Messenger() {
               return (
                 <div
                   key={c.id}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={'Ouvrir la discussion avec '+c.name}
+                  onKeyDown={event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();event.currentTarget.click();}}}
                   className={`relative group cursor-pointer p-space-sm rounded-xl transition-all duration-150 flex items-center gap-space-md ${
                     isSelected
                       ? 'bg-surface-container-high/90 text-on-surface shadow-sm'
@@ -573,6 +595,7 @@ export default function Messenger() {
               <button
                 className="w-9 h-9 rounded-xl bg-surface-container hover:bg-surface-container-high hover:text-primary flex items-center justify-center transition-all cursor-pointer"
                 title="Appel vocal"
+                aria-label="Appel vocal"
                 type="button"
                 disabled={!activeChat||busy}
                 onClick={() => startCall('audio')}
@@ -582,6 +605,7 @@ export default function Messenger() {
               <button
                 className="w-9 h-9 rounded-xl bg-surface-container hover:bg-surface-container-high hover:text-primary flex items-center justify-center transition-all cursor-pointer"
                 title="Appel vidéo"
+                aria-label="Appel vidéo"
                 type="button"
                 disabled={!activeChat||busy}
                 onClick={() => startCall('video')}
@@ -591,6 +615,7 @@ export default function Messenger() {
               <button
                 className={`w-9 h-9 rounded-xl bg-surface-container hover:bg-surface-container-high hover:text-primary flex items-center justify-center transition-all cursor-pointer ${view === 'saved' ? 'text-primary ring-1 ring-primary' : ''}`}
                 title="Messages favoris"
+                aria-label="Messages favoris"
                 type="button"
                 aria-pressed={view === 'saved'}
                 onClick={() => setView(view === 'saved' ? 'chat' : 'saved')}
@@ -600,8 +625,9 @@ export default function Messenger() {
               <button
                 className="w-9 h-9 rounded-xl bg-surface-container hover:bg-surface-container-high hover:text-primary flex items-center justify-center transition-all cursor-pointer"
                 title="Rechercher une discussion"
+                aria-label="Rechercher une discussion"
                 type="button"
-                onClick={() => searchInput.current?.focus()}
+                onClick={focusDiscussions}
               >
                 <span className="material-symbols-outlined text-[18px]">search</span>
               </button>
@@ -609,12 +635,21 @@ export default function Messenger() {
               <button
                 className="w-9 h-9 rounded-xl bg-surface-container hover:bg-surface-container-high hover:text-on-surface flex items-center justify-center transition-all cursor-pointer"
                 title="Options et profil"
+                aria-label="Options et profil"
                 type="button"
                 disabled={!activeChat}
                 onClick={() => setDetail(!detail)}
               >
                 <span className="material-symbols-outlined text-[18px]">more_vert</span>
               </button>
+              <details ref={mobileMenu} className="messenger-mobile-menu" onKeyDown={event=>{if(event.key==='Escape'){event.preventDefault();event.currentTarget.open=false;event.currentTarget.querySelector('summary')?.focus();}}}>
+                <summary aria-label="Options de la discussion"><span className="material-symbols-outlined" aria-hidden="true">more_vert</span></summary>
+                <div>
+                  <button type="button" className="messenger-menu-action" onClick={event=>{event.currentTarget.closest('details')?.removeAttribute('open');focusDiscussions();}}>Rechercher une discussion</button>
+                  <button type="button" className="messenger-menu-action" aria-pressed={view==='saved'} onClick={event=>{event.currentTarget.closest('details')?.removeAttribute('open');setView(view==='saved'?'chat':'saved');}}>Messages favoris</button>
+                  <button type="button" className="messenger-menu-action" disabled={!activeChat} onClick={event=>{event.currentTarget.closest('details')?.removeAttribute('open');setDetail(true);}}>Informations de la discussion</button>
+                </div>
+              </details>
             </div>
           </header>
 
@@ -848,20 +883,20 @@ export default function Messenger() {
       </div>
 
       {/* Details drawer */}
-      {detail && (
-        <aside className="fixed right-0 top-10 bottom-0 w-80 bg-surface-container-high/95 backdrop-blur-2xl z-30 p-space-lg flex flex-col border-l border-white/10 shadow-2xl">
+      <Dialog open={detail} onOpenChange={setDetail}>
+        <DialogContent className="messenger-details" showCloseButton={false} onCloseAutoFocus={event=>{const summary=mobileMenu.current?.querySelector('summary');if(summary?.getClientRects().length){event.preventDefault();summary.focus();}}}>
           <div className="flex items-center justify-between mb-space-lg">
-            <h3 className="font-headline-md text-headline-md font-bold">Détails</h3>
-            <button className="p-1 rounded-lg hover:bg-surface-container text-outline hover:text-white" onClick={() => setDetail(false)}>
+            <DialogTitle className="font-headline-md text-headline-md font-bold">Détails</DialogTitle>
+            <DialogClose asChild><button type="button" aria-label="Fermer les détails" className="messenger-details-close">
               ✕
-            </button>
+            </button></DialogClose>
           </div>
           <div className="flex flex-col items-center gap-space-sm mb-space-lg">
             <div className="w-20 h-20 rounded-2xl bg-secondary-container text-on-secondary-container flex items-center justify-center font-headline-lg">
               {initials(activeChat?.name || 'F')}
             </div>
             <h4 className="font-title-sm text-title-sm font-bold text-on-surface">{activeChat?.name}</h4>
-            <p className="font-label-caps text-label-caps text-tertiary">Discussion réservée aux membres</p>
+            <DialogDescription className="text-tertiary">Discussion réservée aux membres</DialogDescription>
           </div>
           <div className="space-y-space-md">
             <div className="p-space-sm rounded-xl bg-surface-container-lowest border border-white/5">
@@ -875,11 +910,11 @@ export default function Messenger() {
               disabled={!activeChat?.invite}
               onClick={() => activeChat?.invite&&copy(activeChat.invite)}
             >
-              Copier le lien d&apos;invitation
+              Copier le code d&apos;invitation
             </button>
           </div>
-        </aside>
-      )}
+        </DialogContent>
+      </Dialog>
 
       {/* Modals */}
       <Dialog open={!!modal} onOpenChange={(o) => (!o ? setModal('') : null)}>
