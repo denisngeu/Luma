@@ -776,3 +776,8 @@ html[data-luma] .privacy-page :is(textarea, input, select) {
 .messenger-day-divider time{background:var(--t-surface);color:var(--t-muted);border:1px solid var(--t-line);border-radius:20px;padding:5px 12px;font-size:11px}
 textarea.messenger-composer-text{resize:none;min-height:36px;max-height:144px;min-width:0;line-height:1.5;overflow-y:auto;field-sizing:content}
 .messenger-message-body{white-space:pre-wrap;overflow-wrap:anywhere}
+.settings-network-check{padding:18px;border-top:1px solid var(--t-line);display:grid;gap:10px}
+.settings-network-check>div{display:flex;align-items:center;gap:8px;color:var(--t-ink)}
+.settings-network-check svg{width:18px;height:18px;color:var(--luma-accent)}
+.settings-network-check p{margin:0;font-size:12px;line-height:1.6}
+.settings-network-check button{justify-self:start;min-height:44px;border:1px solid var(--t-line);border-radius:10px;padding:10px 14px;background:var(--t-raised);color:var(--t-ink);cursor:pointer}
