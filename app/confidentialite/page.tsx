@@ -1,6 +1,5 @@
 import {privacyConfig as c} from '@/lib/privacy-config';
 import Link from 'next/link';
-import './privacy.css';
 export const metadata={title:'Confidentialité — Luma'};
 export default function Page(){return <main className="privacy-page"><nav><Link href="/">← Luma</Link><Link href="/mes-donnees">Mes données</Link></nav><header><span>CONFIDENTIALITÉ · {c.updated}</span><h1>Comprendre vos données.</h1><p>Cette notice décrit le fonctionnement actuel de Luma.</p></header>
  {(!c.operator||!c.contactEmail)&&<p className="privacy-error">Version privée de préparation. L’identité et le contact de l’exploitant, les durées de conservation et les garanties des prestataires doivent être complétés avant l’ouverture du service.</p>}

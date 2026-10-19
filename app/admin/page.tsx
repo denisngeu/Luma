@@ -2,7 +2,6 @@ import {requireChatGPTUser} from '../chatgpt-auth';
 import {isAdministrator} from '@/lib/admin';
 import {notFound} from 'next/navigation';
 import Dashboard from './dashboard';
-import './admin.css';
 export const dynamic='force-dynamic';
 export const metadata={title:'Administration — Luma'};
 export default async function Administration(){

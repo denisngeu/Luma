@@ -1,24 +1,9 @@
 import type { Metadata } from "next";
-import "./globals.css";
-import './themes.css';
-import './theme-options.css';
-import './social.css';
-import './network.css';
-import './feed-v2.css';
-import './call-v2.css';
+import './app.css';
 import CallInbox from './call-inbox';
 import ThemeProvider from './theme-provider';
 import AppShell from './app-shell';
 import {themeBootstrap} from './theme-bootstrap';
-import './shell.css';
-import './mobile.css';
-import './stitch-design.css';
-import './stitch-mobile.css';
-import './stitch-desktop.css';
-import './switches.css';
-import './stitch-social-final.css';
-import './desktop-exact.css';
-import './mobile-reference.css';
 
 export const metadata: Metadata = {
   title: "Luma — Votre cercle",

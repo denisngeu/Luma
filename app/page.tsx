@@ -3,7 +3,6 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { getChatGPTUser } from "./chatgpt-auth";
-import "./landing.css";
 
 export const dynamic = "force-dynamic";
 

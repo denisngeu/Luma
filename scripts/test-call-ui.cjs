@@ -5,6 +5,7 @@ const {mkdirSync,writeFileSync,readFileSync}=require('node:fs');
 const path=require('node:path');
 const assert=require('node:assert/strict');
 const {build}=require('esbuild');
+const compiledStyles=require('./compiled-styles.cjs');
 const dir=path.resolve('.sites-runtime/call-ui');
 mkdirSync(dir,{recursive:true});
 app.commandLine.appendSwitch('use-fake-device-for-media-stream');
@@ -46,6 +47,7 @@ app.on('window-all-closed',()=>{}); app.whenReady().then(async()=>{
  root.render(<React.StrictMode>{p.get('kind')==='settings'?<Preferences/>:p.get('kind')==='group'?<Room id="test"/>:<Call id="test"/>}</React.StrictMode>);
  `);
  await build({entryPoints:[path.join(dir,'entry.tsx')],outfile:path.join(dir,'app.js'),bundle:true,platform:'browser',jsx:'automatic',alias:{'@':process.cwd()},define:{'process.env.NODE_ENV':'"development"','process.env':'{}'}});
+ const styles=compiledStyles();
  server=createServer(async(req,res)=>{
   if(req.url.startsWith('/api/')){
    let body='';for await(const c of req)body+=c;const p=JSON.parse(body||'{}'),who=req.headers['x-test-user'];let out={};
@@ -67,7 +69,7 @@ app.on('window-all-closed',()=>{}); app.whenReady().then(async()=>{
    res.setHeader('Content-Type','application/json');res.end(JSON.stringify(out));return;
   }
   if(req.url==='/app.js'){res.setHeader('Content-Type','text/javascript');res.end(readFileSync(path.join(dir,'app.js')));return;}
-  res.setHeader('Content-Type','text/html');const css=['app/themes.css','app/social.css','app/globals.css','app/call-v2.css'].map(p=>readFileSync(p,'utf8')).join('\n');res.end('<html data-luma="dark"><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif}button{font:inherit}'+css+'</style></head><body><div id="root"></div><script src="/app.js"></script></body></html>');
+  res.setHeader('Content-Type','text/html');res.end('<html data-luma="dark"><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif}button{font:inherit}'+styles+'</style></head><body><div id="root"></div><script src="/app.js"></script></body></html>');
  });
  await new Promise(r=>server.listen(0,'127.0.0.1',r));const base='http://127.0.0.1:'+server.address().port;
  const checks=[];

@@ -2,7 +2,6 @@
 import {useCallback,useEffect,useRef,useState} from 'react';
 import SocialNav from '../social-nav';
 import ContactCard from './contact-card';
-import './friends.css';
 import jsQR from 'jsqr';
 import {Phone,Video,MessageSquare,Users,Camera} from 'lucide-react';
 import {useRouter} from 'next/navigation';
@@ -10,7 +9,6 @@ import Link from 'next/link';
 import {Switch} from '@/components/ui/switch';
 import {ClientRequestError,requestJson} from '@/lib/client-request';
 import {getUserMediaWithTimeout,mediaError} from '@/lib/call-media';
-import '../confidentialite/privacy.css';
 type Friend={id:string;sender:string;recipient:string;state:string;name:string;peer:string};
 type Listing={profile:{code:string;discoverable:number};items:Friend[];user:{id:string;name:string}};
 async function api(action:string,data:Record<string,unknown>={},signal?:AbortSignal){return requestJson<Listing & {error:string;message:string;chat:string;sent:boolean}>('/api/friends',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,...data}),signal});}

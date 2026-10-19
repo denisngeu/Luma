@@ -7,9 +7,6 @@ import {DropdownMenu,DropdownMenuTrigger,DropdownMenuContent,DropdownMenuItem} f
 import {Switch} from '@/components/ui/switch';
 import {useRouter} from 'next/navigation';
 import Link from 'next/link';
-import './workspace.css';
-import './workspace-v2.css';
-import './stitch-community-mobile.css';
 type Space={id:string;name:string;description:string;rules?:string;invite:string;role:string};
 type Channel={id:string;name:string;topic?:string;mode?:string;space?:string;owner:string};
 type Member={user:string;name:string;role:string};

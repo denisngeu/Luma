@@ -3,7 +3,6 @@ import Link from 'next/link';
 import {requireChatGPTUser,chatGPTSignOutPath} from '../chatgpt-auth';
 import SocialNav from '../social-nav';
 import {Palette,Shield,ChevronRight} from 'lucide-react';
-import '../confidentialite/privacy.css';
 import AccountSessions from './account-sessions';
 import UserPreferences from './user-preferences';
 import SettingsNav from './settings-nav';
