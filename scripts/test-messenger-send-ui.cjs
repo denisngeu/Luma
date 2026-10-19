@@ -15,7 +15,7 @@ const sent=[],stored={a:[],b:[]},tokens=new Map();
 const listing=()=>({user:{id:'me',name:'Moi'},chats:[{id:'a',name:'Alice',kind:'direct'},{id:'b',name:'Bob',kind:'direct'}]});
 app.whenReady().then(async()=>{
  try{
-  writeFileSync(path.join(dir,'navigation.ts'),"export const useRouter=()=>({push(url){location.assign(url);}});");
+  writeFileSync(path.join(dir,'navigation.ts'),require('./test-navigation-fixture.cjs'));
   writeFileSync(path.join(dir,'entry.tsx'),"import React from 'react';import {createRoot} from 'react-dom/client';import Messenger from '../../app/messenger';createRoot(document.getElementById('root')).render(<React.StrictMode><Messenger/></React.StrictMode>);");
   await build({entryPoints:[path.join(dir,'entry.tsx')],outfile:path.join(dir,'app.js'),bundle:true,platform:'browser',jsx:'automatic',alias:{'@':process.cwd(),'next/navigation':path.join(dir,'navigation.ts')},define:{'process.env.NODE_ENV':'"development"','process.env':'{}'}});
   const styles=compiledStyles();

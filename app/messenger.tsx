@@ -1,6 +1,6 @@
 'use client';
 import { Fragment, useCallback, useState, useEffect, useRef, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter,useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import {ClientRequestError,requestJson} from '@/lib/client-request';
 import {isAppVisible,watchAppVisibility} from '@/lib/app-visibility';
@@ -41,6 +41,8 @@ const emptyDraft:Draft={text:'',reply:null,schedule:''};
 
 export default function Messenger() {
   const router = useRouter();
+  const query=useSearchParams(),requestedChat=query.get('chat')||'';
+  const appliedChatLink=useRef<string|null>(null);
   const [chats, setChats] = useState<Chat[]>([]);
   const [active, setActive] = useState<string>('');
   const [msgs, setMsgs] = useState<Msg[]>([]);
@@ -163,9 +165,7 @@ export default function Messenger() {
       if (d.user) {
         setMe(d.user.id);
       }
-      const requested=new URLSearchParams(window.location.search).get('chat');
-      if(requested&&loadedChats.some(chat=>chat.id===requested)){setActive(requested);setMobile(true);}
-      else setActive(current=>loadedChats.some(chat=>chat.id===current)?current:'');
+      setActive(current=>loadedChats.some(chat=>chat.id===current)?current:'');
       setError('');
     } catch (e) {
       setChats([]);
@@ -185,6 +185,20 @@ export default function Messenger() {
       mounted = false;
     };
   }, [load]);
+
+  useEffect(()=>{
+    if(loading||!me||appliedChatLink.current===requestedChat)return;
+    let live=true;
+    queueMicrotask(()=>{
+      if(!live)return;
+      appliedChatLink.current=requestedChat;
+      if(!requestedChat){setActive('');setMobile(false);setError('');return;}
+      if(chats.some(chat=>chat.id===requestedChat)){
+        setActive(requestedChat);setMobile(true);setView('chat');setDetail(false);setModal('');setError('');
+      }else{setActive('');setMobile(false);setError('Cette discussion est introuvable ou vous n’y avez plus accès.');}
+    });
+    return()=>{live=false;};
+  },[requestedChat,chats,loading,me]);
 
   useEffect(() => {
     let live=true,pending=false,initial=true,queued=false;const controller=new AbortController();

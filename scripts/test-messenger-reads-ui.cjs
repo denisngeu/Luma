@@ -16,7 +16,7 @@ const unread={a:2,b:1},sequence={a:2,b:3};
 const listing=()=>({user:{id:'me',name:'Moi'},chats:[{id:'a',name:'Alice',kind:'direct',unread:unread.a},{id:'b',name:'Bob',kind:'direct',unread:unread.b}]});
 app.whenReady().then(async()=>{
  try{
-  writeFileSync(path.join(dir,'navigation.ts'),"export const useRouter=()=>({push(url){location.assign(url);}});");
+  writeFileSync(path.join(dir,'navigation.ts'),require('./test-navigation-fixture.cjs'));
   writeFileSync(path.join(dir,'entry.tsx'),`
    import React from 'react';import {createRoot} from 'react-dom/client';import Messenger from '../../app/messenger';import NotificationCenter from '../../app/notification-center';
    window.__hidden=false;Object.defineProperty(document,'hidden',{get:()=>window.__hidden});
@@ -134,6 +134,20 @@ app.whenReady().then(async()=>{
   win.destroy();unread.b=1;sequence.b++;win=new BrowserWindow({width:390,height:844});await win.loadURL(origin+'/messages?chat=b');
   await until(()=>run(win,"document.querySelector('.stitch-messenger-root').classList.contains('mobile-chat')"),'direct message link opens mobile conversation');
   await until(()=>reads.length===beforeDesktop+2&&unread.b===0,'explicit mobile link acknowledges chosen conversation');
+  await win.page.getByPlaceholder('Écrivez votre message à Bob...', {exact:true}).fill('Brouillon Bob conservé');
+  await run(win,"history.pushState({},'', '/messages?chat=a');window.dispatchEvent(new PopStateEvent('popstate'))");
+  await until(()=>win.page.getByPlaceholder('Écrivez votre message à Alice...', {exact:true}).count(),'query navigation switches the mounted messenger');
+  await win.page.getByPlaceholder('Écrivez votre message à Alice...', {exact:true}).fill('Brouillon Alice conservé');
+  await run(win,"window.dispatchEvent(new Event('luma-chat-list-refresh'))");await wait(250);
+  assert.equal(await win.page.getByPlaceholder('Écrivez votre message à Alice...', {exact:true}).inputValue(),'Brouillon Alice conservé','list refresh does not replay the link or reset the draft');
+  await run(win,"history.pushState({},'', '/messages?chat=inaccessible');window.dispatchEvent(new PopStateEvent('popstate'))");
+  await until(()=>win.page.getByText('Cette discussion est introuvable ou vous n’y avez plus accès.',{exact:true}).count(),'inaccessible link has a real error');
+  assert.equal(await win.page.locator('main textarea').count(),0,'invalid link cannot leave the previous recipient selected');
+  await run(win,"history.pushState({},'', '/messages?chat=b');window.dispatchEvent(new PopStateEvent('popstate'))");
+  await until(()=>win.page.getByPlaceholder('Écrivez votre message à Bob...', {exact:true}).count(),'return to linked conversation');
+  assert.equal(await win.page.getByPlaceholder('Écrivez votre message à Bob...', {exact:true}).inputValue(),'Brouillon Bob conservé','same-page navigation preserves each draft');
+  await run(win,"history.pushState({},'', '/messages');window.dispatchEvent(new PopStateEvent('popstate'))");
+  await until(()=>run(win,"!document.querySelector('.stitch-messenger-root').classList.contains('mobile-chat')"),'root messages link returns to conversation list');
   console.log('PASS real unread filtering, mobile visibility, background/foreground handling, stale list race, confirmed read counts, failed retry, concurrent arrivals and idle write deduplication.');
  }catch(error){console.error(error);if(win)try{writeFileSync(path.join(dir,'debug.txt'),await run(win,'document.body.innerText'));writeFileSync(path.join(dir,'debug.png'),(await win.webContents.capturePage()).toPNG());}catch{}process.exitCode=1;}
  finally{win?.destroy();server?.closeAllConnections();server?.close();await app.exit(process.exitCode||0);}

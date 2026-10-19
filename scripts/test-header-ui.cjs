@@ -13,7 +13,7 @@ const run=(win,code)=>win.webContents.executeJavaScript(code,true);
 let server,win,friendCalls=0,incomingCalls=0;
 app.whenReady().then(async()=>{
  try{
-  writeFileSync(path.join(dir,'navigation.ts'),"import {useSyncExternalStore} from 'react';const subscribe=fn=>{window.addEventListener('popstate',fn);return()=>window.removeEventListener('popstate',fn);};export const usePathname=()=>useSyncExternalStore(subscribe,()=>location.pathname,()=>'/fil');const router={push(url){history.pushState(null,'',url);window.dispatchEvent(new PopStateEvent('popstate'));}};export const useRouter=()=>router;");
+  writeFileSync(path.join(dir,'navigation.ts'),"import {useSyncExternalStore} from 'react';const subscribe=fn=>{window.addEventListener('popstate',fn);return()=>window.removeEventListener('popstate',fn);};export const usePathname=()=>useSyncExternalStore(subscribe,()=>location.pathname,()=>'/fil');const router={push(url){history.pushState(null,'',url);window.dispatchEvent(new PopStateEvent('popstate'));}};export const useRouter=()=>router;export const useSearchParams=()=>new URLSearchParams(useSyncExternalStore(subscribe,()=>location.search,()=>''));");
   writeFileSync(path.join(dir,'image.tsx'),"import React from 'react';export default function Image({src,alt,width,height,className}){return <img src={src} alt={alt} width={width} height={height} className={className}/>;}");
   writeFileSync(path.join(dir,'entry.tsx'),`
    import React from 'react';import {createRoot} from 'react-dom/client';import {usePathname} from 'next/navigation';import Header from '../../app/desktop-header';import Messenger from '../../app/messenger';
