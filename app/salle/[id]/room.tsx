@@ -121,7 +121,7 @@ export default function Room({id}:{id:string}){
   finally{lock.current=false;setBusy(false);}
  }
  async function replaceVideo(track:MediaStreamTrack|null){await Promise.all([...videoSenders.current.values()].map(sender=>sender.replaceTrack(track)));}
- async function captureCamera(nextFacing=facing){const generation=epoch.current;await requestNativeMediaPermissions(true);if(generation!==epoch.current)throw new DOMException('Appel terminé.','AbortError');return captureCameraStream(nextFacing);}
+ async function captureCamera(nextFacing=facing,releasePrevious=false){const generation=epoch.current;await requestNativeMediaPermissions(true);if(generation!==epoch.current)throw new DOMException('Appel terminé.','AbortError');if(releasePrevious)setCamera(false);return captureCameraStream(nextFacing,releasePrevious?local.current:null);}
  async function installCamera(stream:MediaStream,nextFacing=facing){const track=stream.getVideoTracks()[0];if(!track)throw Error('Aucune caméra disponible.');const previous=local.current?.getVideoTracks()[0];await replaceVideo(track);if(previous){local.current?.removeTrack(previous);previous.stop();}local.current?.addTrack(track);setFacing(nextFacing);setCamera(true);if(info)setStreams(s=>({...s,[info.me]:new MediaStream(local.current!.getTracks())}));}
  async function toggleVideo(){
   if(lock.current||sharing||!local.current)return;lock.current=true;setBusy(true);setError('');const generation=epoch.current;let captured:MediaStream|null=null;
@@ -136,7 +136,7 @@ export default function Room({id}:{id:string}){
  }
  async function switchCamera(){
   if(lock.current||sharing||!local.current)return;lock.current=true;setBusy(true);setError('');const generation=epoch.current,next=facing==='user'?'environment':'user';let captured:MediaStream|null=null;
-  try{captured=await captureCamera(next);if(epoch.current!==generation){captured.getTracks().forEach(t=>t.stop());return;}await installCamera(captured,next);}catch(e){captured?.getTracks().forEach(t=>t.stop());setError(mediaError(e));}finally{lock.current=false;setBusy(false);}
+  try{captured=await captureCamera(next,true);if(epoch.current!==generation){captured.getTracks().forEach(t=>t.stop());return;}await installCamera(captured,next);}catch(e){captured?.getTracks().forEach(t=>t.stop());setError(mediaError(e));}finally{lock.current=false;setBusy(false);}
  }
  async function stopSharing(){
   const stream=screen.current;screen.current=null;stream?.getTracks().forEach(t=>{t.onended=null;t.stop();});

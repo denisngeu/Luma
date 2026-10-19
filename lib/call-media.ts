@@ -33,7 +33,10 @@ export async function getUserMediaWithTimeout(constraints: MediaStreamConstraint
   }
 }
 
-export async function captureCameraStream(facing: 'user' | 'environment') {
+export async function captureCameraStream(facing: 'user' | 'environment', previous?:MediaStream|null) {
+  // Some phones can open only one camera at a time. Release video before
+  // requesting another facing mode; the call's microphone stays untouched.
+  previous?.getVideoTracks().forEach(track=>{previous.removeTrack(track);track.stop();});
   const video = {width: {ideal: 1280}, height: {ideal: 720}};
   try {
     return await getUserMediaWithTimeout({video: {...video, facingMode: {exact: facing}}, audio: false});

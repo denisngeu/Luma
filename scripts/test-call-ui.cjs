@@ -37,8 +37,8 @@ app.on('window-all-closed',()=>{}); app.whenReady().then(async()=>{
  if(p.get('kind')==='group'){const interval=window.setInterval.bind(window);window.setInterval=(fn,ms,...args)=>interval(fn,ms===1000?60000:ms,...args);}
  window.fetch=(url,options={})=>original(url,{...options,headers:{...options.headers,'x-test-user':p.get('who')}});
  localStorage.setItem('luma-media-devices',JSON.stringify({input:'default',output:'test-headphones'}));
- window.__captures=[];const capture=navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
- navigator.mediaDevices.getUserMedia=async constraints=>{window.__captures.push(constraints);const stream=await capture(constraints);window.__lastCapture=stream;return stream;};
+ window.__captures=[];window.__cameraTracks=[];const capture=navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+ navigator.mediaDevices.getUserMedia=async constraints=>{window.__captures.push(constraints);if(window.__singleCamera&&constraints.video&&window.__cameraTracks.some(track=>track.readyState==='live'))throw new DOMException('Camera already in use','NotReadableError');const stream=await capture(constraints);window.__cameraTracks.push(...stream.getVideoTracks());window.__lastCapture=stream;return stream;};
  window.__outputs=[];HTMLMediaElement.prototype.setSinkId=async function(id){window.__outputs.push(id);};
  window.__peers=[];const Peer=window.RTCPeerConnection;window.RTCPeerConnection=class extends Peer{constructor(c){super(c);window.__peers.push(this);}};
  navigator.mediaDevices.getDisplayMedia=()=>navigator.mediaDevices.getUserMedia({video:true,audio:false});
@@ -98,6 +98,11 @@ app.on('window-all-closed',()=>{}); app.whenReady().then(async()=>{
   await click(a,'Caméra');
   await until(()=>run(b,"[...document.querySelectorAll('video')].some(v=>v.videoWidth>0)"),kind+' camera enabled after audio join');
   checks.push(kind+' camera enabled mid-call');
+  await run(a,"window.__singleCamera=true;window.__oldCamera=window.__lastCapture.getVideoTracks()[0];window.__micTrack=window.__peers.flatMap(peer=>peer.getSenders()).find(sender=>sender.track?.kind==='audio').track");
+  await click(a,'Retourner');
+  await until(()=>run(a,"window.__oldCamera.readyState==='ended'&&window.__lastCapture.getVideoTracks()[0]!==window.__oldCamera&&window.__lastCapture.getVideoTracks()[0]?.readyState==='live'"),kind+' single-camera hardware switch');
+  assert.equal(await run(a,"window.__micTrack.readyState==='live'&&window.__micTrack.enabled"),true,kind+' camera flip keeps microphone active');
+  await run(a,'window.__singleCamera=false');checks.push(kind+' single-camera switch releases video only');
   assert.equal(await run(a,'document.documentElement.scrollWidth<=innerWidth'),true,kind+' mobile horizontal overflow');
   assert.equal(await run(a,"[...document.querySelectorAll('.call-expand')].every(button=>{const r=button.getBoundingClientRect();return r.width>=44&&r.height>=44&&button.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2));})"),true,kind+' expansion controls reachable without overlap');
   writeFileSync(path.join(dir,kind+'-mobile.png'),(await a.webContents.capturePage()).toPNG());
@@ -118,9 +123,11 @@ app.on('window-all-closed',()=>{}); app.whenReady().then(async()=>{
   // Refusing camera access must not trigger a second permission/capture request.
   await run(a,"window.__capture=navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);window.__cameraRequests=0;navigator.mediaDevices.getUserMedia=()=>{window.__cameraRequests++;return Promise.reject(new DOMException('Permission denied','NotAllowedError'));}");
   await click(a,'Retourner');
-  await until(()=>run(a,"!!document.querySelector('[role=alert]')&&!document.querySelector('.call-controls button:disabled,.room-page footer button:disabled')"),kind+' permission denied');
+  await until(()=>run(a,"!!document.querySelector('[role=alert]')&&[...document.querySelectorAll('button')].some(button=>button.textContent.includes('Caméra')&&!button.disabled)"),kind+' permission denied');
   assert.equal(await run(a,'window.__cameraRequests'),1,kind+' repeated camera permission request');
   await run(a,'navigator.mediaDevices.getUserMedia=window.__capture');
+  assert.equal(await run(a,"window.__micTrack.readyState==='live'&&window.__micTrack.enabled"),true,kind+' refused switch keeps microphone active');
+  await click(a,'Caméra');await until(()=>run(a,"[...document.querySelectorAll('button')].some(button=>button.textContent.includes('Retourner')&&!button.disabled)"),kind+' camera can be enabled after refused switch');
   checks.push(kind+' camera refusal without duplicate request');
   // A device request can resolve after hangup; its stream must be stopped.
   await run(a,"navigator.mediaDevices.getUserMedia=async constraints=>{const stream=await window.__capture(constraints);if(constraints.video&&!constraints.audio){window.__lateCamera=stream;return new Promise(resolve=>{window.__finishCamera=()=>resolve(stream);});}return stream;}");
