@@ -5,6 +5,7 @@ import {ArrowLeft,Camera,CameraOff,Maximize2,Mic,MicOff,Minimize2,MonitorUp,Musi
 import {captureCameraStream,gatherIce,getUserMediaWithTimeout,mediaError,screenSharingSupported,screenSharingUnavailable} from '@/lib/call-media';
 import {Switch} from '@/components/ui/switch';
 import {requestNativeMediaPermissions} from '@/lib/native-permissions';
+import {applyPreferredAudioOutput,preferredMicrophone} from '@/lib/media-devices';
 
 type Person={user:string;name:string};
 type Signal={sender:string;type:'offer'|'answer';payload:string};
@@ -67,7 +68,7 @@ export default function Room({id}:{id:string}){
    if(!navigator.mediaDevices?.getUserMedia)throw Error('Micro indisponible. Ouvrez Luma en HTTPS et autorisez son utilisation.');
     await requestNativeMediaPermissions(joinCamera);
    if(epoch.current!==generation)return;
-     const stream=await getUserMediaWithTimeout({audio:{noiseSuppression,echoCancellation},video:joinCamera?{width:{ideal:1280},height:{ideal:720},facingMode:{ideal:facing}}:false});
+     const stream=await getUserMediaWithTimeout({audio:preferredMicrophone({noiseSuppression,echoCancellation}),video:joinCamera?{width:{ideal:1280},height:{ideal:720},facingMode:{ideal:facing}}:false});
    if(epoch.current!==generation){stream.getTracks().forEach(t=>t.stop());return;}local.current=stream;
    stream.getAudioTracks().forEach(t=>t.enabled=!joinMuted);
    const d=await request('join',{id}) as Info;registered=true;
@@ -173,7 +174,7 @@ function Remote({stream,self=false}:{stream?:MediaStream;self?:boolean}){
  const ref=useRef<HTMLVideoElement>(null),audio=useRef<HTMLAudioElement>(null),[blocked,setBlocked]=useState(false);
  useEffect(()=>{
   const video=ref.current,speaker=audio.current;if(!video||!stream)return;
-  const update=()=>{video.srcObject=new MediaStream(stream.getVideoTracks());void video.play().catch(()=>{});if(speaker&&!self){speaker.srcObject=new MediaStream(stream.getAudioTracks());void speaker.play().then(()=>setBlocked(false)).catch(()=>setBlocked(true));}};
+  const update=()=>{video.srcObject=new MediaStream(stream.getVideoTracks());void video.play().catch(()=>{});if(speaker&&!self){speaker.srcObject=new MediaStream(stream.getAudioTracks());void applyPreferredAudioOutput(speaker).then(()=>speaker.play()).then(()=>setBlocked(false)).catch(()=>setBlocked(true));}};
   update();stream.addEventListener('addtrack',update);
   return()=>{stream.removeEventListener('addtrack',update);video.srcObject=null;if(speaker)speaker.srcObject=null;};
  },[stream,self]);

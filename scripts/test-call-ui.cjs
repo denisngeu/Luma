@@ -29,22 +29,28 @@ app.on('window-all-closed',()=>{}); app.whenReady().then(async()=>{
  writeFileSync(path.join(dir,'entry.tsx'),`
  import React from 'react';import {createRoot} from 'react-dom/client';
  import Call from '../../app/appel/[id]/room';import Room from '../../app/salle/[id]/room';
+ import Preferences from '../../app/parametres/user-preferences';
  const p=new URLSearchParams(location.search);const original=window.fetch;
  // Simulate an Android WebView whose interval was suspended in the background.
  // Connection signals must be processed by the foreground/online handlers.
  if(p.get('kind')==='group'){const interval=window.setInterval.bind(window);window.setInterval=(fn,ms,...args)=>interval(fn,ms===1000?60000:ms,...args);}
  window.fetch=(url,options={})=>original(url,{...options,headers:{...options.headers,'x-test-user':p.get('who')}});
+ localStorage.setItem('luma-media-devices',JSON.stringify({input:'default',output:'test-headphones'}));
+ window.__captures=[];const capture=navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+ navigator.mediaDevices.getUserMedia=async constraints=>{window.__captures.push(constraints);const stream=await capture(constraints);window.__lastCapture=stream;return stream;};
+ window.__outputs=[];HTMLMediaElement.prototype.setSinkId=async function(id){window.__outputs.push(id);};
  window.__peers=[];const Peer=window.RTCPeerConnection;window.RTCPeerConnection=class extends Peer{constructor(c){super(c);window.__peers.push(this);}};
  navigator.mediaDevices.getDisplayMedia=()=>navigator.mediaDevices.getUserMedia({video:true,audio:false});
  const root=createRoot(document.getElementById('root'));
  window.__unmount=()=>root.unmount();
- root.render(<React.StrictMode>{p.get('kind')==='group'?<Room id="test"/>:<Call id="test"/>}</React.StrictMode>);
+ root.render(<React.StrictMode>{p.get('kind')==='settings'?<Preferences/>:p.get('kind')==='group'?<Room id="test"/>:<Call id="test"/>}</React.StrictMode>);
  `);
  await build({entryPoints:[path.join(dir,'entry.tsx')],outfile:path.join(dir,'app.js'),bundle:true,platform:'browser',jsx:'automatic',alias:{'@':process.cwd()},define:{'process.env.NODE_ENV':'"development"','process.env':'{}'}});
  server=createServer(async(req,res)=>{
   if(req.url.startsWith('/api/')){
-   let body='';for await(const c of req)body+=c;const p=JSON.parse(body),who=req.headers['x-test-user'];let out={};
-   if(req.url==='/api/calls'){
+   let body='';for await(const c of req)body+=c;const p=JSON.parse(body||'{}'),who=req.headers['x-test-user'];let out={};
+   if(req.url==='/api/profile')out={profile:{name:'Test',bio:'',avatar:false,notifications:'all',call_camera:0,call_noise_suppression:1,call_echo_cancellation:1,reduce_motion:0}};
+   else if(req.url==='/api/calls'){
     if(p.action==='config')out={iceServers:[],relayConfigured:true};
     if(p.action==='get')out={call,me:who};
     if(p.action==='offer'){call.offer=p.sdp;call.state='ringing';}
@@ -82,6 +88,11 @@ app.on('window-all-closed',()=>{}); app.whenReady().then(async()=>{
    await until(()=>run(w,"(async()=>{for(const p of window.__peers){if(p.connectionState!=='connected')continue;for(const s of (await p.getStats()).values())if(s.type==='inbound-rtp'&&s.kind==='audio'&&s.bytesReceived>0&&s.totalAudioEnergy>0)return true;}return false;})()"),kind+' audio decoded');
   }
   checks.push(kind+' bidirectional audio energy');
+  for(const w of [a,b]){
+   assert.equal(await run(w,"window.__captures.find(c=>c.audio)?.audio.deviceId?.ideal"),'default',kind+' saved microphone applied');
+   assert.equal(await run(w,"window.__outputs.includes('test-headphones')"),true,kind+' saved output applied');
+  }
+  checks.push(kind+' saved microphone and output applied');
   await click(a,'Caméra');
   await until(()=>run(b,"[...document.querySelectorAll('video')].some(v=>v.videoWidth>0)"),kind+' camera enabled after audio join');
   checks.push(kind+' camera enabled mid-call');
@@ -119,6 +130,15 @@ app.on('window-all-closed',()=>{}); app.whenReady().then(async()=>{
  await run(waiting,'window.__unmount()');
  await until(()=>call.state==='ended','call ended on actual unmount');
  waiting.destroy();checks.push('private effect replay and actual unmount');
+ const settings=await open('a','settings',base);
+ await until(()=>run(settings,"[...document.querySelectorAll('button')].some(b=>b.textContent==='Tester le microphone')"),'microphone settings ready');
+ await run(settings,"window.__permissionCalls=0;window.ReactNativeWebView={postMessage(message){const m=JSON.parse(message);if(m.type==='request-media-permissions'){window.__permissionCalls++;window.dispatchEvent(new CustomEvent('luma-native-permissions',{detail:{requestId:m.requestId,granted:true}}));}}}");
+ await click(settings,'Tester le microphone');
+ await until(()=>run(settings,'!!window.__lastCapture'),'settings microphone captured');
+ assert.equal(await run(settings,'window.__permissionCalls'),1,'settings uses native microphone permissions');
+ await run(settings,'window.__unmount()');
+ await until(()=>run(settings,"window.__lastCapture.getTracks().every(t=>t.readyState==='ended')"),'settings microphone released on navigation');
+ settings.destroy();checks.push('settings native microphone permission and cleanup on navigation');
  console.log('PASS '+checks.join('; '));
  writeFileSync(path.join(dir,'result.json'),JSON.stringify({ok:true,checks},null,2));
  }catch(e){for(let i=0;i<windows.length;i++){const w=windows[i];if(!w.isDestroyed())try{writeFileSync(path.join(dir,'debug-'+i+'.json'),JSON.stringify(await run(w,"(async()=>({text:document.body.innerText,media:[...document.querySelectorAll('video,audio')].map(v=>({paused:v.paused,muted:v.muted,tracks:v.srcObject?.getTracks().map(t=>({kind:t.kind,enabled:t.enabled,readyState:t.readyState,muted:t.muted}))})),stats:await Promise.all(window.__peers.map(async p=>[...(await p.getStats()).values()]))}))()"),null,2));}catch{}}console.error(e);writeFileSync(path.join(dir,'result.json'),JSON.stringify({ok:false,error:String(e)}));process.exitCode=1;}
