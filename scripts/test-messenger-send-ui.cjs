@@ -47,12 +47,12 @@ app.whenReady().then(async()=>{
   win=new BrowserWindow({width:390,height:844});await win.loadURL(origin+'/messages');
   const open=async name=>{if(await win.page.getByRole('button',{name:'Revenir aux discussions',exact:true}).isVisible())await win.page.getByRole('button',{name:'Revenir aux discussions',exact:true}).click();await win.page.getByRole('button',{name:'Ouvrir la discussion avec '+name,exact:true}).click();};
   const editor=name=>win.page.getByPlaceholder('Écrivez votre message à '+name+'...', {exact:true});
-  const text=()=>run(win,"document.querySelector('input[placeholder^=\"Écrivez\"]').value");
+  const text=()=>run(win,"document.querySelector('textarea[placeholder^=\"Écrivez\"]').value");
   await until(()=>run(win,"!!document.querySelector('[aria-label=\"Ouvrir la discussion avec Alice\"]')"),'list loaded');
   await open('Alice');await editor('Alice').fill('Brouillon Alice');await open('Bob');await editor('Bob').fill('Brouillon Bob');await open('Alice');
   assert.equal(await text(),'Brouillon Alice','switching discussion preserves its own draft');
   holdSend=true;
-  await run(win,"(()=>{const input=document.querySelector('input[placeholder^=\"Écrivez\"]');input.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}));input.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}));})()");
+  await run(win,"(()=>{const input=document.querySelector('textarea[placeholder^=\"Écrivez\"]');input.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}));input.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}));})()");
   await until(()=>!!releaseSend,'send delayed');assert.equal(sent.length,1,'two same-tick submissions send once');
   await editor('Alice').fill('Suite du brouillon Alice');await open('Bob');assert.equal(await text(),'Brouillon Bob');releaseSend();releaseSend=null;
   await until(()=>win.page.getByTitle('Envoyer le message',{exact:true}).isEnabled(),'send completed');
@@ -88,6 +88,12 @@ app.whenReady().then(async()=>{
   await win.page.getByRole('button',{name:'Confirmer l’envoi programmé',exact:true}).click();
   await until(()=>win.page.locator('[role="dialog"]').count().then(count=>count===0),'retry after scheduled time acknowledged');
   await run(win,'Date.now=window.originalNow');assert.equal(sent.at(-1).clientId,plannedAttempt.clientId);assert.equal(stored.a.filter(m=>m.body==='Programmé avec nouvelle tentative').length,1);
+  const beforeMultiline=sent.length;await editor('Alice').fill('Première ligne');await editor('Alice').press('Shift+Enter');await editor('Alice').press('l');
+  assert.equal(await text(),'Première ligne\nl');assert.equal(sent.length,beforeMultiline,'Shift+Enter inserts a newline without sending');
+  await run(win,"document.querySelector('textarea').dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',isComposing:true,bubbles:true}))");assert.equal(sent.length,beforeMultiline,'IME composition Enter does not send');
+  await editor('Alice').press('Enter');await until(()=>sent.length===beforeMultiline+1,'multiline sent');assert.equal(sent.at(-1).body,'Première ligne\nl');
+  await until(()=>win.page.locator('.messenger-message-body').getByText('Première ligne\nl',{exact:true}).count(),'multiline displayed');
+  assert.equal(await run(win,"getComputedStyle([...document.querySelectorAll('.messenger-message-body')].find(p=>p.textContent.includes('Première ligne'))).whiteSpace"),'pre-wrap','line breaks remain visible');
   console.log('PASS per-chat drafts, same-tick send lock, typing during send, cross-chat replies/uploads, accepted-send refresh failure, visible mobile errors, retry identity and intentional repeated messages.');
  }catch(error){console.error(error);if(win)try{writeFileSync(path.join(dir,'debug.txt'),await run(win,'document.body.innerText'));writeFileSync(path.join(dir,'debug.png'),(await win.webContents.capturePage()).toPNG());}catch{}process.exitCode=1;}
  finally{win?.destroy();server?.closeAllConnections();server?.close();await app.exit(process.exitCode||0);}

@@ -767,3 +767,12 @@ html[data-luma] .privacy-page :is(textarea, input, select) {
 .stitch-messenger-root [role=button]:focus-visible{outline:3px solid var(--luma-accent);outline-offset:-3px}
 .messenger-details{translate:none!important}
 .stitch-messenger-root .messenger-jump-latest{position:absolute;right:16px;bottom:100px;z-index:15;display:flex;align-items:center;gap:8px;min-height:44px;padding:10px 14px;border:1px solid var(--t-line);border-radius:24px;background:var(--t-surface);color:var(--t-ink);font-size:13px;box-shadow:0 5px 20px #0003}.messenger-jump-latest svg{color:var(--luma-accent);flex-shrink:0}.messenger-jump-latest:focus-visible{outline:3px solid var(--luma-accent);outline-offset:3px}
+.messenger-empty-choice{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:32px;text-align:center;color:var(--t-muted)}
+.messenger-empty-choice>span{font-size:42px;color:var(--luma-accent)}
+.messenger-empty-choice h2{font-size:22px;color:var(--t-ink);margin:0}
+.messenger-empty-choice p{max-width:340px;margin:0;line-height:1.6}
+.messenger-empty-choice button{min-height:44px;padding:10px 18px;border:1px solid var(--t-line);border-radius:12px;background:var(--t-raised);color:var(--t-ink);cursor:pointer}
+.messenger-day-divider{align-self:stretch;display:flex;justify-content:center;padding:8px 0}
+.messenger-day-divider time{background:var(--t-surface);color:var(--t-muted);border:1px solid var(--t-line);border-radius:20px;padding:5px 12px;font-size:11px}
+textarea.messenger-composer-text{resize:none;min-height:36px;max-height:144px;min-width:0;line-height:1.5;overflow-y:auto;field-sizing:content}
+.messenger-message-body{white-space:pre-wrap;overflow-wrap:anywhere}

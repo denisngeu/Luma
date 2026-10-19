@@ -50,3 +50,6 @@
 .call-controls .call-hangup{margin:0;min-width:0}
 @media(max-width:650px){.call-videos>div:first-child{height:clamp(210px,36dvh,320px);min-height:210px}.call-videos>div:first-child video{height:100%}.call-controls .call-hangup{grid-column:1/-1;flex-direction:row}}
 @media(max-width:650px){.soundboard-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.soundboard-grid button{min-width:0!important}.call-videos>div.is-expanded{height:100dvh!important}.room-page:has(.is-expanded)>footer,.room-page:has(.is-expanded)>header{visibility:hidden}.room-stage article.is-expanded{visibility:visible}}
+.call-inbox-error{flex-basis:100%;margin:0;font-size:12px;line-height:1.5;color:var(--t-ink)}
+.call-inbox>a,.call-inbox>button{min-height:44px;display:inline-flex;align-items:center;justify-content:center}
+.call-inbox>button:disabled,.call-inbox>a[aria-disabled=true]{opacity:.6;cursor:wait}

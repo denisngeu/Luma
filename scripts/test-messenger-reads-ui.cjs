@@ -33,7 +33,7 @@ app.whenReady().then(async()=>{
      if(holdList){holdList=false;heldList=()=>res.end(JSON.stringify(data));return;}
      res.end(JSON.stringify(data));return;
     }
-    if(p.action==='messages'){res.end(JSON.stringify({messages:[{id:p.chat+'-'+sequence[p.chat],author:p.chat,name:p.chat==='a'?'Alice':'Bob',body:'Message '+p.chat+' '+sequence[p.chat]+(longHistory?'\n'+Array.from({length:180},(_,i)=>'Historique '+i).join('\n'):''),created:1700000000000,scheduled:0},...ownMessages],readCursor:{sequence:sequence[p.chat],through:0}}));return;}
+    if(p.action==='messages'){res.end(JSON.stringify({messages:[{id:p.chat+'-old',author:p.chat,name:'Contact',body:'Message de la veille',created:1699913600000,scheduled:0},{id:p.chat+'-'+sequence[p.chat],author:p.chat,name:p.chat==='a'?'Alice':'Bob',body:'Message '+p.chat+' '+sequence[p.chat]+(longHistory?'\n'+Array.from({length:180},(_,i)=>'Historique '+i).join('\n'):''),created:1700000000000,scheduled:0},...ownMessages],readCursor:{sequence:sequence[p.chat],through:0}}));return;}
     if(p.action==='send'){ownMessages.push({id:'own-'+ownMessages.length,author:'me',name:'Moi',body:p.body,created:Date.now(),scheduled:0,scheduled_pending:0});res.end(JSON.stringify({id:ownMessages.at(-1).id}));return;}
     if(p.action==='read'){
      reads.push({chat:p.chat,cursor:p.cursor});await wait(160);
@@ -56,6 +56,8 @@ app.whenReady().then(async()=>{
   assert.equal(await win.page.getByRole('button',{name:/Ouvrir la discussion avec/}).count(),2,'unread filter uses actual counters');
   await win.page.getByRole('button',{name:'Ouvrir la discussion avec Alice',exact:true}).click();
   await until(()=>reads.length===1&&unread.a===0,'visible conversation acknowledged');
+  assert.equal(await win.page.locator('.messenger-day-divider time').count(),2,'history is grouped by its two actual dates');
+  assert.equal(await win.page.locator('.messenger-day-divider time').last().innerText(),new Date(1700000000000).toLocaleDateString('fr-FR',{dateStyle:'long'}),'old history does not show today as its date');
   await until(()=>run(win,"!document.querySelector('[aria-label=\"Ouvrir la discussion avec Alice\"]')"),'confirmed read removed from unread filter');
   assert.equal(reads[0].chat,'a');
   await win.page.getByRole('button',{name:'Revenir aux discussions',exact:true}).click();
@@ -125,6 +127,9 @@ app.whenReady().then(async()=>{
   await until(()=>run(win,"!!document.querySelector('[aria-label=\"Ouvrir la discussion avec Alice\"]')"),'desktop list loaded');await wait(250);
   assert.equal(reads.length,beforeDesktop,'desktop startup does not mark a conversation read without a choice');
   assert.equal(await win.page.getByRole('heading',{name:'Sélectionnez une discussion',exact:true}).count(),1,'desktop waits for an explicit conversation');
+  assert.equal(await win.page.locator('main textarea').count(),0,'empty desktop pane has no pretend composer');
+  assert.equal(await win.page.getByRole('button',{name:'Appel vocal',exact:true}).count(),0,'empty desktop pane has no call controls');
+  assert.equal(await win.page.locator('main time').count(),0,'empty desktop pane has no fabricated message date');
   await win.page.getByRole('button',{name:'Ouvrir la discussion avec Alice',exact:true}).click();await until(()=>reads.length===beforeDesktop+1&&unread.a===0,'desktop choice acknowledges visible conversation');
   win.destroy();unread.b=1;sequence.b++;win=new BrowserWindow({width:390,height:844});await win.loadURL(origin+'/messages?chat=b');
   await until(()=>run(win,"document.querySelector('.stitch-messenger-root').classList.contains('mobile-chat')"),'direct message link opens mobile conversation');

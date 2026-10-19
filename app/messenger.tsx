@@ -1,5 +1,5 @@
 'use client';
-import { useCallback, useState, useEffect, useRef, useMemo } from 'react';
+import { Fragment, useCallback, useState, useEffect, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {ClientRequestError,requestJson} from '@/lib/client-request';
@@ -81,6 +81,8 @@ export default function Messenger() {
 
   const history=useRef<HTMLElement>(null),followLatest=useRef(true),firstHistory=useRef(true);
   const file = useRef<HTMLInputElement>(null);
+  const composer=useRef<HTMLTextAreaElement>(null);
+  useEffect(()=>{const field=composer.current;if(field){field.style.height='auto';field.style.height=Math.min(field.scrollHeight,144)+'px';}},[text,active]);
   const searchInput = useRef<HTMLInputElement>(null);
   const mobileMenu=useRef<HTMLDetailsElement>(null);
   const searchFrame = useRef<number|null>(null);
@@ -576,6 +578,7 @@ export default function Messenger() {
             Right Main Stage (Active Conversation Pane)
             ========================================================================= */}
         <main className="col-span-12 md:col-span-7 lg:col-span-8 xl:col-span-9 flex flex-col h-full bg-surface relative overflow-hidden">
+          {!activeChat?<section className="messenger-empty-choice"><span className="material-symbols-outlined" aria-hidden="true">forum</span><h2>Sélectionnez une discussion</h2><p>Retrouvez vos messages en choisissant un contact ou un groupe.</p><button type="button" onClick={focusDiscussions}>Choisir une discussion</button><button type="button" onClick={()=>setModal('new')}>Nouvelle discussion</button></section>:<>
           {/* Top Subtle Gradient Glow */}
           <div className="absolute top-0 right-1/4 w-96 h-48 bg-secondary-container/15 rounded-full blur-[100px] pointer-events-none" />
 
@@ -596,7 +599,7 @@ export default function Messenger() {
                     style={{ fontVariationSettings: "'FILL' 1" }}
                     title="Espace Luma privé"
                   >
-                    verified_user
+                    lock
                   </span>
                 </div>
                 <div className="flex items-center gap-space-xs font-label-caps text-label-caps text-outline">
@@ -672,14 +675,6 @@ export default function Messenger() {
           <section ref={history} onScroll={event=>{const pane=event.currentTarget;const latest=pane.scrollHeight-pane.scrollTop-pane.clientHeight<=64;followLatest.current=latest;setAtLatest(latest);}} className="flex-1 overflow-y-auto p-space-lg space-y-space-lg flex flex-col">
             <div className="mt-auto shrink-0" aria-hidden="true"/>
             {messagesLoading&&<p className="mx-auto text-body-sm text-outline">Actualisation…</p>}
-            {/* Day Timestamp Divider */}
-            <div className="flex items-center justify-center my-space-sm">
-              <div className="flex items-center gap-space-sm px-space-md py-1 rounded-full bg-surface-container-low text-outline font-label-caps text-label-caps tracking-wider uppercase shadow-inner border border-white/5">
-                <span className="material-symbols-outlined text-[14px]">calendar_today</span>
-                <span>{new Intl.DateTimeFormat('fr-FR',{dateStyle:'long'}).format(new Date())}</span>
-              </div>
-            </div>
-
             {/* Security Encryption Notice */}
             <div className="mx-auto max-w-md p-space-sm rounded-xl bg-surface-container-lowest/60 text-center text-outline font-label-caps text-label-caps flex items-center justify-center gap-space-xs border border-white/5">
               <span className="material-symbols-outlined text-[14px] text-primary">lock</span>
@@ -694,8 +689,11 @@ export default function Messenger() {
                 <small>Utilisez l’étoile sous un message pour le retrouver ici.</small>
               </div>
             )}
-            {shownMessages.map((m) => {
+            {shownMessages.map((m,index) => {
               const isMine = m.author === me;
+              const day=new Date(m.activity_at??m.created).toLocaleDateString('fr-FR',{dateStyle:'long'});
+              const previous=shownMessages[index-1];
+              const dayDivider=(!previous||new Date(previous.activity_at??previous.created).toLocaleDateString('fr-FR',{dateStyle:'long'})!==day)&&<div className="messenger-day-divider"><time dateTime={new Date(m.activity_at??m.created).toISOString()}>{day}</time></div>;
               const formattedTime = new Date(m.activity_at??m.created).toLocaleTimeString('fr-FR', {
                 hour: '2-digit',
                 minute: '2-digit',
@@ -704,6 +702,7 @@ export default function Messenger() {
               if (isMine) {
                 // Sent Message (Right)
                 return (
+                  <Fragment key={m.id}>{dayDivider}
                   <div key={m.id} className="flex flex-col items-end gap-1 ml-auto max-w-xl group">
                     <div className="flex items-center gap-space-sm pr-1">
                       <span className="font-label-caps text-label-caps text-outline">Vous</span>
@@ -713,7 +712,7 @@ export default function Messenger() {
                     <div className="relative group/bubble bg-secondary-container text-on-secondary-container px-space-md py-space-sm rounded-2xl rounded-tr-sm shadow-lg shadow-secondary-container/20">
                       {!!m.scheduled_pending&&<p className="text-label-caps font-label-caps mb-2">Programmé pour {new Date(m.scheduled).toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'})}</p>}
                       <div className="flex items-center gap-space-sm">
-                        <p className="font-body-md text-body-md tracking-wide font-mono text-primary-fixed select-all">
+                        <p className="messenger-message-body font-body-md text-body-md">
                           {m.body}
                         </p>
                         <button
@@ -764,11 +763,13 @@ export default function Messenger() {
                       </Link>
                     </div>
                   </div>
+                  </Fragment>
                 );
               }
 
               // Received Message (Left)
               return (
+                <Fragment key={m.id}>{dayDivider}
                 <div key={m.id} className="flex items-start gap-space-sm max-w-xl group">
                   <div className="w-8 h-8 rounded-lg bg-secondary-container text-on-secondary-container flex items-center justify-center font-label-md text-label-md flex-shrink-0 mt-1 shadow-sm">
                     {initials(m.name || 'F')}
@@ -780,7 +781,7 @@ export default function Messenger() {
                     </div>
 
                     <div className="relative group/bubble bg-surface-container-high text-on-surface px-space-md py-space-sm rounded-2xl rounded-tl-sm shadow-md transition-all hover:bg-surface-variant">
-                      <p className="font-body-md text-body-md">{m.body}</p>
+                      <p className="messenger-message-body font-body-md text-body-md">{m.body}</p>
                       {attachment(m)}
                     </div>
                     <div className="flex items-center gap-space-md pl-1 opacity-0 group-hover:opacity-100 transition-opacity text-outline font-label-caps text-label-caps">
@@ -796,6 +797,7 @@ export default function Messenger() {
                     </div>
                   </div>
                 </div>
+                </Fragment>
               );
             })}
 
@@ -842,14 +844,16 @@ export default function Messenger() {
                 </button>
 
                 {/* Text Input */}
-                <input
-                  className="flex-1 bg-transparent text-body-md font-body-md text-on-surface placeholder:text-outline focus:outline-none py-2 px-space-xs"
+                <textarea
+                  ref={composer}
+                  className="messenger-composer-text flex-1 bg-transparent text-body-md font-body-md text-on-surface placeholder:text-outline focus:outline-none py-2 px-space-xs"
                   placeholder={activeChat?`Écrivez votre message à ${activeChat.name}...`:'Sélectionnez une discussion'}
-                  type="text"
+                  rows={1}
+                  maxLength={10000}
                   value={text}
                   onChange={(e) => setText(e.target.value)}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
+                    if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
                       e.preventDefault();
                       send();
                     }
@@ -899,6 +903,7 @@ export default function Messenger() {
               </div>
             </div>
           </footer>
+          </>}
         </main>
       </div>
 
