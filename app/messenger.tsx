@@ -36,6 +36,8 @@ type Msg = {
 };
 
 type ActiveRoom = { id: string; participants: number; mode: string };
+type Draft = {text:string;reply:Msg|null;schedule:string};
+const emptyDraft:Draft={text:'',reply:null,schedule:''};
 
 export default function Messenger() {
   const router = useRouter();
@@ -44,7 +46,12 @@ export default function Messenger() {
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [me, setMe] = useState<string>('');
   const [loading, setLoading] = useState(true);
-  const [text, setText] = useState('');
+  const [drafts,setDrafts]=useState<Record<string,Draft>>({});
+  const draft=drafts[active]||emptyDraft;
+  const {text,reply,schedule}=draft;
+  const setText=(value:string|((current:string)=>string))=>setDrafts(current=>({...current,[active]:{...(current[active]||emptyDraft),text:typeof value==='function'?value(current[active]?.text||''):value}}));
+  const setReply=(value:Msg|null)=>setDrafts(current=>({...current,[active]:{...(current[active]||emptyDraft),reply:value}}));
+  const setSchedule=(value:string)=>setDrafts(current=>({...current,[active]:{...(current[active]||emptyDraft),schedule:value}}));
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<'all' | 'groups' | 'unread'>('all');
   const [view, setView] = useState<'chat' | 'saved'>('chat');
@@ -54,15 +61,22 @@ export default function Messenger() {
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
   const [kind, setKind] = useState<'group' | 'direct'>('group');
-  const [schedule, setSchedule] = useState('');
-  const [reply, setReply] = useState<Msg | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [writeErrors,setWriteErrors]=useState<Record<string,string>>({});
   const [notice, setNotice] = useState('');
   const [messagesLoading, setMessagesLoading] = useState(false);
   const [readSnapshot,setReadSnapshot]=useState('');
   const [atLatest,setAtLatest]=useState(true);
   const listEpoch=useRef(0);
+  const composeLock=useRef(false),activeRef=useRef(active),mounted=useRef(true);
+  const sendAttempts=useRef(new Map<string,{fingerprint:string;id:string}>());
+  useEffect(()=>{activeRef.current=active;},[active]);
+  useEffect(()=>{mounted.current=true;return()=>{mounted.current=false;};},[]);
+  const refreshAfterWrite=(chat:string)=>{
+    window.dispatchEvent(new Event('luma-chat-list-refresh'));
+    window.dispatchEvent(new CustomEvent('luma-chat-messages-refresh',{detail:chat}));
+  };
   const [activeRooms, setActiveRooms] = useState<Record<string, ActiveRoom>>({});
 
   const history=useRef<HTMLElement>(null),followLatest=useRef(true),firstHistory=useRef(true);
@@ -194,7 +208,7 @@ export default function Messenger() {
   }, [chats]);
 
   useEffect(() => {
-    let live=true,pending=false,initial=true;const controller=new AbortController();
+    let live=true,pending=false,initial=true,queued=false;const controller=new AbortController();
     followLatest.current=true;firstHistory.current=true;
     queueMicrotask(()=>{if(live){setMsgs([]);setReadSnapshot('');setAtLatest(true);if(!active)setMessagesLoading(false);}});
     if(!active)return()=>{live=false;controller.abort();};
@@ -206,11 +220,13 @@ export default function Messenger() {
           setMsgs(result.messages);setReadSnapshot(result.readCursor?JSON.stringify({chat:active,cursor:result.readCursor}):'');setError('');initial=false;
         }
       }catch(error){if(live)setError(error instanceof Error?error.message:'Impossible de charger les messages.');}
-      finally{pending=false;if(live)setMessagesLoading(false);}
+      finally{pending=false;if(live){setMessagesLoading(false);if(queued){queued=false;void update();}}}
     };
     const resume=()=>{void update();};void update();const timer=setInterval(resume,3500);
     const unwatch=watchAppVisibility(resume);
-    return()=>{live=false;controller.abort();clearInterval(timer);unwatch();};
+    const written=(event:Event)=>{if((event as CustomEvent<string>).detail!==active)return;if(pending)queued=true;else void update();};
+    window.addEventListener('luma-chat-messages-refresh',written);
+    return()=>{live=false;controller.abort();clearInterval(timer);unwatch();window.removeEventListener('luma-chat-messages-refresh',written);};
   },[active,api]);
 
   const lastMessage=msgs[msgs.length-1]?.id||'';
@@ -227,31 +243,31 @@ export default function Messenger() {
   }, [notice]);
 
   async function send(programmed = false) {
-    if (!text.trim() || busy || !active) return;
-    if (programmed && (!schedule || new Date(schedule).getTime() <= Date.now())) {
+    if (!text.trim() || busy || composeLock.current || !activeChat) return;
+    const chat=active,submittedDraft=draft;
+    const scheduled=programmed&&schedule?new Date(schedule).getTime():0;
+    const payload={chat,body:text,scheduled,reply:reply?.id};
+    const fingerprint=JSON.stringify(payload),previous=sendAttempts.current.get(chat);
+    const retry=previous?.fingerprint===fingerprint;
+    if (programmed && (!Number.isSafeInteger(scheduled)||!schedule||scheduled<=Date.now()&&!retry)) {
       setError('Choisissez une date future.');
       return;
     }
-    setBusy(true);
-    const msgText = text;
-    setText('');
+    composeLock.current=true;setBusy(true);
+    const attempt=retry?previous:{fingerprint,id:crypto.randomUUID()};
+    sendAttempts.current.set(chat,attempt);
     try {
-      await api('send', {
-        chat: active,
-        body: msgText,
-        scheduled: programmed && schedule ? new Date(schedule).getTime() : 0,
-        reply: reply?.id,
-      });
-      setReply(null);
-      setSchedule('');
-      setModal('');
-      const res = await api('messages', { chat: active });
-      followLatest.current=true;setMsgs(res.messages);
+      await api('send',{...payload,clientId:attempt.id});
+      sendAttempts.current.delete(chat);
+      if(!mounted.current)return;
+      setWriteErrors(current=>({...current,[chat]:''}));
+      setDrafts(current=>current[chat]===submittedDraft?{...current,[chat]:emptyDraft}:current);
+      if(activeRef.current===chat){followLatest.current=true;setModal('');setError('');}
+      refreshAfterWrite(chat);
     } catch (e) {
-      setText(msgText);
-      setError((e as Error).message || 'Le message n’a pas été envoyé.');
+      if(mounted.current)setWriteErrors(current=>({...current,[chat]:(e as Error).message || 'Le message n’a pas été envoyé.'}));
     } finally {
-      setBusy(false);
+      composeLock.current=false;if(mounted.current)setBusy(false);
     }
   }
 
@@ -273,35 +289,36 @@ export default function Messenger() {
   }
 
   async function upload(f: File) {
+    if(!activeChat||busy||composeLock.current)return;
     if (f.size > 20 * 1024 * 1024) {
       setNotice('Taille maximale : 20 Mo.');
       return;
     }
-    setBusy(true);
+    const chat=active;composeLock.current=true;setBusy(true);
     try {
       const form = new FormData();
       form.append('file', f);
-      form.append('chat', active);
-      const r = await fetch('/api/files', { method: 'POST', body: form });
-      const d = (await r.json()) as { error?: string };
-      if (!r.ok) throw Error(d.error);
-      const res = await api('messages', { chat: active });
-      followLatest.current=true;setMsgs(res.messages);
+      form.append('chat', chat);
+      await requestJson('/api/files',{method:'POST',body:form},60000);
+      if(!mounted.current)return;
+      setWriteErrors(current=>({...current,[chat]:''}));
+      if(activeRef.current===chat){followLatest.current=true;setError('');}
+      refreshAfterWrite(chat);
     } catch (e) {
-      setError((e as Error).message);
+      if(mounted.current)setWriteErrors(current=>({...current,[chat]:(e as Error).message}));
     } finally {
-      setBusy(false);
+      composeLock.current=false;if(mounted.current)setBusy(false);
       if (file.current) file.current.value = '';
     }
   }
 
   async function star(m: Msg) {
+    const chat=active;
     try {
       await api('star', { message: m.id });
-      const res = await api('messages', { chat: active });
-      setMsgs(res.messages);
+      if(mounted.current)refreshAfterWrite(chat);
     } catch (e) {
-      setError((e as Error).message);
+      if(mounted.current&&activeRef.current===chat)setError((e as Error).message);
     }
   }
 
@@ -407,9 +424,6 @@ export default function Messenger() {
                     key={chat.id}
                     onClick={() => {
                       setActive(chat.id);
-                      setReply(null);
-                      setText('');
-                      setSchedule('');
                       setDetail(false);
                       setMobile(true);
                     }}
@@ -505,9 +519,6 @@ export default function Messenger() {
                   }`}
                   onClick={() => {
                     setActive(c.id);
-                    setReply(null);
-                    setText('');
-                    setSchedule('');
                     setDetail(false);
                     setMobile(true);
                   }}
@@ -794,6 +805,7 @@ export default function Messenger() {
           {!atLatest&&<button type="button" className="messenger-jump-latest" aria-label="Aller aux derniers messages" onClick={()=>{followLatest.current=true;history.current?.scrollTo({top:history.current.scrollHeight,behavior:document.documentElement.dataset.motion==='reduced'?'auto':'smooth'});}}><ArrowDown size={18}/><span>{(activeChat?.unread||0)>0?`${activeChat!.unread} non lu${activeChat!.unread!==1?'s':''}`:'Derniers messages'}</span></button>}
           {/* Message Composer Footer */}
           <footer className="p-space-lg pt-space-xs pb-space-lg flex-shrink-0 z-20">
+            {(writeErrors[active]||error)&&<p className="text-body-sm text-error px-space-sm py-space-xs" role="alert">{writeErrors[active]||error}</p>}
             <div className="relative bg-surface-container-low/90 backdrop-blur-xl rounded-2xl shadow-xl p-space-sm flex flex-col gap-space-xs border border-white/5">
               {reply && (
                 <div className="px-space-md py-1 text-body-sm text-primary flex items-center justify-between bg-surface-container rounded-lg">
@@ -976,6 +988,7 @@ export default function Messenger() {
 
           {modal === 'schedule' && (
             <div className="space-y-space-md pt-space-sm">
+              {(writeErrors[active]||error)&&<p className="text-body-sm text-error" role="alert">{writeErrors[active]||error}</p>}
               <input
                 type="datetime-local"
                 className="w-full bg-surface-container-lowest text-on-surface p-space-sm rounded-xl border border-white/10 focus:outline-none"

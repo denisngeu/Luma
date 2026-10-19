@@ -25,4 +25,15 @@ assert.match((await api('bob','list')).chats.find(chat=>chat.id===c.id).preview,
 const download=await fetch(base+'/api/files?id='+attachment.file,{headers:headers('bob')});assert.equal(download.status,200);assert.equal(await download.text(),'Pièce jointe de test');
 const denied=await fetch(base+'/api/files?id='+attachment.file,{headers:headers('eve')});assert.equal(denied.status,404);
 const csrf=await fetch(base+'/api/chat',{method:'POST',headers:{...headers('alice'),'Content-Type':'application/json',Origin:'https://untrusted.example'},body:JSON.stringify({action:'list'})});assert.equal(csrf.status,403);
+const clientId=crypto.randomUUID();
+const retried={chat:c.id,body:'Envoi confirmé une seule fois',clientId};
+const duplicate=await Promise.all([api('alice','send',retried),api('alice','send',retried)]);
+assert.equal(duplicate[0].id,duplicate[1].id,'concurrent retry returns the same stored message');
+assert.equal((await api('bob','messages',{chat:c.id})).messages.filter(message=>message.body===retried.body).length,1);
+await api('alice','send',{...retried,body:'Autre contenu'},409);
+await api('alice','send',{...retried,clientId:'incorrect'},400);
+await api('eve','send',retried,404);
+const ownRetry=await api('bob','send',retried);assert.notEqual(ownRetry.id,duplicate[0].id,'retry identity belongs to the authenticated author');
+const plannedRetry={chat:c.id,body:'Programmé sans doublon',clientId:crypto.randomUUID(),scheduled:Date.now()+3600000,reply:m.messages[0].id};
+assert.equal((await api('alice','send',plannedRetry)).id,(await api('alice','send',plannedRetry)).id);
 console.log('PASS: authentication, private membership, two-person capacity, persistence, scheduling visibility, private stars, file round-trip, denied access, origin validation.');
