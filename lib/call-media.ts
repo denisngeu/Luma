@@ -33,6 +33,18 @@ export async function getUserMediaWithTimeout(constraints: MediaStreamConstraint
   }
 }
 
+export async function captureCameraStream(facing: 'user' | 'environment') {
+  const video = {width: {ideal: 1280}, height: {ideal: 720}};
+  try {
+    return await getUserMediaWithTimeout({video: {...video, facingMode: {exact: facing}}, audio: false});
+  } catch (error) {
+    // A desktop webcam may not expose facingMode. A permission denial or a
+    // busy camera must reach the user without issuing another capture request.
+    if (!(error instanceof DOMException) || error.name !== 'OverconstrainedError') throw error;
+    return getUserMediaWithTimeout({video: {...video, facingMode: {ideal: facing}}, audio: false});
+  }
+}
+
 export async function gatherIce(peer: RTCPeerConnection) {
   if (peer.iceGatheringState === 'complete') return;
   await new Promise<void>((resolve, reject) => {

@@ -2,7 +2,7 @@
 import {useEffect,useRef,useState} from 'react';
 import Link from 'next/link';
 import {ArrowLeft,Camera,CameraOff,Maximize2,Mic,MicOff,Minimize2,MonitorUp,Music2,PhoneOff,SwitchCamera,Users,Volume2} from 'lucide-react';
-import {gatherIce,getUserMediaWithTimeout,mediaError,screenSharingSupported,screenSharingUnavailable} from '@/lib/call-media';
+import {captureCameraStream,gatherIce,getUserMediaWithTimeout,mediaError,screenSharingSupported,screenSharingUnavailable} from '@/lib/call-media';
 import {Switch} from '@/components/ui/switch';
 import {requestNativeMediaPermissions} from '@/lib/native-permissions';
 
@@ -16,8 +16,9 @@ async function request(action:string,data:Record<string,unknown>={}){
 export default function Room({id}:{id:string}){
  const [info,setInfo]=useState<Info|null>(null),[people,setPeople]=useState<Person[]>([]),[joined,setJoined]=useState(false),[busy,setBusy]=useState(false),[muted,setMuted]=useState(false),[camera,setCamera]=useState(false),[sharing,setSharing]=useState(false),[error,setError]=useState(''),[joinMuted,setJoinMuted]=useState(false),[joinCamera,setJoinCamera]=useState(false),[noiseSuppression,setNoiseSuppression]=useState(true),[echoCancellation,setEchoCancellation]=useState(true),[canShare]=useState(screenSharingSupported),[streams,setStreams]=useState<Record<string,MediaStream>>({}),[facing,setFacing]=useState<'user'|'environment'>('user'),[expanded,setExpanded]=useState<string|null>(null);
  const local=useRef<MediaStream|null>(null),screen=useRef<MediaStream|null>(null),pcs=useRef(new Map<string,RTCPeerConnection>()),videoSenders=useRef(new Map<string,RTCRtpSender>()),timer=useRef<ReturnType<typeof setInterval>|null>(null),active=useRef(false),epoch=useRef(0),lock=useRef(false),soundContext=useRef<AudioContext|null>(null),soundTimer=useRef<ReturnType<typeof setTimeout>|null>(null);
+ const pollNow=useRef<(()=>Promise<void>)|null>(null);
  function dispose(){
-  active.current=false;epoch.current++;if(soundTimer.current)clearTimeout(soundTimer.current);void soundContext.current?.close();soundContext.current=null;if(timer.current)clearInterval(timer.current);timer.current=null;
+  active.current=false;pollNow.current=null;epoch.current++;if(soundTimer.current)clearTimeout(soundTimer.current);void soundContext.current?.close();soundContext.current=null;if(timer.current)clearInterval(timer.current);timer.current=null;
   pcs.current.forEach(pc=>{pc.onconnectionstatechange=null;pc.close();});pcs.current.clear();videoSenders.current.clear();
   screen.current?.getTracks().forEach(t=>{t.onended=null;t.stop();});screen.current=null;
   local.current?.getTracks().forEach(t=>t.stop());local.current=null;
@@ -26,7 +27,9 @@ export default function Room({id}:{id:string}){
   let live=true;
   queueMicrotask(()=>{if(!live)return;try{const p=JSON.parse(localStorage.getItem('luma-call-preferences')||'{}');setJoinCamera(!!p.camera);setNoiseSuppression(p.noiseSuppression!==false);setEchoCancellation(p.echoCancellation!==false);}catch{}});
   request('info',{id}).then(d=>{if(live){setInfo(d);setPeople(d.participants);}}).catch(e=>{if(live)setError(e.message);});
-  const resume=()=>{if(active.current)void request('poll',{id}).catch(()=>{});};
+  // Poll responses consume signaling messages. Always process them through the
+  // same guarded handler, including when Android resumes a suspended WebView.
+  const resume=()=>{void pollNow.current?.();};
   window.addEventListener('luma-native-active',resume);window.addEventListener('online',resume);
   return()=>{live=false;if(active.current)navigator.sendBeacon('/api/rooms',new Blob([JSON.stringify({action:'leave',id})],{type:'application/json'}));dispose();window.removeEventListener('luma-native-active',resume);window.removeEventListener('online',resume);};
  },[id]);
@@ -63,6 +66,7 @@ export default function Room({id}:{id:string}){
   try{
    if(!navigator.mediaDevices?.getUserMedia)throw Error('Micro indisponible. Ouvrez Luma en HTTPS et autorisez son utilisation.');
     await requestNativeMediaPermissions(joinCamera);
+   if(epoch.current!==generation)return;
      const stream=await getUserMediaWithTimeout({audio:{noiseSuppression,echoCancellation},video:joinCamera?{width:{ideal:1280},height:{ideal:720},facingMode:{ideal:facing}}:false});
    if(epoch.current!==generation){stream.getTracks().forEach(t=>t.stop());return;}local.current=stream;
    stream.getAudioTracks().forEach(t=>t.enabled=!joinMuted);
@@ -94,12 +98,12 @@ export default function Room({id}:{id:string}){
      }
     }catch(e){if(epoch.current===generation)setError(mediaError(e));}finally{polling=false;}
    };
-   void poll();timer.current=setInterval(poll,1000);
+   pollNow.current=poll;void poll();timer.current=setInterval(poll,1000);
   }catch(e){dispose();setJoined(false);if(registered)await request('leave',{id}).catch(()=>{});setError(mediaError(e));}
   finally{lock.current=false;setBusy(false);}
  }
  async function replaceVideo(track:MediaStreamTrack|null){await Promise.all([...videoSenders.current.values()].map(sender=>sender.replaceTrack(track)));}
-  async function captureCamera(nextFacing=facing){await requestNativeMediaPermissions(true);try{return await getUserMediaWithTimeout({video:{width:{ideal:1280},height:{ideal:720},facingMode:{exact:nextFacing}},audio:false});}catch{return getUserMediaWithTimeout({video:{width:{ideal:1280},height:{ideal:720},facingMode:{ideal:nextFacing}},audio:false});}}
+ async function captureCamera(nextFacing=facing){const generation=epoch.current;await requestNativeMediaPermissions(true);if(generation!==epoch.current)throw new DOMException('Appel terminé.','AbortError');return captureCameraStream(nextFacing);}
  async function installCamera(stream:MediaStream,nextFacing=facing){const track=stream.getVideoTracks()[0];if(!track)throw Error('Aucune caméra disponible.');const previous=local.current?.getVideoTracks()[0];await replaceVideo(track);if(previous){local.current?.removeTrack(previous);previous.stop();}local.current?.addTrack(track);setFacing(nextFacing);setCamera(true);if(info)setStreams(s=>({...s,[info.me]:new MediaStream(local.current!.getTracks())}));}
  async function toggleVideo(){
   if(lock.current||sharing||!local.current)return;lock.current=true;setBusy(true);setError('');const generation=epoch.current;let captured:MediaStream|null=null;

@@ -2,9 +2,9 @@ import assert from 'node:assert/strict';
 import {runInNewContext} from 'node:vm';
 import {themeBootstrap} from '../app/theme-bootstrap.ts';
 for(const [stored,system,expected] of [
- [null,false,'dark'],['light',true,'light'],['dark',false,'dark'],
+ [null,false,'light'],[null,true,'light'],['light',true,'light'],['dark',false,'dark'],
  [JSON.stringify({mode:'system',accent:'#123456',size:18}),true,'dark'],
- [JSON.stringify({mode:'system'}),false,'light'],['{invalid',false,'dark'],['null',false,'dark'],
+ [JSON.stringify({mode:'system'}),false,'light'],['{invalid',false,'light'],['null',false,'light'],
 ]){
  const root={dataset:{},style:{setProperty(name,value){this[name]=value;}}};
  runInNewContext(themeBootstrap,{document:{documentElement:root},localStorage:{getItem:()=>stored},matchMedia:()=>({matches:system})});
