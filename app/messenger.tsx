@@ -5,6 +5,7 @@ import Link from 'next/link';
 import {ClientRequestError,requestJson} from '@/lib/client-request';
 import {isAppVisible,watchAppVisibility} from '@/lib/app-visibility';
 import {useChatRead} from '@/hooks/use-chat-read';
+import {useActiveRooms} from '@/hooks/use-active-rooms';
 import type {ReadCursor} from '@/lib/chat-reads';
 import {ArrowDown} from 'lucide-react';
 import { Dialog, DialogClose, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
@@ -35,7 +36,6 @@ type Msg = {
   starred?: number;
 };
 
-type ActiveRoom = { id: string; participants: number; mode: string };
 type Draft = {text:string;reply:Msg|null;schedule:string};
 const emptyDraft:Draft={text:'',reply:null,schedule:''};
 
@@ -77,7 +77,7 @@ export default function Messenger() {
     window.dispatchEvent(new Event('luma-chat-list-refresh'));
     window.dispatchEvent(new CustomEvent('luma-chat-messages-refresh',{detail:chat}));
   };
-  const [activeRooms, setActiveRooms] = useState<Record<string, ActiveRoom>>({});
+  const activeRooms=useActiveRooms(chats);
 
   const history=useRef<HTMLElement>(null),followLatest=useRef(true),firstHistory=useRef(true);
   const file = useRef<HTMLInputElement>(null);
@@ -185,29 +185,6 @@ export default function Messenger() {
       mounted = false;
     };
   }, [load]);
-
-  useEffect(() => {
-    const groups = chats.filter((chat) => chat.kind === 'group').slice(0, 12);
-    if (!groups.length) {
-      queueMicrotask(() => setActiveRooms({}));
-      return;
-    }
-    let live = true;
-    const refresh = async () => {
-      const rows = await Promise.all(groups.map(async (chat) => {
-        try {
-          const response = await fetch('/api/rooms', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'active', chat: chat.id }), cache: 'no-store' });
-          if (!response.ok) return [chat.id, null] as const;
-          const data = await response.json() as { room: ActiveRoom | null };
-          return [chat.id, data.room] as const;
-        } catch { return [chat.id, null] as const; }
-      }));
-      if (live) setActiveRooms(Object.fromEntries(rows.filter((row): row is readonly [string, ActiveRoom] => !!row[1])));
-    };
-    void refresh();
-    const timer = setInterval(refresh, 8000);
-    return () => { live = false; clearInterval(timer); };
-  }, [chats]);
 
   useEffect(() => {
     let live=true,pending=false,initial=true,queued=false;const controller=new AbortController();

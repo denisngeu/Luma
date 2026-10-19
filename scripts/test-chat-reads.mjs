@@ -83,5 +83,16 @@ try{
  await pg.query('DELETE FROM members WHERE chat=$1 AND "user"=$2',[chat,'bob']);
  assert.equal(Number((await pg.query('SELECT count(*) n FROM chat_reads WHERE chat=$1 AND "user"=$2',[chat,'bob'])).rows[0].n),0,'membership removal deletes read state');
  await api('bob','read',{chat,cursor:bulk.readCursor},404);
+ // An invalid planned date must never become an immediately delivered message.
+ const beforeInvalid=Number((await pg.query('SELECT count(*) n FROM messages')).rows[0].n);
+ for(const scheduled of ['not-a-date','',null,false,{},[],1.5,-1,Date.now()+367*86400000]){
+  await api('alice','send',{chat,body:'Ne pas publier immédiatement',scheduled},400);
+ }
+ assert.equal(Number((await pg.query('SELECT count(*) n FROM messages')).rows[0].n),beforeInvalid);
+ const immediate=await api('alice','send',{chat,body:'Envoi sans programmation'});
+ assert.equal(Number((await pg.query('SELECT scheduled FROM messages WHERE id=$1',[immediate.id])).rows[0].scheduled),0);
+ const planned=Date.now()+60000;
+ const future=await api('alice','send',{chat,body:'Envoi programmé valide',scheduled:planned});
+ assert.equal(Number((await pg.query('SELECT scheduled FROM messages WHERE id=$1',[future.id])).rows[0].scheduled),planned);
  console.log('PASS PostgreSQL read persistence, user isolation, visibility, scheduling, boundary races, monotonic acknowledgements, history cutoff, recent activity order and membership removal.');
 }finally{await pg.close();delete globalThis.__chatReadTest;}
