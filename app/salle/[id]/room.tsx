@@ -6,6 +6,7 @@ import {captureCameraStream,gatherIce,getUserMediaWithTimeout,mediaError,screenS
 import {Switch} from '@/components/ui/switch';
 import {requestNativeMediaPermissions} from '@/lib/native-permissions';
 import {applyPreferredAudioOutput,preferredMicrophone} from '@/lib/media-devices';
+import {useExpandedMedia} from '@/hooks/use-expanded-media';
 
 type Person={user:string;name:string};
 type Signal={sender:string;type:'offer'|'answer';payload:string};
@@ -15,7 +16,8 @@ async function request(action:string,data:Record<string,unknown>={}){
  const d=await r.json() as Info & {error?:string;signals:Signal[]};if(!r.ok)throw Error(d.error||'Salon indisponible');return d;
 }
 export default function Room({id}:{id:string}){
- const [info,setInfo]=useState<Info|null>(null),[people,setPeople]=useState<Person[]>([]),[joined,setJoined]=useState(false),[busy,setBusy]=useState(false),[muted,setMuted]=useState(false),[camera,setCamera]=useState(false),[sharing,setSharing]=useState(false),[error,setError]=useState(''),[joinMuted,setJoinMuted]=useState(false),[joinCamera,setJoinCamera]=useState(false),[noiseSuppression,setNoiseSuppression]=useState(true),[echoCancellation,setEchoCancellation]=useState(true),[canShare]=useState(screenSharingSupported),[streams,setStreams]=useState<Record<string,MediaStream>>({}),[facing,setFacing]=useState<'user'|'environment'>('user'),[expanded,setExpanded]=useState<string|null>(null);
+ const [info,setInfo]=useState<Info|null>(null),[people,setPeople]=useState<Person[]>([]),[joined,setJoined]=useState(false),[busy,setBusy]=useState(false),[muted,setMuted]=useState(false),[camera,setCamera]=useState(false),[sharing,setSharing]=useState(false),[error,setError]=useState(''),[joinMuted,setJoinMuted]=useState(false),[joinCamera,setJoinCamera]=useState(false),[noiseSuppression,setNoiseSuppression]=useState(true),[echoCancellation,setEchoCancellation]=useState(true),[canShare]=useState(screenSharingSupported),[streams,setStreams]=useState<Record<string,MediaStream>>({}),[facing,setFacing]=useState<'user'|'environment'>('user');
+ const [expanded,setExpanded]=useExpandedMedia<string>();
  const local=useRef<MediaStream|null>(null),screen=useRef<MediaStream|null>(null),pcs=useRef(new Map<string,RTCPeerConnection>()),videoSenders=useRef(new Map<string,RTCRtpSender>()),timer=useRef<ReturnType<typeof setInterval>|null>(null),active=useRef(false),epoch=useRef(0),lock=useRef(false),soundContext=useRef<AudioContext|null>(null),soundTimer=useRef<ReturnType<typeof setTimeout>|null>(null);
  const pollNow=useRef<(()=>Promise<void>)|null>(null);
  function dispose(){
@@ -35,7 +37,7 @@ export default function Room({id}:{id:string}){
   return()=>{live=false;if(active.current)navigator.sendBeacon('/api/rooms',new Blob([JSON.stringify({action:'leave',id})],{type:'application/json'}));dispose();window.removeEventListener('luma-native-active',resume);window.removeEventListener('online',resume);};
  },[id]);
  async function send(uid:string,type:'offer'|'answer',pc:RTCPeerConnection,generation:number){
-  await gatherIce(pc);if(epoch.current!==generation||!active.current)return;
+  await gatherIce(pc);if(epoch.current!==generation||!active.current||pcs.current.get(uid)!==pc)return;
   await request('signal',{id,recipient:uid,type,payload:JSON.stringify(pc.localDescription)});
  }
  function makePeer(uid:string,ice:RTCConfiguration,answering=false){
@@ -81,26 +83,41 @@ export default function Room({id}:{id:string}){
      const update=await request('poll',{id}) as {participants:Person[];signals:Signal[]};
      if(epoch.current!==generation)return;setPeople(update.participants);
      const present=new Set(update.participants.map(p=>p.user));
+     setExpanded(current=>current&&present.has(current)?current:null);
      for(const [uid,pc] of pcs.current)if(!present.has(uid)){pc.close();pcs.current.delete(uid);videoSenders.current.delete(uid);setStreams(s=>{const next={...s};delete next[uid];return next;});}
-     for(const signal of update.signals){
-      if(!present.has(signal.sender))continue;
-      let pc=pcs.current.get(signal.sender);
-      if(signal.type==='offer'){
-       if(pc){pc.close();pcs.current.delete(signal.sender);}
-       pc=makePeer(signal.sender,d.ice,true);
-       await pc.setRemoteDescription(JSON.parse(signal.payload));
-       await attachAnswerTracks(signal.sender,pc);
-       await pc.setLocalDescription(await pc.createAnswer());await send(signal.sender,'answer',pc,generation);
-      }else if(pc?.signalingState==='have-local-offer')await pc.setRemoteDescription(JSON.parse(signal.payload));
+     // Serialize descriptions for each peer, but gather ICE for different
+     // participants concurrently so room refresh does not scale with roster size.
+     const grouped=new Map<string,Signal[]>();
+     for(const signal of update.signals)if(present.has(signal.sender)){
+      const batch=grouped.get(signal.sender)||[];batch.push(signal);grouped.set(signal.sender,batch);
      }
-     for(const person of update.participants)if(person.user!==d.me&&!pcs.current.has(person.user)&&d.me.localeCompare(person.user)<0){
+     const settle=async(tasks:Promise<void>[])=>{
+      const results=await Promise.allSettled(tasks);
+      const failed=results.find(result=>result.status==='rejected');
+      if(failed?.status==='rejected')throw failed.reason;
+     };
+     await settle([...grouped.values()].map(async signals=>{
+      for(const signal of signals){
+       if(epoch.current!==generation)return;
+       let pc=pcs.current.get(signal.sender);
+       if(signal.type==='offer'){
+        if(pc){pc.close();pcs.current.delete(signal.sender);}
+        pc=makePeer(signal.sender,d.ice,true);
+        await pc.setRemoteDescription(JSON.parse(signal.payload));
+        await attachAnswerTracks(signal.sender,pc);
+        await pc.setLocalDescription(await pc.createAnswer());await send(signal.sender,'answer',pc,generation);
+       }else if(pc?.signalingState==='have-local-offer')await pc.setRemoteDescription(JSON.parse(signal.payload));
+      }
+     }));
+     if(epoch.current!==generation)return;
+     await settle(update.participants.filter(person=>person.user!==d.me&&!pcs.current.has(person.user)&&d.me.localeCompare(person.user)<0).map(async person=>{
       const pc=makePeer(person.user,d.ice);
       await pc.setLocalDescription(await pc.createOffer());await send(person.user,'offer',pc,generation);
-     }
+     }));
     }catch(e){if(epoch.current===generation)setError(mediaError(e));}finally{polling=false;}
    };
    pollNow.current=poll;void poll();timer.current=setInterval(poll,1000);
-  }catch(e){dispose();setJoined(false);if(registered)await request('leave',{id}).catch(()=>{});setError(mediaError(e));}
+  }catch(e){dispose();setExpanded(null);setJoined(false);if(registered)await request('leave',{id}).catch(()=>{});setError(mediaError(e));}
   finally{lock.current=false;setBusy(false);}
  }
  async function replaceVideo(track:MediaStreamTrack|null){await Promise.all([...videoSenders.current.values()].map(sender=>sender.replaceTrack(track)));}
@@ -152,7 +169,7 @@ export default function Room({id}:{id:string}){
    let remaining=presets[index].length;presets[index].forEach(([hz,offset,duration,wave])=>{const osc=ctx.createOscillator(),gain=ctx.createGain(),filter=ctx.createBiquadFilter(),at=ctx.currentTime+offset;osc.type=wave;osc.frequency.value=hz;filter.type='lowpass';filter.frequency.value=2400;gain.gain.setValueAtTime(.0001,at);gain.gain.exponentialRampToValueAtTime(.13,at+.025);gain.gain.exponentialRampToValueAtTime(.0001,at+duration);osc.connect(filter).connect(gain).connect(dest);osc.start(at);osc.stop(at+duration+.03);osc.onended=()=>{remaining--;if(!remaining)restore();};});soundTimer.current=setTimeout(restore,2200);
   }catch(e){void ctx.close();soundContext.current=null;setError(mediaError(e));}
  }
- async function leave(){const wasActive=active.current;dispose();setJoined(false);setStreams({});setCamera(false);setSharing(false);if(wasActive)await request('leave',{id}).catch(()=>{});}
+ async function leave(){const wasActive=active.current;dispose();setExpanded(null);setJoined(false);setStreams({});setCamera(false);setSharing(false);if(wasActive)await request('leave',{id}).catch(()=>{});}
  return <main className="room-page"><header><Link href="/messages"><ArrowLeft/> Retour</Link><div><strong>{info?.room.chat_name||'Salon Luma'}</strong><span>{info?.room.kind==='voice'?'Salon vocal':'Appel de groupe'}</span></div><span><Users size={17}/>{people.length} participant{people.length!==1?'s':''}</span></header>
  {error&&<p className="room-error" role="alert">{error}</p>}
  <section className="room-stage">{!joined?<div className="room-lobby"><div><Users/></div><h1>Rejoignez la conversation</h1><p>Votre micro ne s’active qu’en rejoignant le salon.</p><section className="room-preflight">
@@ -160,7 +177,7 @@ export default function Room({id}:{id:string}){
  <label><Switch checked={joinCamera} onCheckedChange={setJoinCamera} aria-label="Activer ma caméra"/>Activer ma caméra</label>
  <label><Switch checked={noiseSuppression} onCheckedChange={setNoiseSuppression} aria-label="Réduire le bruit ambiant"/>Réduire le bruit ambiant</label>
  <label><Switch checked={echoCancellation} onCheckedChange={setEchoCancellation} aria-label="Éviter echo"/>Éviter l’écho</label></section>
- <button disabled={busy||!info} onClick={join}>{busy?'Connexion…':'Rejoindre le salon'}</button></div>:<div className="voice-live-stage"><section className="voice-topic"><span>● EN DIRECT</span><div><small>SUJET À L’AFFICHE</small><strong>{info?.room.chat_name||'Salon vocal'}</strong></div><b><Users size={13}/>{people.length} participant{people.length!==1?'s':''}</b></section><section className="voice-speakers"><header><h2>Sur scène</h2><span>{Math.min(people.length,4)} intervenant{Math.min(people.length,4)!==1?'s':''}</span><small>Audio HD</small></header><div>{people.slice(0,4).map(person=><article key={person.user} className={expanded===person.user?'is-expanded':''}><div className="room-avatar">{person.name.slice(0,2).toUpperCase()}</div><Remote stream={streams[person.user]} self={person.user===info?.me}/><b>{person.user===info?.me?(sharing?'Votre écran':'Vous'):person.name}</b><small>{person.user===info?.me?'Vous':'Intervenant'}</small><button className="call-expand" aria-label={expanded===person.user?'Réduire la vidéo':'Agrandir la vidéo ou le partage'} onClick={()=>setExpanded(expanded===person.user?null:person.user)}>{expanded===person.user?<Minimize2/>:<Maximize2/>}</button></article>)}</div></section>{people.length>4&&<section className="voice-audience"><header><h2>Dans l’audience</h2><span>{people.length-4} auditeur{people.length-4!==1?'s':''}</span></header><div>{people.slice(4).map(person=><article key={person.user}><div className="room-avatar">{person.name.slice(0,2).toUpperCase()}</div><Remote stream={streams[person.user]} self={person.user===info?.me}/><strong>{person.name}</strong><small>AUDITEUR</small></article>)}</div></section>}</div>}</section>
+ <button disabled={busy||!info} onClick={join}>{busy?'Connexion…':'Rejoindre le salon'}</button></div>:<div className="voice-live-stage"><section className="voice-topic"><span>● EN DIRECT</span><div><small>SUJET À L’AFFICHE</small><strong>{info?.room.chat_name||'Salon vocal'}</strong></div><b><Users size={13}/>{people.length} participant{people.length!==1?'s':''}</b></section><section className="voice-speakers"><header><h2>Dans la conversation</h2><span>{people.length} participant{people.length!==1?'s':''}</span></header><div>{people.map(person=><article key={person.user} className={expanded===person.user?'is-expanded':''}><div className="room-avatar">{person.name.slice(0,2).toUpperCase()}</div><Remote stream={streams[person.user]} self={person.user===info?.me}/><b>{person.user===info?.me?(sharing?'Votre écran':'Vous'):person.name}</b><small>{person.user===info?.me?'Vous':'Participant'}</small><button className="call-expand" aria-expanded={expanded===person.user} aria-label={expanded===person.user?'Réduire la vidéo':'Agrandir la vidéo ou le partage'} onClick={()=>setExpanded(expanded===person.user?null:person.user)}>{expanded===person.user?<Minimize2/>:<Maximize2/>}</button></article>)}</div></section></div>}</section>
  {joined&&<><footer>
  <button className={muted?'off':''} onClick={()=>{local.current?.getAudioTracks().forEach(t=>t.enabled=muted);setMuted(!muted);}} aria-pressed={muted}>{muted?<MicOff/>:<Mic/>}<span>{muted?'Activer micro':'Micro'}</span></button>
  <button disabled={busy||sharing} className={!camera?'off':''} onClick={toggleVideo} aria-pressed={camera}>{camera?<Camera/>:<CameraOff/>}<span>Caméra</span></button>

@@ -62,8 +62,8 @@ app.on('window-all-closed',()=>{}); app.whenReady().then(async()=>{
     const info={me:who,room:{mode:'audio',kind:'voice',chat_name:'Test'},participants:[...participants].map(user=>({user,name:user})),ice:{iceServers:[]}};
     if(p.action==='info')out=info;
     if(p.action==='join'){participants.add(who);out=info;}
-    if(p.action==='poll'){out={participants:[...participants].map(user=>({user,name:user})),signals:signals[who].splice(0)};}
-    if(p.action==='signal')signals[p.recipient].push({sender:who,type:p.type,payload:p.payload});
+    if(p.action==='poll'){out={participants:[...participants].map(user=>({user,name:user})),signals:signals[who]?.splice(0)||[]};}
+    if(p.action==='signal')signals[p.recipient]?.push({sender:who,type:p.type,payload:p.payload});
     if(p.action==='leave')participants.delete(who);
    }
    res.setHeader('Content-Type','application/json');res.end(JSON.stringify(out));return;
@@ -99,9 +99,19 @@ app.on('window-all-closed',()=>{}); app.whenReady().then(async()=>{
   await until(()=>run(b,"[...document.querySelectorAll('video')].some(v=>v.videoWidth>0)"),kind+' camera enabled after audio join');
   checks.push(kind+' camera enabled mid-call');
   assert.equal(await run(a,'document.documentElement.scrollWidth<=innerWidth'),true,kind+' mobile horizontal overflow');
+  assert.equal(await run(a,"[...document.querySelectorAll('.call-expand')].every(button=>{const r=button.getBoundingClientRect();return r.width>=44&&r.height>=44&&button.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2));})"),true,kind+' expansion controls reachable without overlap');
   writeFileSync(path.join(dir,kind+'-mobile.png'),(await a.webContents.capturePage()).toPNG());
   await click(a,kind==='private'?'Partager l’écran':'Écran');
   await until(()=>run(a,"[...document.querySelectorAll('button')].some(b=>!b.disabled&&(b.textContent==='Arrêter le partage'||b.textContent==='Arrêter'))"),kind+' sharing');
+  await run(b,"document.querySelector('.call-expand').click()");
+  await until(()=>run(b,"!!document.querySelector('.is-expanded')"),kind+' shared video expands');
+  const fullscreen=await run(b,"(()=>{const r=document.querySelector('.is-expanded').getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height,viewportWidth:innerWidth,viewportHeight:innerHeight};})()");
+  assert.equal(fullscreen.x,0);assert.equal(fullscreen.y,0);assert.equal(fullscreen.width,fullscreen.viewportWidth);assert.equal(fullscreen.height,fullscreen.viewportHeight,kind+' expanded video fills mobile viewport');
+  writeFileSync(path.join(dir,kind+'-expanded.png'),(await b.webContents.capturePage()).toPNG());
+  await run(b,"window.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}))");
+  await until(()=>run(b,"!document.querySelector('.is-expanded')"),kind+' Escape reduces video without leaving call');
+  assert.equal(await run(b,"window.__peers.some(p=>p.connectionState==='connected')"),true);
+  checks.push(kind+' reachable 44px expansion controls and full viewport sharing');
   await click(a,kind==='private'?'Arrêter le partage':'Arrêter');
   await until(()=>run(a,"[...document.querySelectorAll('button')].some(b=>b.textContent.includes('Caméra')&&!b.disabled)"),kind+' camera restored');
   checks.push(kind+' share/restore');
@@ -123,6 +133,20 @@ app.on('window-all-closed',()=>{}); app.whenReady().then(async()=>{
   if(kind==='group')await click(b,'Quitter');
   a.destroy();b.destroy();participants.clear();
  }
+ // Every participant can show video; roster order must never imply a muted audience.
+ const roster=await open('a','group',base);
+ await until(()=>run(roster,"!!document.querySelector('.room-lobby button:not(:disabled)')"),'roster ready');
+ await click(roster,'Rejoindre le salon');
+ for(const uid of ['b','c','d','e','f'])participants.add(uid);
+ await run(roster,"window.dispatchEvent(new Event('online'))");
+ await until(()=>run(roster,"document.querySelectorAll('.voice-speakers article').length===6"),'all six participants visible');
+ assert.equal(await run(roster,"document.querySelectorAll('.voice-audience').length"),0,'no fabricated audience roles');
+ await run(roster,"[...document.querySelectorAll('.voice-speakers article')].find(tile=>tile.querySelector('b').textContent==='f').querySelector('.call-expand').click()");
+ await until(()=>run(roster,"!!document.querySelector('.voice-speakers article.is-expanded video')"),'sixth participant can expand video');
+ assert.equal(await run(roster,"getComputedStyle(document.querySelector('.is-expanded video')).display!=='none'"),true);
+ participants.delete('f');await run(roster,"window.dispatchEvent(new Event('online'))");
+ await until(()=>run(roster,"window.dispatchEvent(new Event('online'));!document.querySelector('.is-expanded')&&document.querySelectorAll('.voice-speakers article').length===5"),'departing participant closes expanded tile');
+ await click(roster,'Quitter');roster.destroy();participants.clear();checks.push('all six participants visible and expandable; departure restores room');
  // Development effect replays must preserve a waiting call; a real unmount
  // still needs to end it, even if the user never enabled their microphone.
  call={...call,state:'preparing',offer:null,answer:null};
