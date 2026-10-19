@@ -21,6 +21,7 @@ await api('eve','send',{chat:c.id,body:'Intrusion'},404);
 const form=new FormData();form.set('chat',c.id);form.set('file',new File(['Pièce jointe de test'],'test.txt',{type:'text/plain'}));
 const upload=await fetch(base+'/api/files',{method:'POST',headers:headers('alice'),body:form});assert.equal(upload.status,200,await upload.text());
 m=await api('bob','messages',{chat:c.id});const attachment=m.messages.find(x=>x.file);
+assert.match((await api('bob','list')).chats.find(chat=>chat.id===c.id).preview,/test\.txt/,'attachment has a meaningful conversation preview');
 const download=await fetch(base+'/api/files?id='+attachment.file,{headers:headers('bob')});assert.equal(download.status,200);assert.equal(await download.text(),'Pièce jointe de test');
 const denied=await fetch(base+'/api/files?id='+attachment.file,{headers:headers('eve')});assert.equal(denied.status,404);
 const csrf=await fetch(base+'/api/chat',{method:'POST',headers:{...headers('alice'),'Content-Type':'application/json',Origin:'https://untrusted.example'},body:JSON.stringify({action:'list'})});assert.equal(csrf.status,403);

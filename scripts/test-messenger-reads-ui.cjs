@@ -50,8 +50,8 @@ app.whenReady().then(async()=>{
   await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));const origin='http://127.0.0.1:'+server.address().port;
   win=new BrowserWindow({width:390,height:844});await win.loadURL(origin+'/messages');
   await until(()=>run(win,"!!document.querySelector('[aria-label=\"Ouvrir la discussion avec Alice\"]')"),'discussion list loaded');
-  await wait(250);assert.equal(reads.length,0,'mobile list does not mark the selected default conversation read');
-  assert.equal(await win.page.locator('[aria-label="2 messages non lus"]').count(),1,'unread badge remains on selected default row');
+  await wait(250);assert.equal(reads.length,0,'mobile list does not choose or mark a default conversation read');
+  assert.equal(await win.page.locator('[aria-label="2 messages non lus"]').count(),1,'unread badge remains before a conversation is opened');
   await win.page.getByRole('button',{name:'Non lus',exact:true}).click();
   assert.equal(await win.page.getByRole('button',{name:/Ouvrir la discussion avec/}).count(),2,'unread filter uses actual counters');
   await win.page.getByRole('button',{name:'Ouvrir la discussion avec Alice',exact:true}).click();
@@ -120,6 +120,15 @@ app.whenReady().then(async()=>{
   assert.equal(await win.page.locator('[aria-label="Envoyé"]').count(),1,'sent status does not claim recipient read');
   const planned=Date.now()+60000;ownMessages.push({id:'planned',author:'me',name:'Moi',body:'Plus tard',created:Date.now(),scheduled:planned,scheduled_pending:1});
   await run(win,"window.dispatchEvent(new Event('luma-native-active'))");await until(()=>run(win,"!!document.querySelector('[aria-label=\"Message programmé\"]')"),'scheduled preview is explicitly labelled');
+  const beforeDesktop=reads.length;win.destroy();unread.a=2;sequence.a++;
+  win=new BrowserWindow({width:1280,height:850});await win.loadURL(origin+'/messages');
+  await until(()=>run(win,"!!document.querySelector('[aria-label=\"Ouvrir la discussion avec Alice\"]')"),'desktop list loaded');await wait(250);
+  assert.equal(reads.length,beforeDesktop,'desktop startup does not mark a conversation read without a choice');
+  assert.equal(await win.page.getByRole('heading',{name:'Sélectionnez une discussion',exact:true}).count(),1,'desktop waits for an explicit conversation');
+  await win.page.getByRole('button',{name:'Ouvrir la discussion avec Alice',exact:true}).click();await until(()=>reads.length===beforeDesktop+1&&unread.a===0,'desktop choice acknowledges visible conversation');
+  win.destroy();unread.b=1;sequence.b++;win=new BrowserWindow({width:390,height:844});await win.loadURL(origin+'/messages?chat=b');
+  await until(()=>run(win,"document.querySelector('.stitch-messenger-root').classList.contains('mobile-chat')"),'direct message link opens mobile conversation');
+  await until(()=>reads.length===beforeDesktop+2&&unread.b===0,'explicit mobile link acknowledges chosen conversation');
   console.log('PASS real unread filtering, mobile visibility, background/foreground handling, stale list race, confirmed read counts, failed retry, concurrent arrivals and idle write deduplication.');
  }catch(error){console.error(error);if(win)try{writeFileSync(path.join(dir,'debug.txt'),await run(win,'document.body.innerText'));writeFileSync(path.join(dir,'debug.png'),(await win.webContents.capturePage()).toPNG());}catch{}process.exitCode=1;}
  finally{win?.destroy();server?.closeAllConnections();server?.close();await app.exit(process.exitCode||0);}

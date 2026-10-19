@@ -6,7 +6,7 @@ export async function POST(request:Request){try{
   const now=Date.now();
   const rows=await db().prepare(`SELECT c.id,c.kind,c.space,c.mode,c.topic,c.owner,c.invite,c.created,
    CASE WHEN c.kind='direct' AND c.id LIKE 'friend-%' THEN COALESCE((SELECT u.name FROM members other JOIN users u ON u.id=other.user WHERE other.chat=c.id AND other.user!=? LIMIT 1),c.name) ELSE c.name END name,
-   (SELECT substr(preview_message.body,1,120) FROM messages preview_message WHERE preview_message.hidden=0 AND preview_message.chat=c.id AND preview_message.scheduled<=? ORDER BY ${messageVisibleAt('preview_message')} DESC,preview_message.delivery_seq DESC LIMIT 1) AS preview,
+   (SELECT substr(CASE WHEN preview_message.body!='' THEN preview_message.body WHEN preview_message.file IS NOT NULL THEN 'Pièce jointe : '||COALESCE(NULLIF(preview_message.filename,''),'fichier') ELSE 'Message' END,1,120) FROM messages preview_message WHERE preview_message.hidden=0 AND preview_message.chat=c.id AND preview_message.scheduled<=? ORDER BY ${messageVisibleAt('preview_message')} DESC,preview_message.delivery_seq DESC LIMIT 1) AS preview,
    (SELECT count(*) FROM messages message LEFT JOIN chat_reads reading ON reading.chat=message.chat AND reading.user=? WHERE message.chat=c.id AND message.author!=? AND message.hidden=0 AND message.scheduled<=? AND ${unreadCondition('message','reading')}) unread,
    COALESCE((SELECT MAX(${messageVisibleAt('recent')}) FROM messages recent WHERE recent.chat=c.id AND recent.hidden=0 AND recent.scheduled<=?),c.created) last_activity
    FROM chats c JOIN members m ON m.chat=c.id WHERE m.user=? AND c.locked=0 AND c.space IS NULL ORDER BY last_activity DESC,c.created DESC LIMIT 100`)

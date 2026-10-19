@@ -87,7 +87,7 @@ export default function Messenger() {
   },[focusDiscussions]);
 
   const activeChat = useMemo(() => {
-    return chats.find((c) => c.id === active) || chats[0];
+    return chats.find((c) => c.id === active);
   }, [chats, active]);
 
   const api = useCallback(async (action:string,data:Record<string,unknown>={},signal?:AbortSignal) => requestJson<{
@@ -107,7 +107,7 @@ export default function Messenger() {
         const result=await api('list',{},controller.signal);
         if(live&&epoch===listEpoch.current&&Array.isArray(result.chats)){
           const rows=result.chats;setChats(current=>JSON.stringify(current)===JSON.stringify(rows)?current:rows);
-          setActive(current=>!current||rows.some(chat=>chat.id===current)?current:rows[0]?.id||'');
+          setActive(current=>!current||rows.some(chat=>chat.id===current)?current:'');
         }
       }catch(error){if(live&&error instanceof ClientRequestError&&error.status===401){setChats([]);setActive('');setMe('');setError('Votre session a expiré. Reconnectez-vous.');}}
       finally{pending=false;if(live&&epoch!==listEpoch.current)queueMicrotask(()=>void refresh());}
@@ -147,12 +147,9 @@ export default function Messenger() {
       if (d.user) {
         setMe(d.user.id);
       }
-      setActive((a) => {
-        const requested = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('chat') : null;
-        if (requested && loadedChats.some((c) => c.id === requested)) return requested;
-        if (loadedChats.some((c) => c.id === a)) return a;
-        return loadedChats[0]?.id || '';
-      });
+      const requested=new URLSearchParams(window.location.search).get('chat');
+      if(requested&&loadedChats.some(chat=>chat.id===requested)){setActive(requested);setMobile(true);}
+      else setActive(current=>loadedChats.some(chat=>chat.id===current)?current:'');
       setError('');
     } catch (e) {
       setChats([]);
