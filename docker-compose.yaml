@@ -37,11 +37,12 @@ services:
       context: .
       dockerfile: docker/turn.Dockerfile
     restart: unless-stopped
+    environment:
+      LUMA_TURN_PUBLIC_IP: ${LUMA_TURN_PUBLIC_IP:?Configure the public IPv4 address of this server}
     command:
       - -c
       - /etc/coturn/turnserver.conf
       - --static-auth-secret=${SERVICE_PASSWORD_64_TURN}
-      - --external-ip=${LUMA_TURN_PUBLIC_IP}
     ports:
       - "3478:3478/tcp"
       - "3478:3478/udp"
