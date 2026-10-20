@@ -66,6 +66,7 @@
     box-shadow: none !important;
   }
   .network-sidebar, .network-about { top: 16px !important; }
+  .network-about { padding: 0 !important; border: 0 !important; background: transparent !important; box-shadow: none !important; }
   .my-profile { position: relative; padding: 12px !important; }
   .profile-cover {
     height: 76px !important;
@@ -128,7 +129,7 @@
   .post-composer footer .media-picker, .post-composer footer button { min-height: 32px !important; padding: 7px 10px !important; font-size: 9px !important; }
   .social-post { padding: 0 !important; overflow: hidden; }
   .social-post > header { padding: 12px 13px 0 !important; }
-  .social-post > .post-body { margin: 10px 13px !important; font-size: 11px !important; line-height: 1.55 !important; }
+  .social-post > .post-body { margin: 10px 13px !important; font-size: 13px !important; line-height: 1.55 !important; }
   .social-post .social-avatar { width: 36px; height: 36px; border-radius: 10px; }
   .social-post .post-author { font-size: 11px; }
   .social-post header small { font-size: 8px; }
@@ -184,10 +185,14 @@
   .contact-share-preview { max-width: 246px !important; }
   .contact-share-preview img { border-radius: 12px !important; }
   .contact-share-details h3 { margin: 6px 0 !important; font-size: 18px !important; }
-  .contact-share-details p, .contact-share-details small { font-size: 8.5px !important; line-height: 1.5 !important; }
-  .contact-share-actions { margin: 10px 0 !important; gap: 6px !important; }
-  .contact-share-actions button, .friends-page .contact-download { min-height: 32px !important; padding: 7px !important; font-size: 8px !important; }
+  .contact-share-details p, .contact-share-details small { font-size: 11px !important; line-height: 1.5 !important; }
+  .contact-share-actions { margin: 10px 0 !important; gap: 6px !important; grid-template-columns: repeat(3,minmax(0,1fr)) !important; }
+  .contact-share-actions > button:first-child { grid-column: 1 / -1 !important; }
+  .contact-share-actions > :not(:first-child) { flex-direction: column; gap: 4px; min-height: 48px !important; }
+  .contact-share-actions button, .friends-page .contact-download { min-height: 32px !important; padding: 7px !important; font-size: 11px !important; }
   .contact-share-details > input { padding: 8px !important; font-size: 8px !important; }
+
+  .friends-page > [role="status"]:empty { display: none !important; }
 
   /* Paramètres */
   .privacy-page.settings-page { padding: 16px 24px 64px !important; }
@@ -217,14 +222,16 @@
   .settings-heading { gap: 10px !important; padding: 13px 15px !important; }
   .settings-heading > svg { width: 18px; height: 18px; }
   .settings-heading h2 { font-size: 15px !important; }
-  .settings-heading p { font-size: 10px !important; }
+  .settings-heading p { font-size: 11px !important; }
   .settings-profile { grid-template-columns: 92px 1fr 1fr !important; gap: 11px !important; padding: 14px !important; }
-  .settings-avatar > span { width: 68px !important; height: 68px !important; border-radius: 999px !important; }
+  .settings-profile .settings-avatar { flex-direction: column !important; align-items: center !important; gap: 8px !important; }
+  .settings-device-options > summary { display: none; }
+  .settings-avatar > span { flex: 0 0 68px !important; width: 68px !important; height: 68px !important; border-radius: 999px !important; }
   .settings-avatar strong { font-size: 10px !important; }
-  .settings-profile label { font-size: 10px !important; }
+  .settings-profile label { font-size: 11px !important; }
   .settings-profile input, .settings-profile textarea { min-height: 38px; padding: 9px !important; font-size: 11px !important; }
   .settings-profile textarea { min-height: 60px !important; }
-  .settings-profile > button { min-height: 34px !important; padding: 7px !important; font-size: 9px !important; }
+  .settings-profile > button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 38px !important; padding: 7px !important; font-size: 11px !important; }
   .settings-devices { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; padding: 13px 15px; border-bottom: 1px solid var(--desktop-line); }
   .settings-devices label { max-width: none; gap: 5px; font-size: 10px; }
   .settings-devices label > span { display: flex; align-items: center; gap: 6px; font-weight: 700; }

@@ -40,3 +40,9 @@ html,body{background:var(--t-canvas);color:var(--t-ink);font-family:"Plus Jakart
  .call-room{min-height:100dvh!important;padding:14px 10px max(16px,env(safe-area-inset-bottom,0px))!important;overflow-y:auto!important}.call-room header{text-align:center}.call-videos{display:block!important;margin:13px 0!important}.call-videos>div:first-child{height:clamp(260px,48dvh,430px)!important}.call-videos>div:last-child{width:31%!important}.call-controls{width:100%;max-width:none;display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important}.call-controls button{min-width:0!important;padding:9px 4px!important;font-size:10px!important}.call-controls .call-hangup{grid-column:1/-1!important}
 }
 @media(prefers-reduced-motion:reduce){.luma-page{animation:none!important}}
+
+.settings-avatar-initials{display:grid;width:100%;height:100%;place-items:center;font-size:22px;font-weight:750;color:var(--t-ink)}
+.settings-avatar strong{display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.settings-avatar strong svg{width:15px;height:15px;flex-shrink:0}
+.settings-profile>button svg{width:16px;height:16px;flex-shrink:0}
+html[data-luma] .microphone-test button{color:var(--t-ink)!important}
