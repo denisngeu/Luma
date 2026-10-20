@@ -46,13 +46,13 @@ app.whenReady().then(async()=>{
   await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));const origin='http://127.0.0.1:'+server.address().port;
   win=new BrowserWindow({width:390,height:844});await win.loadURL(origin+'/messages');
   const open=async name=>{if(await win.page.getByRole('button',{name:'Revenir aux discussions',exact:true}).isVisible())await win.page.getByRole('button',{name:'Revenir aux discussions',exact:true}).click();await win.page.getByRole('button',{name:'Ouvrir la discussion avec '+name,exact:true}).click();};
-  const editor=name=>win.page.getByPlaceholder('Écrivez votre message à '+name+'...', {exact:true});
-  const text=()=>run(win,"document.querySelector('textarea[placeholder^=\"Écrivez\"]').value");
+  const editor=name=>win.page.getByLabel('Message à '+name, {exact:true});
+  const text=()=>run(win,"document.querySelector('textarea[aria-label^=\"Message à\"]').value");
   await until(()=>run(win,"!!document.querySelector('[aria-label=\"Ouvrir la discussion avec Alice\"]')"),'list loaded');
   await open('Alice');await editor('Alice').fill('Brouillon Alice');await open('Bob');await editor('Bob').fill('Brouillon Bob');await open('Alice');
   assert.equal(await text(),'Brouillon Alice','switching discussion preserves its own draft');
   holdSend=true;
-  await run(win,"(()=>{const input=document.querySelector('textarea[placeholder^=\"Écrivez\"]');input.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}));input.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}));})()");
+  await run(win,"(()=>{const input=document.querySelector('textarea[aria-label^=\"Message à\"]');input.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}));input.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}));})()");
   await until(()=>!!releaseSend,'send delayed');assert.equal(sent.length,1,'two same-tick submissions send once');
   await editor('Alice').fill('Suite du brouillon Alice');await open('Bob');assert.equal(await text(),'Brouillon Bob');releaseSend();releaseSend=null;
   await until(()=>win.page.getByTitle('Envoyer le message',{exact:true}).isEnabled(),'send completed');
@@ -79,7 +79,7 @@ app.whenReady().then(async()=>{
   await open('Bob');releaseFile();releaseFile=null;await until(()=>win.page.getByTitle('Joindre un fichier (jusqu’à 20 Mo)',{exact:true}).isEnabled(),'upload completed');
   assert.equal(await text(),'Brouillon Bob');assert.equal(await win.page.locator('main>section').getByText('Fichier pour Alice',{exact:true}).count(),0,'late upload cannot replace another conversation');
   await open('Alice');await until(()=>win.page.locator('main>section').getByText('Fichier pour Alice',{exact:true}).count(),'uploaded file shown in original discussion');
-  ambiguous=true;await editor('Alice').fill('Programmé avec nouvelle tentative');await win.page.getByTitle("Planifier l'envoi",{exact:true}).click();
+  ambiguous=true;await editor('Alice').fill('Programmé avec nouvelle tentative');await win.page.getByLabel('Options de la discussion',{exact:true}).click();await win.page.getByRole('button',{name:'Planifier un message',exact:true}).click();
   const planned=new Date(Date.now()+120000),localDate=new Date(planned.getTime()-planned.getTimezoneOffset()*60000).toISOString().slice(0,16);
   await win.page.locator('input[type="datetime-local"]').fill(localDate);await win.page.getByRole('button',{name:'Confirmer l’envoi programmé',exact:true}).click();
   await until(()=>win.page.locator('[role="dialog"] [role="alert"]').isVisible(),'scheduled send failure visible in its dialog');

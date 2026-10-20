@@ -46,3 +46,6 @@ html,body{background:var(--t-canvas);color:var(--t-ink);font-family:"Plus Jakart
 .settings-avatar strong svg{width:15px;height:15px;flex-shrink:0}
 .settings-profile>button svg{width:16px;height:16px;flex-shrink:0}
 html[data-luma] .microphone-test button{color:var(--t-ink)!important}
+
+.hub{font-family:"Plus Jakarta Sans","Segoe UI",Arial,sans-serif}
+.hub :is(h1,h2,h3,button,input,textarea){font-family:inherit}

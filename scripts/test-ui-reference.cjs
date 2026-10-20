@@ -10,13 +10,17 @@ const dir=path.resolve('.sites-runtime/ui-reference');mkdirSync(dir,{recursive:t
 let server,win,rotations=0;const delay=ms=>new Promise(r=>setTimeout(r,ms));
 async function until(fn,label){for(let i=0;i<100;i++){if(await fn())return;await delay(100);}throw Error('Timeout '+label);}
 app.whenReady().then(async()=>{try{
- writeFileSync(path.join(dir,'navigation.ts'),`export const usePathname=()=>location.pathname;export const useSearchParams=()=>new URLSearchParams(location.search);export const useRouter=()=>({push(url){location.assign(url);}});`);
+ writeFileSync(path.join(dir,'navigation.ts'),`export const usePathname=()=>location.pathname;export const useSearchParams=()=>new URLSearchParams(location.search);export const useRouter=()=>({push(url){window.__destination=url;}});`);
  writeFileSync(path.join(dir,'link.tsx'),`import React from 'react';export const useLinkStatus=()=>({pending:false});export default function Link({children,prefetch,replace,scroll,...props}){return <a {...props}>{children}</a>}`);
  writeFileSync(path.join(dir,'image.tsx'),`import React from 'react';export default function Image({priority,fill,...props}){return <img {...props}/>}`);
- writeFileSync(path.join(dir,'entry.tsx'),`import React from 'react';import {createRoot} from 'react-dom/client';import Shell from '../../app/app-shell';import Theme from '../../app/theme-provider';import Feed from '../../app/fil/feed';import Friends from '../../app/amis/page';import Settings from '../../app/parametres/page';(async()=>{const view=location.pathname==='/parametres'?await Settings():location.pathname==='/amis'?<Friends/>:<Feed/>;createRoot(document.getElementById('root')).render(<><Theme/><Shell>{view}</Shell></>);})();`);
+ writeFileSync(path.join(dir,'entry.tsx'),`import React from 'react';import {createRoot} from 'react-dom/client';import Shell from '../../app/app-shell';import Theme from '../../app/theme-provider';import Feed from '../../app/fil/feed';import Friends from '../../app/amis/page';import Settings from '../../app/parametres/page';import Messenger from '../../app/messenger';import Community from '../../app/communities/workspace';(async()=>{const view=location.pathname==='/parametres'?await Settings():location.pathname==='/amis'?<Friends/>:location.pathname==='/messages'?<Messenger/>:location.pathname==='/communities'?<Community/>:<Feed/>;createRoot(document.getElementById('root')).render(<><Theme/><Shell>{view}</Shell></>);})();`);
  await build({entryPoints:[path.join(dir,'entry.tsx')],outfile:path.join(dir,'app.js'),bundle:true,platform:'browser',jsx:'automatic',alias:{'@':process.cwd(),'next/navigation':path.join(dir,'navigation.ts'),'next/link':path.join(dir,'link.tsx'),'next/image':path.join(dir,'image.tsx')},define:{'process.env.NODE_ENV':'"development"','process.env':'{}'},plugins:[{name:'local-auth',setup(b){b.onResolve({filter:/(chatgpt-auth$|^@\/lib\/admin$)/},a=>({path:a.path,namespace:'local-auth'}));b.onLoad({filter:/.*/,namespace:'local-auth'},a=>({loader:'js',contents:a.path.includes('admin')?'export const isAdministrator=async()=>false;':`export const requireChatGPTUser=async()=>({userId:'me',email:'compte@example.test'});export const chatGPTSignOutPath=()=>'/api/auth/logout';`}));}}]});
- const css=compiledStyles();
+ const css=compiledStyles()+(process.env.LUMA_UI_SOURCE_PREVIEW==='1'?readFileSync('app/mobile-reference.css','utf8'):'');
  const profile={id:'me',name:'Compte de test',bio:'Retrouvons-nous sur Luma.',avatar:false,notifications:'mentions',call_camera:0,call_noise_suppression:1,call_echo_cancellation:1,reduce_motion:1};
+ const chats=[{id:'direct-test',name:'Contact de test',kind:'direct',owner:'me',preview:'On se retrouve ce soir ?',unread:2},{id:'group-test',name:'Groupe de test',kind:'group',owner:'me',preview:'À bientôt dans le salon',unread:0}];
+ const channels=[{id:'general-test',name:'général',mode:'text',owner:'me'},{id:'annonces-test',name:'annonces',mode:'announcement',owner:'me'},{id:'live-test',name:'Salon vocal en direct',mode:'voice',owner:'me'},{id:'voice-test',name:'Salon vocal disponible',mode:'voice',owner:'me'}];
+ const space={id:'space-test',name:'Communauté de test',description:'Un espace pour se retrouver.',invite:'fixture-only',role:'owner'};
+ const communityFeed={messages:[{id:'message-test',body:'Bienvenue dans le salon. Retrouvez les autres membres dans le vocal !',name:'Contact de test',author:'peer-0',created:Date.now(),scheduled:0,replies:0,starred:0,pinned:0,edited:0}],reactions:[],polls:[],votes:[],pinned:[],more:false};
  const friends={profile:{code:'fixture-only',discoverable:1},user:profile,items:Array.from({length:3},(_,i)=>({id:'friend-'+i,sender:'me',recipient:'peer-'+i,state:'accepted',name:['Contact de test','Autre contact','Mon ami'][i],peer:'peer-'+i}))};
  server=createServer(async(req,res)=>{
   const url=new URL(req.url,'http://local');
@@ -26,6 +30,9 @@ app.whenReady().then(async()=>{try{
    else if(url.pathname==='/api/friends'){if(p.action==='rotate')friends.profile.code='fixture-rotation-'+(++rotations);out=friends;}
    else if(url.pathname==='/api/auth/sessions')out={sessions:[{created:Date.now()-60000,expires:Date.now()+86400000}]};
    else if(url.pathname==='/api/social')out=p.action==='profile'?{profile}:{items:[{id:'fixture-post',author:'peer-0',name:'Contact de test',body:'Une nouvelle pour notre cercle. On se retrouve ce soir dans le salon vocal ?',created:Date.now(),edited:0,avatar:false,likes:2,liked:0,comments:0,media:[]}],next:null};
+   else if(url.pathname==='/api/chat')out=p.action==='list'?{user:profile,chats}:p.action==='messages'?{messages:communityFeed.messages,readCursor:{sequence:0,through:0}}:{ok:true,unread:0};
+   else if(url.pathname==='/api/rooms')out={room:p.chat==='live-test'?{id:'live-room-test',participants:2,mode:'audio'}:null};
+   else if(url.pathname==='/api/community')out=p.action==='spaces'?{spaces:[space],user:profile}:p.action==='space'?{space,channels,members:[{user:'me',name:profile.name,role:(req.headers.referer||'').includes('member=1')?'member':'owner'}],bots:[],role:(req.headers.referer||'').includes('member=1')?'member':'owner'}:communityFeed;
    else if(url.pathname==='/api/calls')out={items:[],calls:[]};
    res.setHeader('Content-Type','application/json');res.end(JSON.stringify(out));return;
   }
@@ -35,11 +42,11 @@ app.whenReady().then(async()=>{try{
   res.setHeader('Content-Type','text/html');res.end('<html data-luma="'+mode+'" data-motion="reduced"><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>'+css+'</style></head><body><script>localStorage.setItem("luma-theme",JSON.stringify({mode:"'+mode+'",accent:"#7068ff"}));</script><div id="root"></div><script src="/app.js"></script></body></html>');
  });await new Promise(r=>server.listen(0,'127.0.0.1',r));
  const measurements=[];
- for(const width of [320,390,1280,1920])for(const route of ['fil','amis','parametres'])for(const mode of ['dark','light']){
+ for(const width of [320,390,1280,1920])for(const route of (process.env.LUMA_UI_ROUTES||'fil,amis,parametres,messages,communities').split(','))for(const mode of ['dark','light']){
   win=new BrowserWindow({width,height:844});await win.loadURL('http://127.0.0.1:'+server.address().port+'/'+route+'?theme='+mode);
-  const ready=route==='parametres'?'.settings-profile':route==='amis'?'.contact-share-preview img':'.social-post';
+  const ready=route==='parametres'?'.settings-profile':route==='amis'?'.contact-share-preview img':route==='messages'?'[aria-label^="Ouvrir la discussion"]':route==='communities'?'.channel-list .channel':'.social-post';
   await until(()=>win.page.locator(ready).count(),route+' loaded');await win.page.evaluate(()=>document.fonts.ready);
-  const metrics=await win.page.evaluate(()=>({overflow:document.documentElement.scrollWidth>innerWidth,pageOverflow:document.querySelector('.luma-page').scrollWidth>document.querySelector('.luma-page').clientWidth,icons:[...document.querySelectorAll('.settings-heading>svg,.settings-links>a>svg:first-child')].map(n=>{const s=getComputedStyle(n),r=n.getBoundingClientRect();return {width:r.width,content:r.width-parseFloat(s.paddingLeft)-parseFloat(s.paddingRight),box:s.boxSizing}}),text:[...document.querySelectorAll('.settings-heading p,.post-body,.contact-share-details p')].map(n=>parseFloat(getComputedStyle(n).fontSize))}));
+  const metrics=await win.page.evaluate(()=>({overflow:document.documentElement.scrollWidth>innerWidth,pageOverflow:document.querySelector('.luma-page').scrollWidth>document.querySelector('.luma-page').clientWidth,icons:[...document.querySelectorAll('.settings-heading>svg,.settings-links>a>svg:first-child')].map(n=>{const s=getComputedStyle(n),r=n.getBoundingClientRect();return {width:r.width,content:r.width-parseFloat(s.paddingLeft)-parseFloat(s.paddingRight),box:s.boxSizing}}),text:[...document.querySelectorAll('.settings-heading p,.post-body,.contact-share-details p,.stitch-messenger-root aside .text-body-sm,.hub-message-main>p')].map(n=>parseFloat(getComputedStyle(n).fontSize))}));
   measurements.push({route,width,mode,...metrics});if(process.env.LUMA_UI_CAPTURE==='after'){assert.ok(metrics.text.every(size=>size>=11),'readable body copy '+route);assert.ok(metrics.icons.every(icon=>icon.content>=14),'visible icon glyphs '+route);}assert.equal(metrics.overflow,false,route+' viewport overflow '+width);assert.equal(metrics.pageOverflow,false,route+' content overflow '+width);
   const label=process.env.LUMA_UI_CAPTURE||'current';writeFileSync('outputs/ui-'+label+'-'+route+'-'+width+'-'+mode+'.png',await win.page.screenshot());
   if(process.env.LUMA_UI_CAPTURE==='after'&&route==='amis'){
@@ -56,8 +63,32 @@ app.whenReady().then(async()=>{try{
    const control=win.page.getByRole('switch').first();const previous=await control.getAttribute('aria-checked');await control.click();
    await until(async()=>await control.getAttribute('aria-checked')!==previous,'real switch toggled');
   }
+  if(process.env.LUMA_UI_CAPTURE==='after'&&route==='messages'){
+   await win.page.getByRole('button',{name:'Groupes',exact:true}).click();assert.equal(await win.page.getByRole('button',{name:'Ouvrir la discussion avec Contact de test',exact:true}).count(),0,'group filter excludes direct chats');
+   await win.page.getByRole('button',{name:'Toutes',exact:true}).click();await win.page.getByRole('button',{name:'Ouvrir la discussion avec Contact de test',exact:true}).click();
+   await until(()=>win.page.getByText(communityFeed.messages[0].body,{exact:true}).isVisible(),'chat opens');
+   assert.equal(await win.page.getByLabel('Message à Contact de test').isVisible(),true,'composer available');
+   if(width<=760){const bounds=await win.page.getByLabel('Message à Contact de test').evaluate(node=>{const r=node.getBoundingClientRect();return {width:r.width,bottom:r.bottom,nav:document.querySelector('.luma-shell>.social-nav').getBoundingClientRect().top};});assert.ok(bounds.width>=90,'room to type on a small phone');assert.ok(bounds.bottom<=bounds.nav,'composer clears mobile navigation');}
+   writeFileSync('outputs/ui-after-conversation-'+width+'-'+mode+'.png',await win.page.screenshot());
+   if(width<=760){await win.page.getByLabel('Options de la discussion',{exact:true}).click();await win.page.getByRole('button',{name:'Planifier un message',exact:true}).click();assert.equal(await win.page.locator('input[type=datetime-local]').isVisible(),true,'schedule stays accessible from mobile menu');await win.page.keyboard.press('Escape');await win.page.getByRole('button',{name:'Revenir aux discussions',exact:true}).click();assert.equal(await win.page.getByRole('button',{name:'Ouvrir la discussion avec Contact de test',exact:true}).isVisible(),true);}
+  }
+  if(process.env.LUMA_UI_CAPTURE==='after'&&route==='communities'){
+   await until(()=>win.page.locator('.voice-channel.is-live').count(),'live voice room shown');
+   await win.page.locator('.voice-channel.is-live').click();assert.equal(await win.page.evaluate(()=>window.__destination),'/salle/live-room-test');
+   await win.page.locator('.channel:not(.voice-channel)').first().click();await until(()=>win.page.getByText(communityFeed.messages[0].body,{exact:true}).isVisible(),'text channel opens');
+   assert.equal(await win.page.evaluate(()=>document.querySelector('.luma-page').scrollWidth>document.querySelector('.luma-page').clientWidth),false,'opened channel fits viewport');
+   if(width<=760)assert.ok(await win.page.getByRole('textbox',{name:'Message dans le salon',exact:true}).evaluate(node=>parseFloat(getComputedStyle(node).fontSize))>=13,'readable channel composer');
+   writeFileSync('outputs/ui-after-channel-'+width+'-'+mode+'.png',await win.page.screenshot());
+   if(width<=760){await win.page.getByRole('button',{name:'Retour aux salons',exact:true}).click();assert.equal(await win.page.locator('.channel-list').isVisible(),true);}
+  }
   win.destroy();win=null;
  }
- writeFileSync('outputs/ui-'+(process.env.LUMA_UI_CAPTURE||'current')+'-metrics.json',JSON.stringify(measurements,null,2));console.log('PASS '+measurements.length+' responsive/theme views, QR renewal, contact tabs and mobile device/switch controls.');
+ if(process.env.LUMA_UI_CAPTURE==='after'&&(process.env.LUMA_UI_ROUTES||'communities').includes('communities')){
+  win=new BrowserWindow({width:390,height:844});await win.loadURL('http://127.0.0.1:'+server.address().port+'/communities?member=1');
+  await until(()=>win.page.getByRole('button',{name:'Membres',exact:true}).count(),'member toolbar');
+  assert.equal(await win.page.getByRole('button',{name:'Créer un salon',exact:true}).count(),0,'members do not get moderation-only creation controls');
+  await win.page.getByRole('button',{name:'Membres',exact:true}).click();await until(()=>win.page.locator('.hub-detail .hub-member').first().isVisible(),'member roster opens');win.destroy();win=null;
+ }
+ writeFileSync('outputs/ui-'+(process.env.LUMA_UI_CAPTURE||'current')+'-metrics.json',JSON.stringify(measurements,null,2));console.log('PASS '+measurements.length+' responsive/theme views and relevant page interactions.');
  }catch(e){console.error(e);process.exitCode=1;}finally{win?.destroy();server?.closeAllConnections();server?.close();await app.exit(process.exitCode||0);}});
 setTimeout(()=>app.exit(1),180000);

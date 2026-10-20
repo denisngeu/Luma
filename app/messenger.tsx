@@ -654,6 +654,7 @@ export default function Messenger() {
                   <button type="button" className="messenger-menu-action" onClick={event=>{event.currentTarget.closest('details')?.removeAttribute('open');focusDiscussions();}}>Rechercher une discussion</button>
                   <button type="button" className="messenger-menu-action" aria-pressed={view==='saved'} onClick={event=>{event.currentTarget.closest('details')?.removeAttribute('open');setView(view==='saved'?'chat':'saved');}}>Messages favoris</button>
                   <button type="button" className="messenger-menu-action" disabled={!activeChat} onClick={event=>{event.currentTarget.closest('details')?.removeAttribute('open');setDetail(true);}}>Informations de la discussion</button>
+                  <button type="button" className="messenger-menu-action" disabled={!activeChat} onClick={event=>{event.currentTarget.closest('details')?.removeAttribute('open');setSchedule('');setModal('schedule');}}>Planifier un message</button>
                 </div>
               </details>
             </div>
@@ -835,7 +836,8 @@ export default function Messenger() {
                 <textarea
                   ref={composer}
                   className="messenger-composer-text flex-1 bg-transparent text-body-md font-body-md text-on-surface placeholder:text-outline focus:outline-none py-2 px-space-xs"
-                  placeholder={activeChat?`Écrivez votre message à ${activeChat.name}...`:'Sélectionnez une discussion'}
+                  aria-label={activeChat?`Message à ${activeChat.name}`:'Message'}
+                  placeholder={activeChat?'Votre message…':'Sélectionnez une discussion'}
                   rows={1}
                   maxLength={10000}
                   value={text}
