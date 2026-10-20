@@ -5,10 +5,10 @@ import {requestJson} from '@/lib/client-request';
 
 export type ActiveRoom={id:string;participants:number;mode:string};
 
-export function useActiveRooms(chats:readonly {id:string;kind:string}[]){
+export function useActiveRooms(chats:readonly {id:string;kind:string}[],batchMode=false){
  const [rooms,setRooms]=useState<Record<string,ActiveRoom>>({});
  // Activity, unread counters and a new list object must not restart network work.
- const groupKey=JSON.stringify(chats.filter(chat=>chat.kind==='group').slice(0,12).map(chat=>chat.id).sort());
+ const groupKey=JSON.stringify(chats.filter(chat=>chat.kind==='group').slice(0,batchMode?50:12).map(chat=>chat.id).sort());
  useEffect(()=>{
   const ids=JSON.parse(groupKey) as string[];
   let live=true,pending=false,controller:AbortController|null=null,failures=0,nextAttempt=0;
@@ -17,12 +17,20 @@ export function useActiveRooms(chats:readonly {id:string;kind:string}[]){
   const refresh=async()=>{
    if(!live||pending||!isAppVisible()||Date.now()<nextAttempt)return;
    pending=true;const batch=new AbortController();controller=batch;
-   const rows=await Promise.all(ids.map(async chat=>{
+   const readOne=async(chat:string)=>{
     try{
      const data=await requestJson<{room:ActiveRoom|null}>('/api/rooms',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'active',chat}),cache:'no-store',signal:batch.signal});
      return {chat,room:data.room,ok:true};
     }catch{return {chat,room:null,ok:false};}
-   }));
+   };
+   let rows:Array<{chat:string;room:ActiveRoom|null;ok:boolean}>;
+   if(batchMode){
+    try{
+     const data=await requestJson<{rooms:Record<string,ActiveRoom|null>}>('/api/rooms',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'active_many',chats:ids}),cache:'no-store',signal:batch.signal});
+     if(!data.rooms||ids.some(id=>!Object.hasOwn(data.rooms,id)))throw Error('Liste des salons incomplète.');
+     rows=ids.map(chat=>({chat,room:data.rooms[chat],ok:true}));
+    }catch{rows=ids.map(chat=>({chat,room:null,ok:false}));}
+   }else rows=await Promise.all(ids.map(readOne));
    pending=false;
    if(!live||batch.signal.aborted)return;
    failures=rows.every(row=>row.ok)?0:Math.min(failures+1,3);
@@ -40,6 +48,6 @@ export function useActiveRooms(chats:readonly {id:string;kind:string}[]){
   };
   void refresh();const timer=setInterval(update,8000),unwatch=watchAppVisibility(visibility);
   return()=>{live=false;controller?.abort();clearInterval(timer);unwatch();};
- },[groupKey]);
+ },[groupKey,batchMode]);
  return rooms;
 }

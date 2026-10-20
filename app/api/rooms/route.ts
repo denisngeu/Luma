@@ -1,5 +1,6 @@
 import {iceConfiguration} from '@/lib/ice-config';
 import {createMediaRoom} from '@/lib/call-creation';
+import {activeRoomBatch} from '@/lib/active-room-batch';
 import {ApiError,db,fail,manager,member,sameOrigin,str,user} from '@/lib/chat-server';
 const json=(data:unknown)=>Response.json(data,{headers:{'Cache-Control':'private, no-store'}});
 async function roomFor(uid:string,id:string){const room=await db().prepare('SELECT r.*,c.name AS chat_name,c.space,c.mode AS chat_mode FROM media_rooms r JOIN chats c ON c.id=r.chat WHERE r.id=? AND r.state=\'open\' AND r.expires>?').bind(id,Date.now()).first<{id:string;chat:string;creator:string;kind:string;mode:string;chat_name:string;space:string|null;chat_mode:string}>();if(!room)throw new ApiError('Ce salon vocal est terminé.',404);await member(uid,room.chat);return room;}
@@ -12,6 +13,7 @@ export async function POST(request:Request){try{
   return json(await createMediaRoom(db(),chat,u.id,kind,p.mode==='video'?'video':'audio'));
  }
  if(p.action==='active'){const chat=str(p.chat,100);await member(u.id,chat);const active=await db().prepare("SELECT r.id,r.mode,r.kind,u.name creator_name,(SELECT count(*) FROM media_participants mp WHERE mp.room=r.id AND mp.last_seen>?) participants FROM media_rooms r JOIN users u ON u.id=r.creator WHERE r.chat=? AND r.state='open' AND r.expires>? ORDER BY r.created DESC LIMIT 1").bind(now-30000,chat,now).first();return json({room:active||null});}
+ if(p.action==='active_many')return json({rooms:await activeRoomBatch(db(),u.id,p.chats,now)});
  const id=str(p.id,100),room=await roomFor(u.id,id);
  if(p.action==='info'){const participants=await db().prepare('SELECT mp.user,u.name FROM media_participants mp JOIN users u ON u.id=mp.user WHERE mp.room=? AND mp.last_seen>? ORDER BY mp.joined').bind(id,now-30000).all();return json({room,participants:participants.results,me:u.id});}
  if(p.action==='join'){await db().prepare('INSERT INTO media_participants(room,"user",joined,last_seen) VALUES (?,?,?,?) ON CONFLICT(room,"user") DO UPDATE SET last_seen=excluded.last_seen').bind(id,u.id,now,now).run();return json({room,me:u.id,ice:iceConfiguration(u.id)});}

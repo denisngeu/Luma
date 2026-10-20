@@ -49,3 +49,7 @@ html[data-luma] .microphone-test button{color:var(--t-ink)!important}
 
 .hub{font-family:"Plus Jakarta Sans","Segoe UI",Arial,sans-serif}
 .hub :is(h1,h2,h3,button,input,textarea){font-family:inherit}
+
+.community-switcher button>.community-picker-label{width:auto;height:auto;flex:initial;background:none;font-size:12px}
+
+.community-switcher>.community-picker-trigger{position:sticky;left:0;z-index:1;flex-shrink:0;background:var(--t-surface)}

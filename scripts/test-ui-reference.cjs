@@ -31,7 +31,7 @@ app.whenReady().then(async()=>{try{
    else if(url.pathname==='/api/auth/sessions')out={sessions:[{created:Date.now()-60000,expires:Date.now()+86400000}]};
    else if(url.pathname==='/api/social')out=p.action==='profile'?{profile}:{items:[{id:'fixture-post',author:'peer-0',name:'Contact de test',body:'Une nouvelle pour notre cercle. On se retrouve ce soir dans le salon vocal ?',created:Date.now(),edited:0,avatar:false,likes:2,liked:0,comments:0,media:[]}],next:null};
    else if(url.pathname==='/api/chat')out=p.action==='list'?{user:profile,chats}:p.action==='messages'?{messages:communityFeed.messages,readCursor:{sequence:0,through:0}}:{ok:true,unread:0};
-   else if(url.pathname==='/api/rooms')out={room:p.chat==='live-test'?{id:'live-room-test',participants:2,mode:'audio'}:null};
+   else if(url.pathname==='/api/rooms')out=p.action==='active_many'?{rooms:Object.fromEntries(p.chats.map(chat=>[chat,chat==='live-test'?{id:'live-room-test',participants:2,mode:'audio'}:null]))}:{room:p.chat==='live-test'?{id:'live-room-test',participants:2,mode:'audio'}:null};
    else if(url.pathname==='/api/community')out=p.action==='spaces'?{spaces:[space],user:profile}:p.action==='space'?{space,channels,members:[{user:'me',name:profile.name,role:(req.headers.referer||'').includes('member=1')?'member':'owner'}],bots:[],role:(req.headers.referer||'').includes('member=1')?'member':'owner'}:communityFeed;
    else if(url.pathname==='/api/calls')out={items:[],calls:[]};
    res.setHeader('Content-Type','application/json');res.end(JSON.stringify(out));return;
@@ -73,6 +73,7 @@ app.whenReady().then(async()=>{try{
    if(width<=760){await win.page.getByLabel('Options de la discussion',{exact:true}).click();await win.page.getByRole('button',{name:'Planifier un message',exact:true}).click();assert.equal(await win.page.locator('input[type=datetime-local]').isVisible(),true,'schedule stays accessible from mobile menu');await win.page.keyboard.press('Escape');await win.page.getByRole('button',{name:'Revenir aux discussions',exact:true}).click();assert.equal(await win.page.getByRole('button',{name:'Ouvrir la discussion avec Contact de test',exact:true}).isVisible(),true);}
   }
   if(process.env.LUMA_UI_CAPTURE==='after'&&route==='communities'){
+   await win.page.getByRole('button',{name:'Ajouter une communauté',exact:true}).click();assert.equal(await win.page.getByRole('menuitem',{name:'Créer une communauté',exact:true}).isVisible(),true);await win.page.getByRole('menuitem',{name:'Rejoindre une communauté',exact:true}).click();assert.equal(await win.page.getByRole('dialog').getByLabel('Code d’invitation',{exact:true}).isVisible(),true);await win.page.keyboard.press('Escape');
    await until(()=>win.page.locator('.voice-channel.is-live').count(),'live voice room shown');
    await win.page.locator('.voice-channel.is-live').click();assert.equal(await win.page.evaluate(()=>window.__destination),'/salle/live-room-test');
    await win.page.locator('.channel:not(.voice-channel)').first().click();await until(()=>win.page.getByText(communityFeed.messages[0].body,{exact:true}).isVisible(),'text channel opens');
