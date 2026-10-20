@@ -8,7 +8,7 @@ if ! turn_valid_ipv4 "$turn_public"; then
     printf '%s\n' 'TURN: invalid public IPv4 address' >&2
     exit 1
 fi
-turn_local=$(turn_select_ipv4 "$(hostname -I)") || {
+turn_local=$(turn_select_ipv4 "$(hostname -I)" "$(cat /proc/net/route)") || {
     printf '%s\n' 'TURN: no usable container IPv4 address' >&2
     exit 1
 }

@@ -14,9 +14,21 @@ for turn_input in '' ::1 fd83:7c7a:8110::6 0.0.0.0 0.1.2.3 127.0.0.1 \
         exit 1
     fi
 done
-[ "$(turn_select_ipv4 'fd83:7c7a:8110::6 10.0.3.2 10.0.1.6')" = '10.0.3.2' ]
-[ "$(turn_select_ipv4 '127.0.0.1 169.254.169.254 172.18.0.4')" = '172.18.0.4' ]
-if turn_select_ipv4 '::1 fd83:7c7a:8110::6 0.0.0.0 224.0.0.1'; then
+turn_routes='Iface Destination Gateway Flags RefCnt Use Metric Mask
+eth1 00000000 0101000A 0003 0 0 0 00000000
+eth1 0001000A 00000000 0001 0 0 0 00FFFFFF
+eth0 0003000A 00000000 0001 0 0 0 00FFFFFF'
+[ "$(turn_select_ipv4 'fd83:7c7a:8110::6 10.0.3.4 10.0.1.8' "$turn_routes")" = '10.0.1.8' ]
+[ "$(turn_select_ipv4 '10.0.1.8 10.0.3.4' "$turn_routes")" = '10.0.1.8' ]
+if turn_select_ipv4 '10.0.3.4' "$turn_routes"; then
+    printf '%s\n' 'FAIL: selected the wrong published-port network' >&2
+    exit 1
+fi
+if turn_select_ipv4 '10.0.1.8' ''; then
+    printf '%s\n' 'FAIL: silently fell back without a default route' >&2
+    exit 1
+fi
+if turn_select_ipv4 '::1 fd83:7c7a:8110::6 0.0.0.0 224.0.0.1' "$turn_routes"; then
     printf '%s\n' 'FAIL: selected an unusable relay address' >&2
     exit 1
 fi
