@@ -15,7 +15,20 @@ export async function POST(request:Request){try{
  const id=str(p.id,100),room=await roomFor(u.id,id);
  if(p.action==='info'){const participants=await db().prepare('SELECT mp.user,u.name FROM media_participants mp JOIN users u ON u.id=mp.user WHERE mp.room=? AND mp.last_seen>? ORDER BY mp.joined').bind(id,now-30000).all();return json({room,participants:participants.results,me:u.id});}
  if(p.action==='join'){await db().prepare('INSERT INTO media_participants(room,"user",joined,last_seen) VALUES (?,?,?,?) ON CONFLICT(room,"user") DO UPDATE SET last_seen=excluded.last_seen').bind(id,u.id,now,now).run();return json({room,me:u.id,ice:iceConfiguration(u.id)});}
- if(p.action==='poll'){await db().prepare('UPDATE media_participants SET last_seen=? WHERE room=? AND "user"=?').bind(now,id,u.id).run();await db().prepare('DELETE FROM media_participants WHERE room=? AND last_seen<?').bind(id,now-30000).run();const participants=await db().prepare('SELECT mp.user,u.name FROM media_participants mp JOIN users u ON u.id=mp.user WHERE mp.room=? ORDER BY mp.joined').bind(id).all();const signals=await db().prepare('SELECT id,sender,type,payload FROM media_signals WHERE room=? AND recipient=? ORDER BY created,id LIMIT 100').bind(id,u.id).all<{id:string}>();if(signals.results.length)await db().driver.query(`DELETE FROM media_signals WHERE id IN (${signals.results.map((_,i)=>'$'+(i+1)).join(',')})`,signals.results.map(x=>x.id));return json({participants:participants.results,signals:signals.results});}
+ if(p.action==='poll'){
+  const reliable=p.reliable===true;
+  if(reliable&&p.acknowledgements!==undefined&&(!Array.isArray(p.acknowledgements)||p.acknowledgements.length>100))throw new ApiError('Accusés de réception invalides.');
+  const acknowledgements=reliable?[...new Set((p.acknowledgements||[]).map((value:unknown)=>str(value,100)))]:[];
+  await db().prepare('UPDATE media_participants SET last_seen=? WHERE room=? AND "user"=?').bind(now,id,u.id).run();
+  await db().prepare('DELETE FROM media_participants WHERE room=? AND last_seen<?').bind(id,now-30000).run();
+  if(acknowledgements.length)await db().driver.query('DELETE FROM media_signals WHERE room=$1 AND recipient=$2 AND id=ANY($3::text[])',[id,u.id,acknowledgements]);
+  const participants=await db().prepare('SELECT mp.user,u.name FROM media_participants mp JOIN users u ON u.id=mp.user WHERE mp.room=? ORDER BY mp.joined').bind(id).all();
+  const signals=await db().prepare('SELECT id,sender,type,payload FROM media_signals WHERE room=? AND recipient=? ORDER BY created,id LIMIT 100').bind(id,u.id).all<{id:string}>();
+  // Older clients consume immediately. New clients acknowledge only messages
+  // they have processed, so a lost response cannot consume their negotiation.
+  if(!reliable&&signals.results.length)await db().driver.query('DELETE FROM media_signals WHERE room=$1 AND recipient=$2 AND id=ANY($3::text[])',[id,u.id,signals.results.map(signal=>signal.id)]);
+  return json({participants:participants.results,signals:signals.results});
+ }
  if(p.action==='signal'){const recipient=str(p.recipient,100),type=p.type==='answer'?'answer':'offer',payload=str(p.payload,100000);const present=await db().prepare('SELECT 1 FROM media_participants WHERE room=? AND "user"=? AND last_seen>?').bind(id,recipient,now-30000).first();if(!present)throw new ApiError('Ce participant a quitté le salon.',409);await db().prepare('INSERT INTO media_signals(id,room,sender,recipient,type,payload,created) VALUES (?,?,?,?,?,?,?)').bind(crypto.randomUUID(),id,u.id,recipient,type,payload,now).run();return json({ok:true});}
  if(p.action==='leave'){await db().batch([db().prepare('DELETE FROM media_participants WHERE room=? AND "user"=?').bind(id,u.id),db().prepare('DELETE FROM media_signals WHERE room=? AND (sender=? OR recipient=?)').bind(id,u.id,u.id)]);return json({ok:true});}
  if(p.action==='end'){if(room.creator!==u.id)await manager(u.id,room.chat);await db().prepare("UPDATE media_rooms SET state='ended' WHERE id=?").bind(id).run();return json({ok:true});}

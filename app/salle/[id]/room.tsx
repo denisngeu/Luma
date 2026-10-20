@@ -1,5 +1,5 @@
 'use client';
-import {useEffect,useRef,useState} from 'react';
+import {useCallback,useEffect,useMemo,useRef,useState} from 'react';
 import Link from 'next/link';
 import {ArrowLeft,Camera,CameraOff,Maximize2,Mic,MicOff,Minimize2,MonitorUp,Music2,PhoneOff,SwitchCamera,Users,Volume2} from 'lucide-react';
 import {captureCameraStream,gatherIce,getUserMediaWithTimeout,mediaError,screenSharingSupported,screenSharingUnavailable} from '@/lib/call-media';
@@ -7,25 +7,24 @@ import {Switch} from '@/components/ui/switch';
 import {requestNativeMediaPermissions} from '@/lib/native-permissions';
 import {applyPreferredAudioOutput,preferredMicrophone} from '@/lib/media-devices';
 import {useExpandedMedia} from '@/hooks/use-expanded-media';
+import {createCallTransport} from '@/lib/call-transport';
 
 type Person={user:string;name:string};
-type Signal={sender:string;type:'offer'|'answer';payload:string};
+type Signal={id:string;sender:string;type:'offer'|'answer';payload:string};
 type Info={me:string;room:{mode:string;kind:string;chat_name:string};participants:Person[];ice:RTCConfiguration};
-async function request(action:string,data:Record<string,unknown>={}){
- const r=await fetch('/api/rooms',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,...data}),cache:'no-store'});
- const d=await r.json() as Info & {error?:string;signals:Signal[]};if(!r.ok)throw Error(d.error||'Salon indisponible');return d;
-}
 export default function Room({id}:{id:string}){
+ const {request,cancel:cancelRequests}=useMemo(()=>createCallTransport<Info & {signals:Signal[]}>('/api/rooms',{id}),[id]);
  const [info,setInfo]=useState<Info|null>(null),[people,setPeople]=useState<Person[]>([]),[joined,setJoined]=useState(false),[busy,setBusy]=useState(false),[muted,setMuted]=useState(false),[camera,setCamera]=useState(false),[sharing,setSharing]=useState(false),[error,setError]=useState(''),[joinMuted,setJoinMuted]=useState(false),[joinCamera,setJoinCamera]=useState(false),[noiseSuppression,setNoiseSuppression]=useState(true),[echoCancellation,setEchoCancellation]=useState(true),[canShare]=useState(screenSharingSupported),[streams,setStreams]=useState<Record<string,MediaStream>>({}),[facing,setFacing]=useState<'user'|'environment'>('user');
  const [expanded,setExpanded]=useExpandedMedia<string>();
  const local=useRef<MediaStream|null>(null),screen=useRef<MediaStream|null>(null),pcs=useRef(new Map<string,RTCPeerConnection>()),videoSenders=useRef(new Map<string,RTCRtpSender>()),timer=useRef<ReturnType<typeof setInterval>|null>(null),active=useRef(false),epoch=useRef(0),lock=useRef(false),soundContext=useRef<AudioContext|null>(null),soundTimer=useRef<ReturnType<typeof setTimeout>|null>(null);
  const pollNow=useRef<(()=>Promise<void>)|null>(null);
- function dispose(){
+ const dispose=useCallback(()=>{
+  cancelRequests();
   active.current=false;pollNow.current=null;epoch.current++;if(soundTimer.current)clearTimeout(soundTimer.current);void soundContext.current?.close();soundContext.current=null;if(timer.current)clearInterval(timer.current);timer.current=null;
   pcs.current.forEach(pc=>{pc.onconnectionstatechange=null;pc.close();});pcs.current.clear();videoSenders.current.clear();
   screen.current?.getTracks().forEach(t=>{t.onended=null;t.stop();});screen.current=null;
   local.current?.getTracks().forEach(t=>t.stop());local.current=null;
- }
+ },[cancelRequests]);
  useEffect(()=>{
   let live=true;
   queueMicrotask(()=>{if(!live)return;try{const p=JSON.parse(localStorage.getItem('luma-call-preferences')||'{}');setJoinCamera(!!p.camera);setNoiseSuppression(p.noiseSuppression!==false);setEchoCancellation(p.echoCancellation!==false);}catch{}});
@@ -35,7 +34,7 @@ export default function Room({id}:{id:string}){
   const resume=()=>{void pollNow.current?.();};
   window.addEventListener('luma-native-active',resume);window.addEventListener('online',resume);
   return()=>{live=false;if(active.current)navigator.sendBeacon('/api/rooms',new Blob([JSON.stringify({action:'leave',id})],{type:'application/json'}));dispose();window.removeEventListener('luma-native-active',resume);window.removeEventListener('online',resume);};
- },[id]);
+ },[id,request,dispose]);
  async function send(uid:string,type:'offer'|'answer',pc:RTCPeerConnection,generation:number){
   await gatherIce(pc);if(epoch.current!==generation||!active.current||pcs.current.get(uid)!==pc)return;
   await request('signal',{id,recipient:uid,type,payload:JSON.stringify(pc.localDescription)});
@@ -76,12 +75,15 @@ export default function Room({id}:{id:string}){
    const d=await request('join',{id}) as Info;registered=true;
    if(epoch.current!==generation){await request('leave',{id});return;}
    active.current=true;setInfo(d);setMuted(joinMuted);setCamera(stream.getVideoTracks().length>0);setJoined(true);
-   setStreams({[d.me]:stream});setPeople([{user:d.me,name:'Vous'}]);let polling=false;
+   setStreams({[d.me]:stream});setPeople([{user:d.me,name:'Vous'}]);let polling=false,networkError='';const acknowledged=new Set<string>();
    const poll=async()=>{
     if(polling||!active.current)return;polling=true;
     try{
-     const update=await request('poll',{id}) as {participants:Person[];signals:Signal[]};
+     const acknowledgements=[...acknowledged];
+     const update=await request('poll',{id,reliable:true,acknowledgements}).catch(error=>{networkError=mediaError(error);throw error;}) as {participants:Person[];signals:Signal[]};
+     for(const signalId of acknowledgements)acknowledged.delete(signalId);
      if(epoch.current!==generation)return;setPeople(update.participants);
+     if(networkError){const previous=networkError;networkError='';setError(current=>current===previous?'':current);}
      const present=new Set(update.participants.map(p=>p.user));
      setExpanded(current=>current&&present.has(current)?current:null);
      for(const [uid,pc] of pcs.current)if(!present.has(uid)){pc.close();pcs.current.delete(uid);videoSenders.current.delete(uid);setStreams(s=>{const next={...s};delete next[uid];return next;});}
@@ -99,6 +101,7 @@ export default function Room({id}:{id:string}){
      await settle([...grouped.values()].map(async signals=>{
       for(const signal of signals){
        if(epoch.current!==generation)return;
+       if(signal.id&&acknowledged.has(signal.id))continue;
        let pc=pcs.current.get(signal.sender);
        if(signal.type==='offer'){
         if(pc){pc.close();pcs.current.delete(signal.sender);}
@@ -107,6 +110,7 @@ export default function Room({id}:{id:string}){
         await attachAnswerTracks(signal.sender,pc);
         await pc.setLocalDescription(await pc.createAnswer());await send(signal.sender,'answer',pc,generation);
        }else if(pc?.signalingState==='have-local-offer')await pc.setRemoteDescription(JSON.parse(signal.payload));
+       if(signal.id)acknowledged.add(signal.id);
       }
      }));
      if(epoch.current!==generation)return;

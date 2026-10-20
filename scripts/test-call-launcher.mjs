@@ -6,6 +6,8 @@ import {createServer} from 'node:http';
 const dir='.sites-runtime/call-launcher';mkdirSync(dir,{recursive:true});
 await build({entryPoints:['lib/call-launcher.ts'],outfile:dir+'/launcher.mjs',bundle:true,platform:'node',format:'esm'});
 const {createCallLauncher}=await import(pathToFileURL(process.cwd()+'/'+dir+'/launcher.mjs'));
+await build({entryPoints:['lib/call-transport.ts'],outfile:dir+'/transport.mjs',bundle:true,platform:'node',format:'esm'});
+const {createCallTransport}=await import(pathToFileURL(process.cwd()+'/'+dir+'/transport.mjs'));
 const requests=[];let behavior='hold',release;
 const server=createServer(async(req,res)=>{
  let raw='';for await(const part of req)raw+=part;
@@ -35,5 +37,12 @@ try{
  behavior='ok';assert.equal(await launcher.start(target),'/appel/'+timeout);
  behavior='hang';const cancelled=launcher.start(target);await until(()=>launcher.isPending());launcher.cancel();await assert.rejects(cancelled,error=>error.name==='AbortError');assert.equal(launcher.isPending(),false);
  behavior='ok';assert.match(await launcher.start({chat:'team',mode:'video',group:true}),/^\/salle\//);assert.equal(requests.at(-1).url,'/api/rooms');
+ const transport=createCallTransport('/api/calls',{id:'visit-one'});
+ behavior='hang';const outstanding=Promise.allSettled([transport.request('get'),transport.request('config')]);transport.cancel();
+ for(const result of await outstanding){assert.equal(result.status,'rejected');assert.equal(result.reason.name,'AbortError');}
+ behavior='ok';await transport.request('get');assert.equal(requests.at(-1).id,'visit-one');
+ behavior='hang';await assert.rejects(transport.request('get'),/trop de temps/);
+ behavior='ok';await transport.request('get');
  console.log('PASS real HTTP duplicate press, ambiguous retry, conflict reset, bounded timeout, cancellation, group navigation');
+ console.log('PASS call transport cancels every outstanding request and recovers after a bounded polling timeout');
 }finally{globalThis.fetch=realFetch;globalThis.setTimeout=realTimer;server.closeAllConnections();await new Promise(resolve=>server.close(resolve));}

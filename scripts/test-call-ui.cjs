@@ -16,6 +16,7 @@ app.commandLine.appendSwitch('autoplay-policy','no-user-gesture-required');
 app.setPath('userData',path.join(dir,'profile-'+Date.now()));
 let server;const windows=[];let call={caller:'a',callee:'b',callerName:'Alice',calleeName:'Bob',mode:'audio',state:'preparing',offer:null,answer:null};
 const participants=new Set(),signals={a:[],b:[]};
+const callGets={a:0,b:0};
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 async function until(fn,label){for(let i=0;i<100;i++){if(await fn())return;await wait(200);}throw Error('Timeout '+label);}
 async function run(w,code){return w.webContents.executeJavaScript(code,true);}
@@ -54,7 +55,7 @@ app.on('window-all-closed',()=>{}); app.whenReady().then(async()=>{
    if(req.url==='/api/profile')out={profile:{name:'Test',bio:'',avatar:false,notifications:'all',call_camera:0,call_noise_suppression:1,call_echo_cancellation:1,reduce_motion:0}};
    else if(req.url==='/api/calls'){
     if(p.action==='config')out={iceServers:[],relayConfigured:true};
-    if(p.action==='get')out={call,me:who};
+    if(p.action==='get'){callGets[who]++;out={call,me:who};}
     if(p.action==='offer'){call.offer=p.sdp;call.state='ringing';}
     if(p.action==='answer'){call.answer=p.sdp;call.state='active';}
     if(p.action==='end')call.state='ended';
@@ -62,8 +63,11 @@ app.on('window-all-closed',()=>{}); app.whenReady().then(async()=>{
     const info={me:who,room:{mode:'audio',kind:'voice',chat_name:'Test'},participants:[...participants].map(user=>({user,name:user})),ice:{iceServers:[]}};
     if(p.action==='info')out=info;
     if(p.action==='join'){participants.add(who);out=info;}
-    if(p.action==='poll'){out={participants:[...participants].map(user=>({user,name:user})),signals:signals[who]?.splice(0)||[]};}
-    if(p.action==='signal')signals[p.recipient]?.push({sender:who,type:p.type,payload:p.payload});
+    if(p.action==='poll'){
+     if(p.reliable){signals[who]=signals[who].filter(signal=>!p.acknowledgements?.includes(signal.id));out={participants:[...participants].map(user=>({user,name:user})),signals:[...signals[who]]};}
+     else out={participants:[...participants].map(user=>({user,name:user})),signals:signals[who]?.splice(0)||[]};
+    }
+    if(p.action==='signal')signals[p.recipient]?.push({id:require('node:crypto').randomUUID(),sender:who,type:p.type,payload:p.payload});
     if(p.action==='leave')participants.delete(who);
    }
    res.setHeader('Content-Type','application/json');res.end(JSON.stringify(out));return;
@@ -90,6 +94,18 @@ app.on('window-all-closed',()=>{}); app.whenReady().then(async()=>{
    await until(()=>run(w,"(async()=>{for(const p of window.__peers){if(p.connectionState!=='connected')continue;for(const s of (await p.getStats()).values())if(s.type==='inbound-rtp'&&s.kind==='audio'&&s.bytesReceived>0&&s.totalAudioEnergy>0)return true;}return false;})()"),kind+' audio decoded');
   }
   checks.push(kind+' bidirectional audio energy');
+  // A stalled poll must time out, retain the media connection, and recover
+  // through the same foreground handler that Android uses after suspension.
+  await run(a,`window.__realTimeout=window.setTimeout;window.setTimeout=(fn,ms,...args)=>window.__realTimeout(fn,ms===12000?100:ms,...args);
+   window.__beforeStall=window.fetch;window.__stallPoll=true;window.__pollAborted=0;
+   window.fetch=(url,options={})=>{let body={};try{body=JSON.parse(options.body||'{}');}catch{}
+    if(window.__stallPoll&&['get','poll'].includes(body.action)){window.__stallPoll=false;return new Promise((resolve,reject)=>options.signal.addEventListener('abort',()=>{window.__pollAborted++;reject(new DOMException('Timed out','AbortError'));},{once:true}));}
+    return window.__beforeStall(url,options);};window.dispatchEvent(new Event('online'));`);
+  await until(()=>run(a,"window.__pollAborted===1"),kind+' stalled poll aborted');
+  assert.equal(await run(a,"window.__peers.some(peer=>peer.connectionState==='connected')"),true,kind+' timeout preserves active media');
+  await until(async()=>{await run(a,"window.dispatchEvent(new Event('luma-native-active'))");return run(a,"!document.body.innerText.includes('Actualisation interrompue')&&!document.body.innerText.includes('Le serveur met trop de temps')");},kind+' recovered poll clears transient error');
+  await run(a,'window.fetch=window.__beforeStall;window.setTimeout=window.__realTimeout');
+  checks.push(kind+' bounded refresh timeout and foreground recovery preserve connected media');
   for(const w of [a,b]){
    assert.equal(await run(w,"window.__captures.find(c=>c.audio)?.audio.deviceId?.ideal"),'default',kind+' saved microphone applied');
    assert.equal(await run(w,"window.__outputs.includes('test-headphones')"),true,kind+' saved output applied');
@@ -137,6 +153,11 @@ app.on('window-all-closed',()=>{}); app.whenReady().then(async()=>{
   await run(a,'window.__finishCamera()');
   await until(()=>run(a,"window.__lateCamera.getTracks().every(t=>t.readyState==='ended')"),kind+' late camera released');
   checks.push(kind+' camera released after hangup during capture');
+  if(kind==='private'){
+   await until(()=>run(b,"document.body.innerText.includes('Appel terminé')"),'remote end observed');
+   const count=callGets.b;await run(b,"window.dispatchEvent(new Event('online'))");await wait(1800);
+   assert.equal(callGets.b,count,'an ended call does not resume polling');checks.push('private polling stops after remote hangup');
+  }
   if(kind==='group')await click(b,'Quitter');
   a.destroy();b.destroy();participants.clear();
  }

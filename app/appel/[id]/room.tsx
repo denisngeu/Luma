@@ -1,5 +1,5 @@
 'use client';
-import {useCallback,useEffect,useRef,useState} from 'react';
+import {useCallback,useEffect,useMemo,useRef,useState} from 'react';
 import Link from 'next/link';
 import {captureCameraStream,gatherIce,getUserMediaWithTimeout,mediaError,screenSharingSupported,screenSharingUnavailable} from '@/lib/call-media';
 import {Maximize2,Mic,MicOff,Minimize2,MonitorUp,Music2,PhoneOff,SlidersHorizontal,SwitchCamera,Video,VideoOff,Volume2,VolumeX} from 'lucide-react';
@@ -7,6 +7,8 @@ import {Switch} from '@/components/ui/switch';
 import {requestNativeMediaPermissions} from '@/lib/native-permissions';
 import {applyPreferredAudioOutput,preferredMicrophone} from '@/lib/media-devices';
 import {useExpandedMedia} from '@/hooks/use-expanded-media';
+import {createCallTransport} from '@/lib/call-transport';
+import {ClientRequestError} from '@/lib/client-request';
 type Call={caller:string;callee:string;callerName:string;calleeName:string;mode:string;state:string;offer:string|null;answer:string|null};
 type ResponseData={call:Call;me:string;iceServers:RTCIceServer[];relayConfigured:boolean;error:string};
 export default function CallRoom({id}:{id:string}){
@@ -15,8 +17,9 @@ export default function CallRoom({id}:{id:string}){
  const pc=useRef<RTCPeerConnection|null>(null),local=useRef<MediaStream|null>(null),screen=useRef<MediaStream|null>(null),remote=useRef<MediaStream|null>(null),localVideo=useRef<HTMLVideoElement>(null),remoteVideo=useRef<HTMLVideoElement>(null),remoteAudio=useRef<HTMLAudioElement>(null),ctx=useRef<AudioContext|null>(null),micGain=useRef<GainNode|null>(null),mix=useRef<MediaStreamAudioDestinationNode|null>(null),videoSender=useRef<RTCRtpSender|null>(null),sound=useRef<AudioBuffer|null>(null),nodes=useRef<AudioScheduledSourceNode[]>([]),epoch=useRef(0),lastSound=useRef(0),soundGain=useRef<GainNode|null>(null),audioSender=useRef<RTCRtpSender|null>(null),actionLock=useRef(false);
  const [mediaBusy,setMediaBusy]=useState(false),[canShare]=useState(screenSharingSupported);
  const presence=useRef<{id:string;mounted:boolean}|null>(null);
- const api=useCallback(async(action:string,data:Record<string,unknown>={})=>{const r=await fetch('/api/calls',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,id,...data})});const d=await r.json() as ResponseData;if(!r.ok)throw Error(d.error||'Appel indisponible');return d;},[id]);
- function cleanup(){
+ const {request:api,cancel:cancelRequests}=useMemo(()=>createCallTransport<ResponseData>('/api/calls',{id}),[id]);
+ const cleanup=useCallback(()=>{
+  cancelRequests();
   epoch.current++;
   local.current?.getTracks().forEach(t=>t.stop());local.current=null;
   screen.current?.getTracks().forEach(t=>{t.onended=null;t.stop();});screen.current=null;
@@ -25,13 +28,25 @@ export default function CallRoom({id}:{id:string}){
   if(ctx.current){ctx.current.onstatechange=null;void ctx.current.close().catch(()=>{});ctx.current=null;}
   audioSender.current=null;videoSender.current=null;micGain.current=null;soundGain.current=null;mix.current=null;remote.current=null;
   if(localVideo.current)localVideo.current.srcObject=null;if(remoteVideo.current)remoteVideo.current.srcObject=null;if(remoteAudio.current)remoteAudio.current.srcObject=null;
- }
+ },[cancelRequests]);
  useEffect(()=>{
-  let live=true,polling=false;
+  let live=true,polling=false,finished=false;
   const visit=presence.current?.id===id?presence.current:{id,mounted:false};presence.current=visit;visit.mounted=true;
   queueMicrotask(()=>{if(!live)return;try{const p=JSON.parse(localStorage.getItem('luma-call-preferences')||'{}');setStartCamera(!!p.camera);setNoiseSuppression(p.noiseSuppression!==false);setEchoCancellation(p.echoCancellation!==false);}catch{}});
-  api('config').then(d=>{if(live)setRelay(d.relayConfigured);}).catch(e=>{if(live)setError(e.message);});
-  const poll=async()=>{if(polling)return;polling=true;try{const d=await api('get');if(!live)return;setCall(d.call);setMe(d.me);if(d.call.state==='ended'){cleanup();setExpanded(null);setStarted(false);setState('Appel terminé');return;}if(pc.current&&d.call.answer&&d.me===d.call.caller&&!pc.current.currentRemoteDescription){await pc.current.setRemoteDescription({type:'answer',sdp:d.call.answer});}}catch{if(live)setError('Actualisation interrompue. Nouvelle tentative automatique…');}finally{polling=false;}};
+  api('config').then(d=>{if(live)setRelay(d.relayConfigured);}).catch(e=>{if(live&&e.name!=='AbortError')setError(e.message);});
+  const poll=async()=>{
+   if(polling||finished||!live)return;polling=true;const generation=epoch.current;
+   try{
+    const d=await api('get');if(!live||generation!==epoch.current)return;setCall(d.call);setMe(d.me);
+    setError(current=>current==='Actualisation interrompue. Nouvelle tentative automatique…'?'':current);
+    if(d.call.state==='ended'){finished=true;cleanup();setExpanded(null);setStarted(false);setState('Appel terminé');return;}
+    if(pc.current&&d.call.answer&&d.me===d.call.caller&&!pc.current.currentRemoteDescription)await pc.current.setRemoteDescription({type:'answer',sdp:d.call.answer});
+   }catch(error){
+    if(!live||generation!==epoch.current)return;
+    if(error instanceof ClientRequestError&&[401,403,404].includes(error.status)){finished=true;cleanup();setExpanded(null);setStarted(false);setState('Appel indisponible');setError(error.message);}
+    else setError('Actualisation interrompue. Nouvelle tentative automatique…');
+   }finally{polling=false;}
+  };
   const resume=()=>{void ctx.current?.resume().catch(()=>{});void remoteAudio.current?.play().then(()=>setNeedsAudio(false)).catch(()=>setNeedsAudio(true));void poll();};
   void poll();const t=setInterval(poll,1500);window.addEventListener('luma-native-active',resume);window.addEventListener('online',resume);
   return()=>{
@@ -41,7 +56,7 @@ export default function CallRoom({id}:{id:string}){
    queueMicrotask(()=>{if(!visit.mounted)navigator.sendBeacon('/api/calls',new Blob([JSON.stringify({action:'end',id})],{type:'application/json'}));});
    cleanup();
   };
- },[api,id,setExpanded]);
+ },[api,id,setExpanded,cleanup]);
  async function start(){if(!call||busy||started)return;setBusy(true);setError('');const generation=epoch.current;let captured:MediaStream|null=null;try{
   if(!navigator.mediaDevices?.getUserMedia||!window.RTCPeerConnection)throw Error('Ce navigateur ne prend pas en charge les appels. Ouvrez Luma dans un navigateur récent.');
   await requestNativeMediaPermissions(call.mode==='video'&&startCamera);
