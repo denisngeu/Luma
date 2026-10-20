@@ -1,4 +1,5 @@
 import {iceConfiguration} from '@/lib/ice-config';
+import {createMediaRoom} from '@/lib/call-creation';
 import {ApiError,db,fail,manager,member,sameOrigin,str,user} from '@/lib/chat-server';
 const json=(data:unknown)=>Response.json(data,{headers:{'Cache-Control':'private, no-store'}});
 async function roomFor(uid:string,id:string){const room=await db().prepare('SELECT r.*,c.name AS chat_name,c.space,c.mode AS chat_mode FROM media_rooms r JOIN chats c ON c.id=r.chat WHERE r.id=? AND r.state=\'open\' AND r.expires>?').bind(id,Date.now()).first<{id:string;chat:string;creator:string;kind:string;mode:string;chat_name:string;space:string|null;chat_mode:string}>();if(!room)throw new ApiError('Ce salon vocal est terminé.',404);await member(uid,room.chat);return room;}
@@ -8,8 +9,7 @@ export async function POST(request:Request){try{
  if(p.action==='create'){
   const settings=await db().prepare('SELECT calls_open FROM service_settings WHERE id=1').first<{calls_open:number}>();if(!settings?.calls_open)throw new ApiError('Les appels sont temporairement désactivés.',403);
   const chat=str(p.chat,100),channel=await member(u.id,chat),kind=channel.space&&channel.mode==='voice'?'voice':'group';if(kind==='group'&&chat.startsWith('friend-'))throw new ApiError('Utilisez l’appel privé dans cette discussion.');
-  let existing=await db().prepare("SELECT id FROM media_rooms WHERE chat=? AND kind=? AND state='open' AND expires>? ORDER BY created DESC LIMIT 1").bind(chat,kind,now).first<{id:string}>();
-  if(!existing){const id=crypto.randomUUID();await db().prepare("INSERT INTO media_rooms(id,chat,creator,kind,mode,state,created,expires) VALUES (?,?,?,?,?,'open',?,?)").bind(id,chat,u.id,kind,p.mode==='video'?'video':'audio',now,now+(kind==='voice'?43200000:14400000)).run();existing={id};}return json(existing);
+  return json(await createMediaRoom(db(),chat,u.id,kind,p.mode==='video'?'video':'audio'));
  }
  if(p.action==='active'){const chat=str(p.chat,100);await member(u.id,chat);const active=await db().prepare("SELECT r.id,r.mode,r.kind,u.name creator_name,(SELECT count(*) FROM media_participants mp WHERE mp.room=r.id AND mp.last_seen>?) participants FROM media_rooms r JOIN users u ON u.id=r.creator WHERE r.chat=? AND r.state='open' AND r.expires>? ORDER BY r.created DESC LIMIT 1").bind(now-30000,chat,now).first();return json({room:active||null});}
  const id=str(p.id,100),room=await roomFor(u.id,id);

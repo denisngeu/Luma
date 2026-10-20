@@ -6,6 +6,7 @@ import {ClientRequestError,requestJson} from '@/lib/client-request';
 import {isAppVisible,watchAppVisibility} from '@/lib/app-visibility';
 import {useChatRead} from '@/hooks/use-chat-read';
 import {useActiveRooms} from '@/hooks/use-active-rooms';
+import {createCallLauncher} from '@/lib/call-launcher';
 import type {ReadCursor} from '@/lib/chat-reads';
 import {ArrowDown} from 'lucide-react';
 import { Dialog, DialogClose, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
@@ -73,8 +74,10 @@ export default function Messenger() {
   const listEpoch=useRef(0);
   const composeLock=useRef(false),activeRef=useRef(active),mounted=useRef(true);
   const sendAttempts=useRef(new Map<string,{fingerprint:string;id:string}>());
+  const callLauncher=useRef<ReturnType<typeof createCallLauncher>|null>(null);
+  if(callLauncher.current===null)callLauncher.current=createCallLauncher();
   useEffect(()=>{activeRef.current=active;},[active]);
-  useEffect(()=>{mounted.current=true;return()=>{mounted.current=false;};},[]);
+  useEffect(()=>{mounted.current=true;return()=>{mounted.current=false;callLauncher.current?.cancel();};},[]);
   const refreshAfterWrite=(chat:string)=>{
     window.dispatchEvent(new Event('luma-chat-list-refresh'));
     window.dispatchEvent(new CustomEvent('luma-chat-messages-refresh',{detail:chat}));
@@ -136,23 +139,17 @@ export default function Messenger() {
   },[api]);
 
   async function startCall(mode: 'audio' | 'video') {
-    if (busy || !activeChat) return;
+    if (busy || !activeChat || callLauncher.current!.isPending()) return;
     setBusy(true);
     setError('');
     try {
       const group = activeChat.kind === 'group';
-      const r = await fetch(group ? '/api/rooms' : '/api/calls', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'create', chat: activeChat.id, mode }),
-      });
-      const d = (await r.json()) as { id: string; error?: string };
-      if (!r.ok) throw Error(d.error || 'Appel indisponible');
-      router.push((group ? '/salle/' : '/appel/') + encodeURIComponent(d.id));
+      const destination=await callLauncher.current!.start({group,chat:activeChat.id,mode});
+      if(mounted.current&&destination)router.push(destination);
     } catch (e) {
-      setError((e as Error).message);
+      if(mounted.current)setError((e as Error).message);
     } finally {
-      setBusy(false);
+      if(mounted.current)setBusy(false);
     }
   }
 

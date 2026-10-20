@@ -9,12 +9,16 @@ import Link from 'next/link';
 import {Switch} from '@/components/ui/switch';
 import {ClientRequestError,requestJson} from '@/lib/client-request';
 import {getUserMediaWithTimeout,mediaError} from '@/lib/call-media';
+import {createCallLauncher} from '@/lib/call-launcher';
 type Friend={id:string;sender:string;recipient:string;state:string;name:string;peer:string};
 type Listing={profile:{code:string;discoverable:number};items:Friend[];user:{id:string;name:string}};
 async function api(action:string,data:Record<string,unknown>={},signal?:AbortSignal){return requestJson<Listing & {error:string;message:string;chat:string;sent:boolean}>('/api/friends',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,...data}),signal});}
 export default function Friends(){const router=useRouter();const [data,setData]=useState<Listing|null>(null),[email,setEmail]=useState(''),[code,setCode]=useState(''),[link,setLink]=useState(''),[error,setError]=useState(''),[notice,setNotice]=useState(''),[busy,setBusy]=useState(false),[scanning,setScanning]=useState(false),[activeSection,setActiveSection]=useState('ma-carte');const video=useRef<HTMLVideoElement>(null),media=useRef<MediaStream|null>(null),timer=useRef<ReturnType<typeof setInterval>|null>(null),scanVersion=useRef(0);
  const [loading,setLoading]=useState(true),[loadError,setLoadError]=useState(''),[authRequired,setAuthRequired]=useState(false);
  const mounted=useRef(false),actionLock=useRef(false),refreshVersion=useRef(0),refreshAbort=useRef<AbortController|null>(null);
+ const callLauncher=useRef<ReturnType<typeof createCallLauncher>|null>(null);
+ if(callLauncher.current===null)callLauncher.current=createCallLauncher();
+ useEffect(()=>()=>callLauncher.current?.cancel(),[]);
  const refresh=useCallback(async()=>{
   if(!mounted.current)return;
   const version=++refreshVersion.current;refreshAbort.current?.abort();const controller=new AbortController();refreshAbort.current=controller;
@@ -56,7 +60,7 @@ export default function Friends(){const router=useRouter();const [data,setData]=
    let ticks=0;timer.current=setInterval(()=>{try{if(video.current)decode(video.current,video.current.videoWidth,video.current.videoHeight);if(++ticks>=240){stop();setNotice('Scanner arrêté après une minute. Vous pouvez le relancer.');}}catch(e){stop();setError((e as Error).message);}},250);
   }catch(e){stream?.getTracks().forEach(t=>t.stop());if(version===scanVersion.current)stop();throw e;}
  }
- async function call(peer:string,mode:string){const d=await requestJson<{id:string}>('/api/calls',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'create',peer,mode})});if(mounted.current)router.push('/appel/'+encodeURIComponent(d.id));}
+ async function call(peer:string,mode:string){const destination=await callLauncher.current!.start({peer,mode});if(mounted.current&&destination)router.push(destination);}
  function goToSection(event:React.MouseEvent<HTMLAnchorElement>,id:string){event.preventDefault();setActiveSection(id);document.getElementById(id)?.scrollIntoView({behavior:document.documentElement.dataset.motion==='reduced'?'auto':'smooth',block:'start'});history.replaceState(null,'','#'+id);}
  const displayError=error||loadError;
  return <main className="privacy-page friends-page"><SocialNav/><div className="stitch-page-topbar"><i/><span><small>LUMA • CONTACTS</small><strong>Amis &amp; QR</strong></span></div><header><span><Users size={18}/> LUMA / CONTACTS</span><h1>Amis &amp; QR</h1><p>Votre cercle, vos cartes de contact et vos invitations au même endroit.</p><div className="contact-shortcuts" role="tablist" aria-label="Rubriques des contacts"><a role="tab" href="#ma-carte" aria-selected={activeSection==='ma-carte'} aria-current={activeSection==='ma-carte'?'page':undefined} onClick={e=>goToSection(e,'ma-carte')}>Ma carte QR</a><a role="tab" href="#mes-amis" aria-selected={activeSection==='mes-amis'} aria-current={activeSection==='mes-amis'?'page':undefined} onClick={e=>goToSection(e,'mes-amis')}>Mes amis</a><a role="tab" href="#ajouter" aria-selected={activeSection==='ajouter'} aria-current={activeSection==='ajouter'?'page':undefined} onClick={e=>goToSection(e,'ajouter')}>Ajouter</a></div></header>{displayError&&<p role="alert" className="privacy-error">{displayError} {!data&&(authRequired?<Link href={'/connexion?returnTo='+encodeURIComponent('/amis'+(code?'?code='+encodeURIComponent(code):''))}>Se connecter</Link>:<button disabled={busy} onClick={()=>void run(refresh)}>Réessayer</button>)}</p>}<p role="status">{notice}</p>
