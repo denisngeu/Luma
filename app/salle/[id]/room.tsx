@@ -8,23 +8,28 @@ import {requestNativeMediaPermissions} from '@/lib/native-permissions';
 import {applyPreferredAudioOutput,preferredMicrophone} from '@/lib/media-devices';
 import {useExpandedMedia} from '@/hooks/use-expanded-media';
 import {createCallTransport} from '@/lib/call-transport';
+import {createNativeCallSession} from '@/lib/native-call-session';
+import {useNativeCallEnd} from '@/hooks/use-native-call-end';
 
 type Person={user:string;name:string};
 type Signal={id:string;sender:string;type:'offer'|'answer';payload:string};
 type Info={me:string;room:{mode:string;kind:string;chat_name:string};participants:Person[];ice:RTCConfiguration};
 export default function Room({id}:{id:string}){
  const {request,cancel:cancelRequests}=useMemo(()=>createCallTransport<Info & {signals:Signal[]}>('/api/rooms',{id}),[id]);
+ const nativeCall=useMemo(()=>createNativeCallSession('room:'+id),[id]);
+ useNativeCallEnd(nativeCall,leave);
  const [info,setInfo]=useState<Info|null>(null),[people,setPeople]=useState<Person[]>([]),[joined,setJoined]=useState(false),[busy,setBusy]=useState(false),[muted,setMuted]=useState(false),[camera,setCamera]=useState(false),[sharing,setSharing]=useState(false),[error,setError]=useState(''),[joinMuted,setJoinMuted]=useState(false),[joinCamera,setJoinCamera]=useState(false),[noiseSuppression,setNoiseSuppression]=useState(true),[echoCancellation,setEchoCancellation]=useState(true),[canShare]=useState(screenSharingSupported),[streams,setStreams]=useState<Record<string,MediaStream>>({}),[facing,setFacing]=useState<'user'|'environment'>('user');
  const [expanded,setExpanded]=useExpandedMedia<string>();
  const local=useRef<MediaStream|null>(null),screen=useRef<MediaStream|null>(null),pcs=useRef(new Map<string,RTCPeerConnection>()),videoSenders=useRef(new Map<string,RTCRtpSender>()),timer=useRef<ReturnType<typeof setInterval>|null>(null),active=useRef(false),epoch=useRef(0),lock=useRef(false),soundContext=useRef<AudioContext|null>(null),soundTimer=useRef<ReturnType<typeof setTimeout>|null>(null);
  const pollNow=useRef<(()=>Promise<void>)|null>(null);
  const dispose=useCallback(()=>{
   cancelRequests();
+  nativeCall.stop();
   active.current=false;pollNow.current=null;epoch.current++;if(soundTimer.current)clearTimeout(soundTimer.current);void soundContext.current?.close();soundContext.current=null;if(timer.current)clearInterval(timer.current);timer.current=null;
   pcs.current.forEach(pc=>{pc.onconnectionstatechange=null;pc.close();});pcs.current.clear();videoSenders.current.clear();
   screen.current?.getTracks().forEach(t=>{t.onended=null;t.stop();});screen.current=null;
   local.current?.getTracks().forEach(t=>t.stop());local.current=null;
- },[cancelRequests]);
+ },[cancelRequests,nativeCall]);
  useEffect(()=>{
   let live=true;
   queueMicrotask(()=>{if(!live)return;try{const p=JSON.parse(localStorage.getItem('luma-call-preferences')||'{}');setJoinCamera(!!p.camera);setNoiseSuppression(p.noiseSuppression!==false);setEchoCancellation(p.echoCancellation!==false);}catch{}});
@@ -67,7 +72,9 @@ export default function Room({id}:{id:string}){
   if(lock.current||active.current)return;lock.current=true;setBusy(true);setError('');const generation=epoch.current;let registered=false;
   try{
    if(!navigator.mediaDevices?.getUserMedia)throw Error('Micro indisponible. Ouvrez Luma en HTTPS et autorisez son utilisation.');
-    await requestNativeMediaPermissions(joinCamera);
+    await requestNativeMediaPermissions(joinCamera,true);
+   if(epoch.current!==generation)return;
+   await nativeCall.start(joinCamera);
    if(epoch.current!==generation)return;
      const stream=await getUserMediaWithTimeout({audio:preferredMicrophone({noiseSuppression,echoCancellation}),video:joinCamera?{width:{ideal:1280},height:{ideal:720},facingMode:{ideal:facing}}:false});
    if(epoch.current!==generation){stream.getTracks().forEach(t=>t.stop());return;}local.current=stream;
@@ -121,11 +128,11 @@ export default function Room({id}:{id:string}){
     }catch(e){if(epoch.current===generation)setError(mediaError(e));}finally{polling=false;}
    };
    pollNow.current=poll;void poll();timer.current=setInterval(poll,1000);
-  }catch(e){dispose();setExpanded(null);setJoined(false);if(registered)await request('leave',{id}).catch(()=>{});setError(mediaError(e));}
+  }catch(e){if(epoch.current!==generation)return;dispose();setExpanded(null);setJoined(false);if(registered)await request('leave',{id}).catch(()=>{});setError(mediaError(e));}
   finally{lock.current=false;setBusy(false);}
  }
  async function replaceVideo(track:MediaStreamTrack|null){await Promise.all([...videoSenders.current.values()].map(sender=>sender.replaceTrack(track)));}
- async function captureCamera(nextFacing=facing,releasePrevious=false){const generation=epoch.current;await requestNativeMediaPermissions(true);if(generation!==epoch.current)throw new DOMException('Appel terminé.','AbortError');if(releasePrevious)setCamera(false);return captureCameraStream(nextFacing,releasePrevious?local.current:null);}
+ async function captureCamera(nextFacing=facing,releasePrevious=false){const generation=epoch.current;await requestNativeMediaPermissions(true);if(generation!==epoch.current)throw new DOMException('Appel terminé.','AbortError');await nativeCall.start(true);if(generation!==epoch.current)throw new DOMException('Appel terminé.','AbortError');if(releasePrevious)setCamera(false);return captureCameraStream(nextFacing,releasePrevious?local.current:null);}
  async function installCamera(stream:MediaStream,nextFacing=facing){const track=stream.getVideoTracks()[0];if(!track)throw Error('Aucune caméra disponible.');const previous=local.current?.getVideoTracks()[0];await replaceVideo(track);if(previous){local.current?.removeTrack(previous);previous.stop();}local.current?.addTrack(track);setFacing(nextFacing);setCamera(true);if(info)setStreams(s=>({...s,[info.me]:new MediaStream(local.current!.getTracks())}));}
  async function toggleVideo(){
   if(lock.current||sharing||!local.current)return;lock.current=true;setBusy(true);setError('');const generation=epoch.current;let captured:MediaStream|null=null;

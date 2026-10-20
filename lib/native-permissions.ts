@@ -6,7 +6,7 @@ declare global{
  interface Window{ReactNativeWebView?:{postMessage:(message:string)=>void}}
 }
 
-export function requestNativeMediaPermissions(camera=false){
+export function requestNativeMediaPermissions(camera=false,callService=false){
  if(typeof window==='undefined')return Promise.resolve();
  const bridge=window.ReactNativeWebView;
  if(!bridge)return Promise.resolve();
@@ -19,8 +19,9 @@ export function requestNativeMediaPermissions(camera=false){
    if(event.detail.granted)resolve();
    else reject(Error(event.detail.message||'Autorisez le micro et la caméra dans les réglages de Luma.'));
   };
-  const timer=setTimeout(()=>{cleanup();reject(Error('La demande d’autorisation Android n’a pas répondu. Ouvrez les réglages de Luma puis réessayez.'));},10000);
+  // System permission dialogs are human interactions, not network requests.
+  const timer=setTimeout(()=>{cleanup();reject(Error('La demande d’autorisation Android n’a pas répondu. Ouvrez les réglages de Luma puis réessayez.'));},120000);
   window.addEventListener('luma-native-permissions',listener as EventListener);
-  bridge.postMessage(JSON.stringify({type:'request-media-permissions',requestId,camera}));
+  bridge.postMessage(JSON.stringify({type:'request-media-permissions',requestId,camera,callService}));
  });
 }

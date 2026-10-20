@@ -3,6 +3,7 @@
 # dependencies
 node_modules/
 native/**/dist/
+native/mobile/dist-check/
 native/**/.expo/
 native/mobile/android/
 native/mobile/ios/

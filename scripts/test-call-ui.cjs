@@ -37,6 +37,18 @@ app.on('window-all-closed',()=>{}); app.whenReady().then(async()=>{
  // Connection signals must be processed by the foreground/online handlers.
  if(p.get('kind')==='group'){const interval=window.setInterval.bind(window);window.setInterval=(fn,ms,...args)=>interval(fn,ms===1000?60000:ms,...args);}
  window.fetch=(url,options={})=>original(url,{...options,headers:{...options.headers,'x-test-user':p.get('who')}});
+ if(p.get('kind')!=='settings'){
+  window.__lumaCallService=true;window.__nativeStops=[];window.__nativeCallRequests=[];
+  window.ReactNativeWebView={postMessage(raw){const message=JSON.parse(raw);
+   if(message.type==='request-media-permissions'){queueMicrotask(()=>window.dispatchEvent(new CustomEvent('luma-native-permissions',{detail:{requestId:message.requestId,granted:true}})));return;}
+   if(message.type!=='call-session')return;
+   if(message.action==='stop'){window.__nativeStops.push(message.token);return;}
+   window.__nativeCallRequests.push(message);window.__lastNativeToken=message.token;
+   const ok=!window.__nativeReject;window.__nativeReject=false;
+   const reply=()=>window.dispatchEvent(new CustomEvent('luma-native-call-service',{detail:{requestId:message.requestId,token:message.token,ok,error:ok?'':'Service Android refusé'}}));
+   if(window.__holdNativeStart){window.__holdNativeStart=false;window.__releaseNativeStart=reply;}else queueMicrotask(reply);
+  }};
+ }
  localStorage.setItem('luma-media-devices',JSON.stringify({input:'default',output:'test-headphones'}));
  window.__captures=[];window.__cameraTracks=[];const capture=navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
  navigator.mediaDevices.getUserMedia=async constraints=>{window.__captures.push(constraints);if(window.__singleCamera&&constraints.video&&window.__cameraTracks.some(track=>track.readyState==='live'))throw new DOMException('Camera already in use','NotReadableError');const stream=await capture(constraints);window.__cameraTracks.push(...stream.getVideoTracks());window.__lastCapture=stream;return stream;};
@@ -80,7 +92,15 @@ app.on('window-all-closed',()=>{}); app.whenReady().then(async()=>{
  for(const kind of ['private','group']){
   const a=await open('a',kind,base),b=await open('b',kind,base);
   await until(()=>run(a,"!!document.querySelector('button:not(:disabled)')"),'loaded');
-  if(kind==='private'){await until(()=>run(a,"!!document.querySelector('.call-start:not(:disabled)')"),'caller ready');await click(a,'Démarrer');await until(()=>call.state==='ringing','offer');await until(()=>run(b,"!!document.querySelector('.call-start:not(:disabled)')"),'callee ready');await click(b,'Accepter');}
+  if(kind==='private'){
+   await until(()=>run(a,"!!document.querySelector('.call-start:not(:disabled)')"),'caller ready');
+   await run(a,'window.__nativeReject=true');await click(a,'Démarrer');await until(()=>run(a,"document.body.innerText.includes('Service Android refusé')"),'native refusal shown');
+   assert.equal(await run(a,'window.__captures.length'),0,'native refusal does not open the microphone');
+   await run(a,'window.__holdNativeStart=true');await click(a,'Démarrer');await until(()=>run(a,'!!window.__releaseNativeStart'),'native startup waiting');
+   assert.equal(await run(a,'window.__captures.length'),0,'capture waits for native foreground startup');await run(a,'window.__releaseNativeStart()');
+   await until(()=>call.state==='ringing','offer');await until(()=>run(b,"!!document.querySelector('.call-start:not(:disabled)')"),'callee ready');await click(b,'Accepter');
+   checks.push('native service startup gates capture and handles refusal');
+  }
   else {for(const w of [a,b]){await until(()=>run(w,"!!document.querySelector('.room-lobby button:not(:disabled)')"),'room ready');await click(w,'Rejoindre le salon');}}
   if(kind==='group'){
    await until(async()=>{
@@ -94,6 +114,8 @@ app.on('window-all-closed',()=>{}); app.whenReady().then(async()=>{
    await until(()=>run(w,"(async()=>{for(const p of window.__peers){if(p.connectionState!=='connected')continue;for(const s of (await p.getStats()).values())if(s.type==='inbound-rtp'&&s.kind==='audio'&&s.bytesReceived>0&&s.totalAudioEnergy>0)return true;}return false;})()"),kind+' audio decoded');
   }
   checks.push(kind+' bidirectional audio energy');
+  await run(a,"window.dispatchEvent(new CustomEvent('luma-native-call-ended',{detail:{token:'another-call'}}))");
+  assert.equal(await run(a,"window.__peers.some(peer=>peer.connectionState==='connected')"),true,'another native session cannot end this call');
   // A stalled poll must time out, retain the media connection, and recover
   // through the same foreground handler that Android uses after suspension.
   await run(a,`window.__realTimeout=window.setTimeout;window.setTimeout=(fn,ms,...args)=>window.__realTimeout(fn,ms===12000?100:ms,...args);
@@ -149,10 +171,12 @@ app.on('window-all-closed',()=>{}); app.whenReady().then(async()=>{
   await run(a,"navigator.mediaDevices.getUserMedia=async constraints=>{const stream=await window.__capture(constraints);if(constraints.video&&!constraints.audio){window.__lateCamera=stream;return new Promise(resolve=>{window.__finishCamera=()=>resolve(stream);});}return stream;}");
   await click(a,'Retourner');
   await until(()=>run(a,'!!window.__finishCamera'),kind+' pending camera');
-  await click(a,kind==='private'?'Raccrocher':'Quitter');
+  await run(a,"window.dispatchEvent(new CustomEvent('luma-native-call-ended',{detail:{token:window.__lastNativeToken}}))");
   await run(a,'window.__finishCamera()');
   await until(()=>run(a,"window.__lateCamera.getTracks().every(t=>t.readyState==='ended')"),kind+' late camera released');
   checks.push(kind+' camera released after hangup during capture');
+  assert.equal(await run(a,'window.__nativeStops.includes(window.__lastNativeToken)'),true,kind+' notification hangup stops the native service');
+  checks.push(kind+' native notification hangup and service cleanup');
   if(kind==='private'){
    await until(()=>run(b,"document.body.innerText.includes('Appel terminé')"),'remote end observed');
    const count=callGets.b;await run(b,"window.dispatchEvent(new Event('online'))");await wait(1800);

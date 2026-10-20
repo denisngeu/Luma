@@ -23,7 +23,7 @@ jobs:
       - run: docker build -f docker/turn.Dockerfile -t luma-turn-test .
       - name: Validate TURN configuration
         run: |
-          docker run -d --name luma-turn-test luma-turn-test -c /etc/coturn/turnserver.conf --static-auth-secret=ci-only-test-secret --external-ip=127.0.0.1
+          docker run -d --name luma-turn-test -e LUMA_TURN_PUBLIC_IP=203.0.113.1 luma-turn-test -c /etc/coturn/turnserver.conf --static-auth-secret=ci-only-test-secret
           sleep 3
           docker logs luma-turn-test
           test "$(docker inspect --format '{{.State.Running}}' luma-turn-test)" = true

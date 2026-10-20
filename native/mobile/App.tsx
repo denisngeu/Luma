@@ -5,12 +5,13 @@ import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import {SafeAreaProvider,SafeAreaView,useSafeAreaInsets} from 'react-native-safe-area-context';
 import {WebView} from 'react-native-webview';
+import CallService from './modules/luma-call-service';
 
 LogBox.ignoreLogs(['Cannot connect to Expo CLI']);
 
 const DEFAULT_SERVER='https://cx9tpuja8iqkelk0zci4vlbs.app.luma-sas.fr';
 const SERVER=(process.env.EXPO_PUBLIC_LUMA_URL||'').trim()||DEFAULT_SERVER;
-const MOBILE_RELEASE='0.3.14';
+const MOBILE_RELEASE='0.3.15';
 const themeBridge=`(()=>{const send=()=>window.ReactNativeWebView.postMessage(JSON.stringify({theme:document.documentElement.dataset.luma}));new MutationObserver(send).observe(document.documentElement,{attributes:true,attributeFilter:['data-luma']});send()})();true;`;
 // One persistent WebView keeps cookies, theme preferences and navigation together.
 class NativeErrorBoundary extends React.Component<React.PropsWithChildren,{failed:boolean}>{
@@ -27,6 +28,31 @@ function LumaApp(){
  const ringtone=useAudioPlayer(require('./assets/ringtone.wav'));
  const ringing=useRef<string|null>(null);
  const web=useRef<WebView>(null);
+ const callOwner=useRef<string|null>(null),notificationAsked=useRef(false);
+ const stopNativeCall=useCallback(()=>{const token=callOwner.current;callOwner.current=null;if(token)void CallService?.stop(token).catch(()=>{});},[]);
+ useEffect(()=>{
+  const subscription=CallService?.addListener('onCallEnded',event=>{
+   if(callOwner.current!==event.token)return;callOwner.current=null;
+   web.current?.injectJavaScript(`window.dispatchEvent(new CustomEvent('luma-native-call-ended',{detail:${JSON.stringify(event)}}));true;`);
+  });
+  return()=>{subscription?.remove();stopNativeCall();};
+ },[stopNativeCall]);
+ const manageCallService=useCallback(async(message:{action?:unknown;requestId?:unknown;token?:unknown;camera?:unknown})=>{
+  const {token,requestId}=message;
+  if(typeof token!=='string'||!token||token.length>120)return;
+  if(message.action==='stop'){if(callOwner.current===token)stopNativeCall();return;}
+  if(message.action!=='start'||typeof requestId!=='string'||requestId.length>120)return;
+  let ok=false,error='';callOwner.current=token;
+  try{
+   if(!CallService)throw Error('Le service d’appel est indisponible dans cette version Android.');
+   if(AppState.currentState!=='active')throw Error('Revenez dans Luma pour rejoindre l’appel.');
+   if(callOwner.current!==token)throw Error('Appel terminé.');
+   await CallService.start(token,message.camera===true);
+   if(callOwner.current!==token){await CallService.stop(token);throw Error('Appel terminé.');}
+   ok=true;
+  }catch(reason){if(callOwner.current===token)stopNativeCall();error=reason instanceof Error?reason.message:'Service d’appel indisponible.';}
+  web.current?.injectJavaScript(`window.dispatchEvent(new CustomEvent('luma-native-call-service',{detail:${JSON.stringify({requestId,token,ok,error})}}));true;`);
+ },[stopNativeCall]);
  const back=useRef(false);
  const [loading,setLoading]=useState(true);
  const [error,setError]=useState(false);
@@ -46,8 +72,8 @@ function LumaApp(){
  const beginLoad=useCallback(()=>{clearLoadTimer();loadFailed.current=false;setError(false);if(firstLoad.current){setLoading(true);setMessage('Ouverture de Luma…');loadTimer.current=setTimeout(()=>{loadFailed.current=true;setLoading(false);setError(true);setMessage('Luma ne répond pas. Vérifiez votre connexion puis réessayez.');},12000);}},[clearLoadTimer]);
  const finishLoad=useCallback(()=>{clearLoadTimer();if(loadFailed.current)return;firstLoad.current=false;setLoading(false);setError(false);},[clearLoadTimer]);
  const recover=useCallback((reason='Connexion indisponible. Vérifiez votre réseau.')=>{clearLoadTimer();loadFailed.current=true;setMessage(reason);setError(true);setLoading(false);},[clearLoadTimer]);
- const retry=useCallback(()=>{rendererCrashes.current=[];rendererGone.current=false;firstLoad.current=true;clearRendererTimer();beginLoad();setWebKey(value=>value+1);setWebMounted(true);},[beginLoad,clearRendererTimer]);
- const recoverRenderer=useCallback(()=>{const now=Date.now(),recent=rendererCrashes.current.filter(time=>now-time<60000);rendererCrashes.current=[...recent,now];rendererGone.current=true;clearRendererTimer();setWebMounted(false);if(recent.length){recover('Le moteur d’affichage Android s’est arrêté deux fois. Touchez Recharger Luma pour repartir proprement.');return;}loadFailed.current=true;setLoading(true);setMessage('Redémarrage de l’affichage…');rendererTimer.current=setTimeout(()=>{rendererTimer.current=null;rendererGone.current=false;beginLoad();setWebKey(value=>value+1);setWebMounted(true);},100);},[beginLoad,clearRendererTimer,recover]);
+ const retry=useCallback(()=>{stopNativeCall();rendererCrashes.current=[];rendererGone.current=false;firstLoad.current=true;clearRendererTimer();beginLoad();setWebKey(value=>value+1);setWebMounted(true);},[beginLoad,clearRendererTimer,stopNativeCall]);
+ const recoverRenderer=useCallback(()=>{stopNativeCall();const now=Date.now(),recent=rendererCrashes.current.filter(time=>now-time<60000);rendererCrashes.current=[...recent,now];rendererGone.current=true;clearRendererTimer();setWebMounted(false);if(recent.length){recover('Le moteur d’affichage Android s’est arrêté deux fois. Touchez Recharger Luma pour repartir proprement.');return;}loadFailed.current=true;setLoading(true);setMessage('Redémarrage de l’affichage…');rendererTimer.current=setTimeout(()=>{rendererTimer.current=null;rendererGone.current=false;beginLoad();setWebKey(value=>value+1);setWebMounted(true);},100);},[beginLoad,clearRendererTimer,recover,stopNativeCall]);
  async function shareCard(image:unknown){
   if(sharing.current||typeof image!=='string'||image.length>3000000||!/^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(image))return;
   sharing.current=true;
@@ -68,7 +94,7 @@ function LumaApp(){
    ringing.current=null;Vibration.cancel();ringtone?.pause?.();void ringtone?.seekTo?.(0)?.catch?.(()=>{});
   }catch{ringing.current=null;Vibration.cancel();}
  },[ringtone]);
- const requestMediaPermissions=useCallback(async(requestId:unknown,camera:unknown)=>{
+ const requestMediaPermissions=useCallback(async(requestId:unknown,camera:unknown,callService:unknown)=>{
   if(typeof requestId!=='string'||requestId.length>120)return;
   let granted=true,permanentlyDenied=false;
   try{
@@ -78,6 +104,7 @@ function LumaApp(){
     const results=await PermissionsAndroid.requestMultiple(requested);
     granted=requested.every(permission=>results[permission]===PermissionsAndroid.RESULTS.GRANTED);
     permanentlyDenied=requested.some(permission=>results[permission]===PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN);
+    if(granted&&callService===true&&Number(Platform.Version)>=33&&!notificationAsked.current){notificationAsked.current=true;if(!await PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS))await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS);}
    }
   }catch{granted=false;}
   const message=granted?'':permanentlyDenied?'Le micro ou la caméra est bloqué. Ouvrez les réglages Android de Luma pour l’autoriser.':'Le micro ou la caméra est nécessaire pour rejoindre cet appel.';
@@ -87,11 +114,11 @@ function LumaApp(){
  let origin='';
  try{const url=new URL(SERVER);if(url.protocol==='https:'||url.protocol==='http:')origin=url.origin;}catch{}
  if(!origin)return <SafeAreaView edges={['top','left','right']} style={styles.screen}><Text style={styles.text}>Configurez l’adresse du serveur Luma (http:// ou https://) avant de lancer l’application.</Text></SafeAreaView>;
- const safeAreaBridge=`document.documentElement.style.setProperty('--native-safe-bottom','${insets.bottom}px');true;`;
+ const safeAreaBridge=`window.__lumaCallService=${Platform.OS==='android'&&!!CallService};document.documentElement.style.setProperty('--native-safe-bottom','${insets.bottom}px');true;`;
  return <SafeAreaView edges={['top','left','right']} style={[styles.screen,{backgroundColor:dark?'#121623':'#f4f5fb'}]}>
    {webMounted&&<WebView key={webKey} ref={web} style={styles.web} source={{uri:origin+'/messages?native=android&release='+MOBILE_RELEASE}} originWhitelist={[origin,'http://*','https://*']} sharedCookiesEnabled thirdPartyCookiesEnabled domStorageEnabled javaScriptEnabled allowsInlineMediaPlayback mediaPlaybackRequiresUserAction={false} mediaCapturePermissionGrantType="grantIfSameHostElsePrompt" mixedContentMode="compatibility" cacheEnabled cacheMode="LOAD_DEFAULT" setSupportMultipleWindows={false} overScrollMode="never" scrollEnabled nestedScrollEnabled
-     onNavigationStateChange={state=>{back.current=state.canGoBack;}}
-     injectedJavaScriptBeforeContentLoaded={safeAreaBridge} injectedJavaScript={safeAreaBridge+themeBridge} onMessage={event=>{try{const url=new URL(event.nativeEvent.url);if(url.origin!==origin)return;const message=JSON.parse(event.nativeEvent.data);if(message.theme==='dark'||message.theme==='light')setDark(message.theme==='dark');if(message.type==='share-contact-card'&&url.pathname==='/amis')void shareCard(message.image);if(message.type==='incoming-call')updateRingtone(message.id);if(message.type==='request-media-permissions')void requestMediaPermissions(message.requestId,message.camera);}catch{}}}
+     onNavigationStateChange={state=>{back.current=state.canGoBack;try{if(!/^\/(appel|salle)\/[^/]+$/.test(new URL(state.url).pathname))stopNativeCall();}catch{stopNativeCall();}}}
+     injectedJavaScriptBeforeContentLoaded={safeAreaBridge} injectedJavaScript={safeAreaBridge+themeBridge} onMessage={event=>{try{const url=new URL(event.nativeEvent.url);if(url.origin!==origin)return;const message=JSON.parse(event.nativeEvent.data);if(message.theme==='dark'||message.theme==='light')setDark(message.theme==='dark');if(message.type==='share-contact-card'&&url.pathname==='/amis')void shareCard(message.image);if(message.type==='incoming-call')updateRingtone(message.id);if(message.type==='request-media-permissions')void requestMediaPermissions(message.requestId,message.camera,message.callService);if(message.type==='call-session'&&/^\/(appel|salle)\/[^/]+$/.test(url.pathname))void manageCallService(message);}catch{}}}
      onLoadStart={beginLoad} onLoadEnd={finishLoad} onError={event=>recover(`Connexion impossible au serveur (${event.nativeEvent.description||'erreur réseau'}).`)} onHttpError={event=>recover('Le serveur Luma répond avec une erreur ('+event.nativeEvent.statusCode+').')}
      onRenderProcessGone={recoverRenderer} onContentProcessDidTerminate={recoverRenderer}
      onShouldStartLoadWithRequest={request=>{try{const url=new URL(request.url);if(url.origin===origin)return true;if(['https:','http:','mailto:'].includes(url.protocol))void Linking.openURL(request.url);return false;}catch{return false;}}}

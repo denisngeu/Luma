@@ -9,6 +9,8 @@ import {applyPreferredAudioOutput,preferredMicrophone} from '@/lib/media-devices
 import {useExpandedMedia} from '@/hooks/use-expanded-media';
 import {createCallTransport} from '@/lib/call-transport';
 import {ClientRequestError} from '@/lib/client-request';
+import {createNativeCallSession} from '@/lib/native-call-session';
+import {useNativeCallEnd} from '@/hooks/use-native-call-end';
 type Call={caller:string;callee:string;callerName:string;calleeName:string;mode:string;state:string;offer:string|null;answer:string|null};
 type ResponseData={call:Call;me:string;iceServers:RTCIceServer[];relayConfigured:boolean;error:string};
 export default function CallRoom({id}:{id:string}){
@@ -18,8 +20,11 @@ export default function CallRoom({id}:{id:string}){
  const [mediaBusy,setMediaBusy]=useState(false),[canShare]=useState(screenSharingSupported);
  const presence=useRef<{id:string;mounted:boolean}|null>(null);
  const {request:api,cancel:cancelRequests}=useMemo(()=>createCallTransport<ResponseData>('/api/calls',{id}),[id]);
+ const nativeCall=useMemo(()=>createNativeCallSession('private:'+id),[id]);
+ useNativeCallEnd(nativeCall,hangup);
  const cleanup=useCallback(()=>{
   cancelRequests();
+  nativeCall.stop();
   epoch.current++;
   local.current?.getTracks().forEach(t=>t.stop());local.current=null;
   screen.current?.getTracks().forEach(t=>{t.onended=null;t.stop();});screen.current=null;
@@ -28,7 +33,7 @@ export default function CallRoom({id}:{id:string}){
   if(ctx.current){ctx.current.onstatechange=null;void ctx.current.close().catch(()=>{});ctx.current=null;}
   audioSender.current=null;videoSender.current=null;micGain.current=null;soundGain.current=null;mix.current=null;remote.current=null;
   if(localVideo.current)localVideo.current.srcObject=null;if(remoteVideo.current)remoteVideo.current.srcObject=null;if(remoteAudio.current)remoteAudio.current.srcObject=null;
- },[cancelRequests]);
+ },[cancelRequests,nativeCall]);
  useEffect(()=>{
   let live=true,polling=false,finished=false;
   const visit=presence.current?.id===id?presence.current:{id,mounted:false};presence.current=visit;visit.mounted=true;
@@ -57,9 +62,11 @@ export default function CallRoom({id}:{id:string}){
    cleanup();
   };
  },[api,id,setExpanded,cleanup]);
- async function start(){if(!call||busy||started)return;setBusy(true);setError('');const generation=epoch.current;let captured:MediaStream|null=null;try{
+ async function start(){if(!call||busy||started||actionLock.current)return;actionLock.current=true;setBusy(true);setError('');const generation=epoch.current;let captured:MediaStream|null=null;try{
   if(!navigator.mediaDevices?.getUserMedia||!window.RTCPeerConnection)throw Error('Ce navigateur ne prend pas en charge les appels. Ouvrez Luma dans un navigateur récent.');
-  await requestNativeMediaPermissions(call.mode==='video'&&startCamera);
+  await requestNativeMediaPermissions(call.mode==='video'&&startCamera,true);
+  if(generation!==epoch.current)return;
+  await nativeCall.start(call.mode==='video'&&startCamera);
   if(generation!==epoch.current)return;
   captured=await getUserMediaWithTimeout({audio:preferredMicrophone({echoCancellation,noiseSuppression}),video:call.mode==='video'&&startCamera?{width:{ideal:1280},height:{ideal:720},facingMode:{ideal:facing}}:false});if(generation!==epoch.current){captured.getTracks().forEach(t=>t.stop());return;}local.current=captured;setCamera(captured.getVideoTracks().length>0);if(localVideo.current)localVideo.current.srcObject=captured;
   const audio=new AudioContext();ctx.current=audio;void audio.resume().catch(()=>{});const destination=audio.createMediaStreamDestination();mix.current=destination;const gain=audio.createGain();micGain.current=gain;audio.createMediaStreamSource(captured).connect(gain).connect(destination);const sounds=audio.createGain();sounds.gain.value=volume;soundGain.current=sounds;sounds.connect(destination);sounds.connect(audio.destination);
@@ -68,9 +75,9 @@ export default function CallRoom({id}:{id:string}){
   audio.onstatechange=()=>{if(audio.state!=='running'&&audioSender.current&&local.current)void audioSender.current.replaceTrack(local.current.getAudioTracks()[0]).catch(()=>{});};const caller=me===call.caller;if(!caller){if(!call.offer)throw Error('Attendez que votre contact lance l’appel.');await peer.setRemoteDescription({type:'offer',sdp:call.offer});const trans=peer.getTransceivers();const a=trans.find(t=>t.receiver.track.kind==='audio');if(!a)throw Error('Le contact doit relancer l’appel avec une version récente de Luma.');a.direction='sendrecv';audioSender.current=a.sender;await a.sender.replaceTrack(captured.getAudioTracks()[0]);const v=trans.find(t=>t.receiver.track.kind==='video');if(!v)throw Error('Le contact doit relancer l’appel pour activer la vidéo.');v.direction='sendrecv';videoSender.current=v.sender;await v.sender.replaceTrack(captured.getVideoTracks()[0]||null);await peer.setLocalDescription(await peer.createAnswer());await gatherIce(peer);if(generation!==epoch.current)return;await api('answer',{sdp:peer.localDescription!.sdp});}
   else{audioSender.current=peer.addTransceiver(captured.getAudioTracks()[0],{direction:'sendrecv',streams:[captured]}).sender;videoSender.current=peer.addTransceiver(captured.getVideoTracks()[0]||'video',{direction:'sendrecv',streams:[captured]}).sender;await peer.setLocalDescription(await peer.createOffer());await gatherIce(peer);if(generation!==epoch.current)return;await api('offer',{sdp:peer.localDescription!.sdp});}
   setStarted(true);setState(caller?'Appel en cours… En attente de votre contact.':'Connexion en cours…');
- }catch(e){captured?.getTracks().forEach(t=>t.stop());cleanup();setError(mediaError(e));}finally{setBusy(false);}}
+ }catch(e){captured?.getTracks().forEach(t=>t.stop());if(generation!==epoch.current)return;cleanup();setError(mediaError(e));}finally{actionLock.current=false;if(presence.current?.id===id&&presence.current.mounted)setBusy(false);}}
  async function hangup(){cleanup();setExpanded(null);setStarted(false);setState('Appel terminé');try{await api('end');setCall(c=>c?{...c,state:'ended'}:c);}catch(e){setError((e as Error).message);}}
- async function captureCamera(nextFacing=facing,releasePrevious=false){const generation=epoch.current;await requestNativeMediaPermissions(true);if(generation!==epoch.current)throw new DOMException('Appel terminé.','AbortError');if(releasePrevious)setCamera(false);return captureCameraStream(nextFacing,releasePrevious?local.current:null);}
+ async function captureCamera(nextFacing=facing,releasePrevious=false){const generation=epoch.current;await requestNativeMediaPermissions(true);if(generation!==epoch.current)throw new DOMException('Appel terminé.','AbortError');await nativeCall.start(true);if(generation!==epoch.current)throw new DOMException('Appel terminé.','AbortError');if(releasePrevious)setCamera(false);return captureCameraStream(nextFacing,releasePrevious?local.current:null);}
  async function installCamera(stream:MediaStream,nextFacing:typeof facing,generation:number){
   const track=stream.getVideoTracks()[0];if(!track){stream.getTracks().forEach(t=>t.stop());throw Error('Aucune caméra disponible.');}
   const sender=videoSender.current,source=local.current;
