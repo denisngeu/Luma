@@ -4,6 +4,9 @@ import CallInbox from './call-inbox';
 import ThemeProvider from './theme-provider';
 import AppShell from './app-shell';
 import {themeBootstrap} from './theme-bootstrap';
+import fontManifest from '../public/fonts/manifest.json';
+
+const preloadFonts=fontManifest.assets.filter(font=>font.subset==='latin'||font.family==='material-symbols-outlined');
 
 export const metadata: Metadata = {
   title: "Luma — Votre cercle",
@@ -23,16 +26,7 @@ export default function RootLayout({
   return (
     <html lang="fr" suppressHydrationWarning>
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
-          rel="stylesheet"
-        />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
-          rel="stylesheet"
-        />
+        {preloadFonts.map(font=><link key={font.file} rel="preload" href={'/fonts/'+font.file} as="font" type="font/woff2" crossOrigin="anonymous"/>)}
         <script dangerouslySetInnerHTML={{ __html: themeBootstrap }} />
       </head>
       <body className="antialiased">

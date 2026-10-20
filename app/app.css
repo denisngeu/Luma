@@ -1,6 +1,7 @@
 /* One owner for global CSS. Route-level global imports survive navigation and
    allow chunk merging to change their cascade order. Keep base page styles
    before shared themes, then apply the approved desktop/mobile rules last. */
+@import './fonts.css';
 @import './globals.css';
 @import './landing.css';
 @import './connexion/connexion.css';
