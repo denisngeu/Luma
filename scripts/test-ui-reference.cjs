@@ -21,6 +21,7 @@ app.whenReady().then(async()=>{try{
  const channels=[{id:'general-test',name:'général',mode:'text',owner:'me'},{id:'annonces-test',name:'annonces',mode:'announcement',owner:'me'},{id:'live-test',name:'Salon vocal en direct',mode:'voice',owner:'me'},{id:'voice-test',name:'Salon vocal disponible',mode:'voice',owner:'me'}];
  const space={id:'space-test',name:'Communauté de test',description:'Un espace pour se retrouver.',invite:'fixture-only',role:'owner'};
  const communityFeed={messages:[{id:'message-test',body:'Bienvenue dans le salon. Retrouvez les autres membres dans le vocal !',name:'Contact de test',author:'peer-0',created:Date.now(),scheduled:0,replies:0,starred:0,pinned:0,edited:0}],reactions:[],polls:[],votes:[],pinned:[],more:false};
+ const privateMessages=[...communityFeed.messages,{...communityFeed.messages[0],id:'my-message-test',author:'me',name:profile.name,body:'Voici ma réponse à notre discussion.'}];
  const friends={profile:{code:'fixture-only',discoverable:1},user:profile,items:Array.from({length:3},(_,i)=>({id:'friend-'+i,sender:'me',recipient:'peer-'+i,state:'accepted',name:['Contact de test','Autre contact','Mon ami'][i],peer:'peer-'+i}))};
  server=createServer(async(req,res)=>{
   const url=new URL(req.url,'http://local');
@@ -30,7 +31,7 @@ app.whenReady().then(async()=>{try{
    else if(url.pathname==='/api/friends'){if(p.action==='rotate')friends.profile.code='fixture-rotation-'+(++rotations);out=friends;}
    else if(url.pathname==='/api/auth/sessions')out={sessions:[{created:Date.now()-60000,expires:Date.now()+86400000}]};
    else if(url.pathname==='/api/social')out=p.action==='profile'?{profile}:{items:[{id:'fixture-post',author:'peer-0',name:'Contact de test',body:'Une nouvelle pour notre cercle. On se retrouve ce soir dans le salon vocal ?',created:Date.now(),edited:0,avatar:false,likes:2,liked:0,comments:0,media:[]}],next:null};
-   else if(url.pathname==='/api/chat')out=p.action==='list'?{user:profile,chats}:p.action==='messages'?{messages:communityFeed.messages,readCursor:{sequence:0,through:0}}:{ok:true,unread:0};
+   else if(url.pathname==='/api/chat')out=p.action==='list'?{user:profile,chats}:p.action==='messages'?{messages:privateMessages,readCursor:{sequence:0,through:0}}:{ok:true,unread:0};
    else if(url.pathname==='/api/rooms')out=p.action==='active_many'?{rooms:Object.fromEntries(p.chats.map(chat=>[chat,chat==='live-test'?{id:'live-room-test',participants:2,mode:'audio'}:null]))}:{room:p.chat==='live-test'?{id:'live-room-test',participants:2,mode:'audio'}:null};
    else if(url.pathname==='/api/community')out=p.action==='spaces'?{spaces:[space],user:profile}:p.action==='space'?{space,channels,members:[{user:'me',name:profile.name,role:(req.headers.referer||'').includes('member=1')?'member':'owner'}],bots:[],role:(req.headers.referer||'').includes('member=1')?'member':'owner'}:communityFeed;
    else if(url.pathname==='/api/calls')out={items:[],calls:[]};
@@ -121,6 +122,37 @@ app.whenReady().then(async()=>{try{
    win.destroy();win=null;
   }
   console.log('PASS saved message sizes 14/20 across feed, private chats and communities, mobile/desktop and both themes.');
+ }
+ if(process.env.LUMA_UI_LAYOUT_PREFERENCES==='1'){
+  const base='http://127.0.0.1:'+server.address().port,preferenceChecks=[];
+  for(const width of [320,1280])for(const mode of ['light','dark']){
+   win=new BrowserWindow({width,height:844});await win.loadURL(base+'/apparence?theme='+mode);const phases={};
+   for(const [phase,density,contrast] of [['normal','comfortable','normal'],['compact-high','compact','high'],['restored','comfortable','normal']]){
+    await win.page.goto(base+'/apparence?theme='+mode);await win.page.getByLabel('Espacement',{exact:true}).selectOption(density);await win.page.getByLabel('Contraste',{exact:true}).selectOption(contrast);await win.page.reload();
+    await until(async()=>await win.page.getByLabel('Espacement',{exact:true}).inputValue()===density&&await win.page.getByLabel('Contraste',{exact:true}).inputValue()===contrast,'layout preferences survive reload');
+    const views={};
+    for(const route of ['fil','messages','communities']){
+     await win.page.goto(base+'/'+route+'?theme='+mode);let touchHeight;
+     if(route==='messages'){const chat=win.page.getByRole('button',{name:'Ouvrir la discussion avec Contact de test',exact:true});touchHeight=await chat.evaluate(el=>el.getBoundingClientRect().height);await chat.click();}
+     if(route==='communities'){const channel=win.page.locator('.channel:not(.voice-channel)').first();touchHeight=await channel.evaluate(el=>el.getBoundingClientRect().height);await channel.click();}
+     const body=win.page.locator(route==='fil'?'.social-post>.post-body':route==='messages'?'.messenger-message-body':'.hub-message-main>p').first();await body.waitFor({state:'visible'});await win.page.evaluate(()=>document.fonts.ready);
+     const view=await body.evaluate((el,route)=>{
+      const meta=route==='fil'?el.closest('.social-post').querySelector('header small'):route==='messages'?el.closest('.group').querySelector('.text-outline'):el.closest('.hub-message').querySelector('time');
+      const canvas=document.createElement('canvas');canvas.width=canvas.height=1;const ctx=canvas.getContext('2d');const rgba=color=>{ctx.clearRect(0,0,1,1);ctx.fillStyle=color;ctx.fillRect(0,0,1,1);return [...ctx.getImageData(0,0,1,1).data];};const blend=(fg,bg)=>fg.slice(0,3).map((v,i)=>v*fg[3]/255+bg[i]*(1-fg[3]/255));
+      const luminance=rgb=>{const c=rgb.map(v=>{v/=255;return v<=.04045?v/12.92:((v+.055)/1.055)**2.4;});return c[0]*.2126+c[1]*.7152+c[2]*.0722;};
+      const ratio=target=>{const layers=[];for(let node=target;node;node=node.parentElement){const c=rgba(getComputedStyle(node).backgroundColor);if(c[3])layers.push(c);if(c[3]===255)break;}let background=[255,255,255];for(const layer of layers.reverse())background=blend(layer,background);const text=luminance(blend(rgba(getComputedStyle(target).color),background)),bg=luminance(background);return (Math.max(text,bg)+.05)/(Math.min(text,bg)+.05);};
+      const spacing=route==='fil'?getComputedStyle(el).marginTop:route==='messages'?getComputedStyle(el.parentElement).paddingTop:getComputedStyle(el.closest('.hub-message')).paddingTop;
+      return {spacing:parseFloat(spacing),font:parseFloat(getComputedStyle(el).fontSize),contrast:ratio(meta),bodyContrasts:(route==='messages'?[...document.querySelectorAll('.messenger-message-body')]:[el]).map(ratio),iconContrasts:route==='messages'?[...document.querySelectorAll('.messenger-message-bubble button')].map(ratio):[],sentTimeContrasts:route==='messages'?[...document.querySelectorAll('.messenger-message-bubble .text-primary-fixed-dim .font-label-caps')].map(ratio):[],deliveryContrasts:route==='messages'?[...document.querySelectorAll('.messenger-message-bubble .text-tertiary')].map(ratio):[],color:getComputedStyle(meta).color,overflow:document.querySelector('.luma-page').scrollWidth>document.querySelector('.luma-page').clientWidth};
+     },route);
+     views[route]={...view,touchHeight};if(phase==='compact-high')writeFileSync('outputs/ui-preferences-'+route+'-'+width+'-'+mode+'.png',await win.page.screenshot());
+    }
+    phases[phase]=views;
+   }
+   preferenceChecks.push({width,mode,phases});win.destroy();win=null;
+  }
+  writeFileSync('outputs/ui-layout-preferences-metrics.json',JSON.stringify(preferenceChecks,null,2));
+  for(const check of preferenceChecks)for(const route of ['fil','messages','communities']){const normal=check.phases.normal[route],compact=check.phases['compact-high'][route],restored=check.phases.restored[route];assert.ok(compact.contrast>normal.contrast,route+' high contrast visibly strengthens secondary text at '+check.width+' '+check.mode);assert.ok(compact.contrast>=4.5,route+' high contrast text remains legible');assert.ok(compact.spacing<normal.spacing,route+' compact mode reduces actual message spacing');assert.equal(compact.font,normal.font,'density preserves chosen message size');assert.equal(compact.overflow,false,'compact content fits');if(compact.touchHeight!==undefined){assert.ok(compact.touchHeight>=44,'compact targets remain touch-sized');assert.ok(compact.touchHeight<=normal.touchHeight,'compact targets do not grow');}for(const phase of [normal,compact,restored]){assert.ok(phase.bodyContrasts.every(ratio=>ratio>=4.5),'message text stays readable in '+route+' '+check.width+' '+check.mode);assert.ok(phase.iconContrasts.every(ratio=>ratio>=4.5),'copy action stays visible');if(route==='messages'){assert.equal(phase.bodyContrasts.length,2,'sent and received message colors are checked');assert.equal(phase.sentTimeContrasts.length,1,'sent message timestamp is checked');assert.ok(phase.sentTimeContrasts.every(ratio=>ratio>=4.5),'sent timestamp remains readable');assert.equal(phase.deliveryContrasts.length,1,'sent status is checked');assert.ok(phase.deliveryContrasts.every(ratio=>ratio>=3),'sent status remains visible');}}assert.equal(restored.spacing,normal.spacing,'comfortable spacing is restored');assert.ok(Math.abs(restored.contrast-normal.contrast)<.01,'normal contrast is restored');}
+  console.log('PASS persisted density/contrast preferences across feed, private chats and communities, both widths and themes, with touch targets and restoration.');
  }
  writeFileSync('outputs/ui-'+(process.env.LUMA_UI_CAPTURE||'current')+'-metrics.json',JSON.stringify(measurements,null,2));console.log('PASS '+measurements.length+' responsive/theme views and relevant page interactions.');
  }catch(e){console.error(e);process.exitCode=1;}finally{win?.destroy();server?.closeAllConnections();server?.close();await app.exit(process.exitCode||0);}});

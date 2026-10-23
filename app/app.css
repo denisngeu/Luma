@@ -1,6 +1,7 @@
 /* One owner for global CSS. Route-level global imports survive navigation and
    allow chunk merging to change their cascade order. Keep base page styles
-   before shared themes, then apply the approved desktop/mobile rules last. */
+   before shared themes and approved desktop/mobile rules. User preferences
+   come last so page layouts cannot reset the user's choices. */
 @import './fonts.css';
 @import './globals.css';
 @import './landing.css';
@@ -13,7 +14,6 @@
 @import './communities/workspace-v2.css';
 @import './communities/stitch-community-mobile.css';
 @import './themes.css';
-@import './theme-options.css';
 @import './social.css';
 @import './network.css';
 @import './feed-v2.css';
@@ -28,3 +28,4 @@
 @import './desktop-exact.css';
 @import './mobile-reference.css';
 @import './message-preferences.css';
+@import './theme-options.css';

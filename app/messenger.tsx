@@ -502,7 +502,7 @@ export default function Messenger() {
                   tabIndex={0}
                   aria-label={'Ouvrir la discussion avec '+c.name}
                   onKeyDown={event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();event.currentTarget.click();}}}
-                  className={`relative group cursor-pointer p-space-sm rounded-xl transition-all duration-150 flex items-center gap-space-md ${
+                  className={`messenger-chat-row relative group cursor-pointer p-space-sm rounded-xl transition-all duration-150 flex items-center gap-space-md ${
                     isSelected
                       ? 'bg-surface-container-high/90 text-on-surface shadow-sm'
                       : 'hover:bg-surface-container/70 text-on-surface-variant hover:text-on-surface'
@@ -661,7 +661,7 @@ export default function Messenger() {
           </header>
 
           {/* Message History Canvas */}
-          <section ref={history} onScroll={event=>{const pane=event.currentTarget;const latest=pane.scrollHeight-pane.scrollTop-pane.clientHeight<=64;followLatest.current=latest;setAtLatest(latest);}} className="flex-1 overflow-y-auto p-space-lg space-y-space-lg flex flex-col">
+          <section ref={history} onScroll={event=>{const pane=event.currentTarget;const latest=pane.scrollHeight-pane.scrollTop-pane.clientHeight<=64;followLatest.current=latest;setAtLatest(latest);}} className="messenger-message-list flex-1 overflow-y-auto p-space-lg space-y-space-lg flex flex-col">
             <div className="mt-auto shrink-0" aria-hidden="true"/>
             {messagesLoading&&<p className="mx-auto text-body-sm text-outline">Actualisation…</p>}
             {/* Security Encryption Notice */}
@@ -692,13 +692,13 @@ export default function Messenger() {
                 // Sent Message (Right)
                 return (
                   <Fragment key={m.id}>{dayDivider}
-                  <div key={m.id} className="flex flex-col items-end gap-1 ml-auto max-w-xl group">
+                  <div key={m.id} className="messenger-message-row flex flex-col items-end gap-1 ml-auto max-w-xl group">
                     <div className="flex items-center gap-space-sm pr-1">
                       <span className="font-label-caps text-label-caps text-outline">Vous</span>
                       <span className="font-label-caps text-label-caps text-outline">{formattedTime}</span>
                     </div>
 
-                    <div className="relative group/bubble bg-secondary-container text-on-secondary-container px-space-md py-space-sm rounded-2xl rounded-tr-sm shadow-lg shadow-secondary-container/20">
+                    <div data-direction="outgoing" className="messenger-message-bubble relative group/bubble bg-secondary-container text-on-secondary-container px-space-md py-space-sm rounded-2xl rounded-tr-sm shadow-lg shadow-secondary-container/20">
                       {!!m.scheduled_pending&&<p className="text-label-caps font-label-caps mb-2">Programmé pour {new Date(m.scheduled).toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'})}</p>}
                       <div className="flex items-center gap-space-sm">
                         <p className="messenger-message-body font-body-md text-body-md">
@@ -759,7 +759,7 @@ export default function Messenger() {
               // Received Message (Left)
               return (
                 <Fragment key={m.id}>{dayDivider}
-                <div key={m.id} className="flex items-start gap-space-sm max-w-xl group">
+                <div key={m.id} className="messenger-message-row flex items-start gap-space-sm max-w-xl group">
                   <div className="w-8 h-8 rounded-lg bg-secondary-container text-on-secondary-container flex items-center justify-center font-label-md text-label-md flex-shrink-0 mt-1 shadow-sm">
                     {initials(m.name || 'F')}
                   </div>
@@ -769,7 +769,7 @@ export default function Messenger() {
                       <span className="font-label-caps text-label-caps text-outline">{formattedTime}</span>
                     </div>
 
-                    <div className="relative group/bubble bg-surface-container-high text-on-surface px-space-md py-space-sm rounded-2xl rounded-tl-sm shadow-md transition-all hover:bg-surface-variant">
+                    <div className="messenger-message-bubble relative group/bubble bg-surface-container-high text-on-surface px-space-md py-space-sm rounded-2xl rounded-tl-sm shadow-md transition-all hover:bg-surface-variant">
                       <p className="messenger-message-body font-body-md text-body-md">{m.body}</p>
                       {attachment(m)}
                     </div>
