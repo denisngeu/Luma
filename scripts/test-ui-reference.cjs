@@ -13,7 +13,7 @@ app.whenReady().then(async()=>{try{
  writeFileSync(path.join(dir,'navigation.ts'),`export const usePathname=()=>location.pathname;export const useSearchParams=()=>new URLSearchParams(location.search);export const useRouter=()=>({push(url){window.__destination=url;}});`);
  writeFileSync(path.join(dir,'link.tsx'),`import React from 'react';export const useLinkStatus=()=>({pending:false});export default function Link({children,prefetch,replace,scroll,...props}){return <a {...props}>{children}</a>}`);
  writeFileSync(path.join(dir,'image.tsx'),`import React from 'react';export default function Image({priority,fill,...props}){return <img {...props}/>}`);
- writeFileSync(path.join(dir,'entry.tsx'),`import React from 'react';import {createRoot} from 'react-dom/client';import Shell from '../../app/app-shell';import Theme from '../../app/theme-provider';import Feed from '../../app/fil/feed';import Friends from '../../app/amis/page';import Settings from '../../app/parametres/page';import Messenger from '../../app/messenger';import Community from '../../app/communities/workspace';(async()=>{const view=location.pathname==='/parametres'?await Settings():location.pathname==='/amis'?<Friends/>:location.pathname==='/messages'?<Messenger/>:location.pathname==='/communities'?<Community/>:<Feed/>;createRoot(document.getElementById('root')).render(<><Theme/><Shell>{view}</Shell></>);})();`);
+ writeFileSync(path.join(dir,'entry.tsx'),`import React from 'react';import {createRoot} from 'react-dom/client';import Shell from '../../app/app-shell';import Theme from '../../app/theme-provider';import Feed from '../../app/fil/feed';import Friends from '../../app/amis/page';import Settings from '../../app/parametres/page';import Messenger from '../../app/messenger';import Community from '../../app/communities/workspace';import Appearance from '../../app/apparence/page';(async()=>{const view=location.pathname==='/apparence'?<Appearance/>:location.pathname==='/parametres'?await Settings():location.pathname==='/amis'?<Friends/>:location.pathname==='/messages'?<Messenger/>:location.pathname==='/communities'?<Community/>:<Feed/>;createRoot(document.getElementById('root')).render(<><Theme/><Shell>{view}</Shell></>);})();`);
  await build({entryPoints:[path.join(dir,'entry.tsx')],outfile:path.join(dir,'app.js'),bundle:true,platform:'browser',jsx:'automatic',alias:{'@':process.cwd(),'next/navigation':path.join(dir,'navigation.ts'),'next/link':path.join(dir,'link.tsx'),'next/image':path.join(dir,'image.tsx')},define:{'process.env.NODE_ENV':'"development"','process.env':'{}'},plugins:[{name:'local-auth',setup(b){b.onResolve({filter:/(chatgpt-auth$|^@\/lib\/admin$)/},a=>({path:a.path,namespace:'local-auth'}));b.onLoad({filter:/.*/,namespace:'local-auth'},a=>({loader:'js',contents:a.path.includes('admin')?'export const isAdministrator=async()=>false;':`export const requireChatGPTUser=async()=>({userId:'me',email:'compte@example.test'});export const chatGPTSignOutPath=()=>'/api/auth/logout';`}));}}]});
  const css=compiledStyles()+(process.env.LUMA_UI_SOURCE_PREVIEW==='1'?readFileSync('app/mobile-reference.css','utf8'):'');
  const profile={id:'me',name:'Compte de test',bio:'Retrouvons-nous sur Luma.',avatar:false,notifications:'mentions',call_camera:0,call_noise_suppression:1,call_echo_cancellation:1,reduce_motion:1};
@@ -39,7 +39,7 @@ app.whenReady().then(async()=>{try{
   if(url.pathname==='/app.js'){res.setHeader('Content-Type','text/javascript');res.end(readFileSync(path.join(dir,'app.js')));return;}
   if(url.pathname==='/luma-logo.png'){res.setHeader('Content-Type','image/png');res.end(readFileSync('public/luma-logo.png'));return;}
   const mode=url.searchParams.get('theme')==='light'?'light':'dark';
-  res.setHeader('Content-Type','text/html');res.end('<html data-luma="'+mode+'" data-motion="reduced"><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>'+css+'</style></head><body><script>localStorage.setItem("luma-theme",JSON.stringify({mode:"'+mode+'",accent:"#7068ff"}));</script><div id="root"></div><script src="/app.js"></script></body></html>');
+  res.setHeader('Content-Type','text/html');res.end('<html data-luma="'+mode+'" data-motion="reduced"><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>'+css+'</style></head><body><script>if(!localStorage.getItem("luma-theme"))localStorage.setItem("luma-theme",JSON.stringify({mode:"'+mode+'",accent:"#7068ff"}));</script><div id="root"></div><script src="/app.js"></script></body></html>');
  });await new Promise(r=>server.listen(0,'127.0.0.1',r));
  const measurements=[];
  for(const width of [320,390,1280,1920])for(const route of (process.env.LUMA_UI_ROUTES||'fil,amis,parametres,messages,communities').split(','))for(const mode of ['dark','light']){
@@ -94,6 +94,29 @@ app.whenReady().then(async()=>{try{
   await until(()=>win.page.getByRole('button',{name:'Membres',exact:true}).count(),'member toolbar');
   assert.equal(await win.page.getByRole('button',{name:'Créer un salon',exact:true}).count(),0,'members do not get moderation-only creation controls');
   await win.page.getByRole('button',{name:'Membres',exact:true}).click();await until(()=>win.page.locator('.hub-detail .hub-member').first().isVisible(),'member roster opens');win.destroy();win=null;
+ }
+ if(process.env.LUMA_UI_PREFERENCES==='1'){
+  const base='http://127.0.0.1:'+server.address().port;
+  for(const width of [320,1280])for(const mode of ['light','dark']){
+   win=new BrowserWindow({width,height:844});await win.loadURL(base+'/apparence?theme='+mode);
+   for(const size of [20,14]){
+    await win.page.goto(base+'/apparence?theme='+mode);const select=win.page.getByLabel('Taille des messages',{exact:true});await select.selectOption(String(size));
+    await win.page.reload();await until(async()=>await select.inputValue()===String(size),'message size survives reload');
+    assert.equal(await win.page.locator('.preview-bubble').first().evaluate(el=>parseFloat(getComputedStyle(el).fontSize)),size,'preview matches saved size');
+    for(const route of ['fil','messages','communities']){
+     await win.page.goto(base+'/'+route+'?theme='+mode);
+     if(route==='messages'){await win.page.getByRole('button',{name:'Ouvrir la discussion avec Contact de test',exact:true}).click();}
+     if(route==='communities'){await win.page.locator('.channel:not(.voice-channel)').first().click();}
+     const body=win.page.locator(route==='fil'?'.social-post>.post-body':route==='messages'?'.messenger-message-body':'.hub-message-main>p').first();await body.waitFor({state:'visible'});
+     assert.equal(await body.evaluate(el=>parseFloat(getComputedStyle(el).fontSize)),size,route+' respects saved message size');
+     if(route==='fil'){await win.page.getByRole('button',{name:'0 commentaires',exact:true}).click();const comment=win.page.locator('.social-comment>div>p').first();await comment.waitFor({state:'visible'});assert.equal(await comment.evaluate(el=>parseFloat(getComputedStyle(el).fontSize)),size,'comments respect saved message size');}
+     assert.equal(await win.page.evaluate(()=>document.querySelector('.luma-page').scrollWidth>document.querySelector('.luma-page').clientWidth),false,route+' fits at '+size+'px');
+     if(size===20)writeFileSync('outputs/ui-message-size-'+route+'-'+width+'-'+mode+'.png',await win.page.screenshot());
+    }
+   }
+   win.destroy();win=null;
+  }
+  console.log('PASS saved message sizes 14/20 across feed, private chats and communities, mobile/desktop and both themes.');
  }
  writeFileSync('outputs/ui-'+(process.env.LUMA_UI_CAPTURE||'current')+'-metrics.json',JSON.stringify(measurements,null,2));console.log('PASS '+measurements.length+' responsive/theme views and relevant page interactions.');
  }catch(e){console.error(e);process.exitCode=1;}finally{win?.destroy();server?.closeAllConnections();server?.close();await app.exit(process.exitCode||0);}});

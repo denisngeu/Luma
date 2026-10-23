@@ -1,0 +1,3 @@
+/* User message size wins over the fixed sizes in desktop/mobile mockups.
+   Navigation labels and timestamps keep their own typographic hierarchy. */
+html[data-luma] :is(.messenger-message-body,.hub-message-main>p,.social-post>.post-body,.social-comment>div>p,.preview-bubble,.bubble){font-size:var(--luma-size,16px)!important;line-height:1.55!important;overflow-wrap:anywhere}
