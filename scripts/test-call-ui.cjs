@@ -7,6 +7,8 @@ const assert=require('node:assert/strict');
 const {build}=require('esbuild');
 const compiledStyles=require('./compiled-styles.cjs');
 const dir=path.resolve('.sites-runtime/call-ui');
+const testWidth=Number(process.env.LUMA_CALL_TEST_WIDTH)||390;
+const testTheme=process.env.LUMA_CALL_TEST_THEME==='light'?'light':'dark';
 mkdirSync(dir,{recursive:true});
 app.commandLine.appendSwitch('use-fake-device-for-media-stream');
 app.commandLine.appendSwitch('use-fake-ui-for-media-stream');
@@ -16,7 +18,7 @@ app.commandLine.appendSwitch('autoplay-policy','no-user-gesture-required');
 app.setPath('userData',path.join(dir,'profile-'+Date.now()));
 let server;const windows=[];let call={caller:'a',callee:'b',callerName:'Alice',calleeName:'Bob',mode:'audio',state:'preparing',offer:null,answer:null};
 const participants=new Set(),signals={a:[],b:[]};
-const memberships=new Map();let membershipClock=Date.now(),watchExpired=false,otherSawAbsence=false,loseRejoinResponse=false;
+const memberships=new Map();let membershipClock=Date.now(),watchExpired=false,otherSawAbsence=false,loseRejoinResponse=false,expiredUser='a';
 const callGets={a:0,b:0};
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 async function until(fn,label){for(let i=0;i<100;i++){if(await fn())return;await wait(200);}throw Error('Timeout '+label);}
@@ -24,14 +26,16 @@ async function run(w,code){return w.webContents.executeJavaScript(code,true);}
 async function click(w,text){await run(w,`[...document.querySelectorAll('button')].find(b=>b.textContent.includes(${JSON.stringify(text)}))?.click()`);}
 async function open(who,kind,base){
  const ses=session.fromPartition('calls-'+Date.now()+who);ses.setPermissionRequestHandler((_wc,p,cb)=>cb(p==='media'));ses.setPermissionCheckHandler((_wc,p)=>p==='media');
- const win=new BrowserWindow({show:false,width:390,height:844,webPreferences:{session:ses,contextIsolation:true,nodeIntegration:false,backgroundThrottling:false}});
+ const win=new BrowserWindow({show:false,width:testWidth,height:844,webPreferences:{session:ses,contextIsolation:true,nodeIntegration:false,backgroundThrottling:false}});
  windows.push(win);await win.loadURL(base+'/?who='+who+'&kind='+kind);return win;
 }
-async function resumeExpiredRoom(a,b,loseResponse=false){
+async function resumeExpiredRoom(a,b,loseResponse=false,expired='a',onRejoined){
  for(const w of [a,b])await run(w,'window.__beforeRejoinPeers=[...window.__peers]');
- watchExpired=true;otherSawAbsence=false;loseRejoinResponse=loseResponse;participants.delete('a');await run(a,"window.dispatchEvent(new Event('luma-native-active'))");
- await until(()=>participants.has('a'),'expired membership explicitly rejoins');
+ expiredUser=expired;const returning=expired==='a'?a:b;
+ watchExpired=true;otherSawAbsence=false;loseRejoinResponse=loseResponse;participants.delete(expired);await run(returning,"window.dispatchEvent(new Event('luma-native-active'))");
+ await until(()=>participants.has(expired),'expired membership explicitly rejoins');
  assert.equal(otherSawAbsence,false,'the other peer has not observed the temporary absence');watchExpired=false;
+ if(onRejoined){await until(()=>run(returning,"document.body.innerText.includes('Reconnexion au salon')"),'rejoin response applied before the next poll');await onRejoined();}
  await until(async()=>{for(const w of [a,b])await run(w,"window.dispatchEvent(new Event('luma-native-active'))");return (await Promise.all([a,b].map(w=>run(w,"window.__beforeRejoinPeers.every(p=>p.connectionState==='closed')&&window.__peers.some(p=>p.connectionState==='connected')")))).every(Boolean);},'changed membership rebuilds both peer connections');
 }
 app.on('window-all-closed',()=>{}); app.whenReady().then(async()=>{
@@ -39,7 +43,7 @@ app.on('window-all-closed',()=>{}); app.whenReady().then(async()=>{
  writeFileSync(path.join(dir,'entry.tsx'),`
  import React from 'react';import {createRoot} from 'react-dom/client';
  import Call from '../../app/appel/[id]/room';import Room from '../../app/salle/[id]/room';
- import Preferences from '../../app/parametres/user-preferences';
+ import Preferences from '../../app/parametres/user-preferences';import Theme from '../../app/theme-provider';
  const p=new URLSearchParams(location.search);const original=window.fetch;
  // Simulate an Android WebView whose interval was suspended in the background.
  // Connection signals must be processed by the foreground/online handlers.
@@ -65,7 +69,8 @@ app.on('window-all-closed',()=>{}); app.whenReady().then(async()=>{
  navigator.mediaDevices.getDisplayMedia=()=>navigator.mediaDevices.getUserMedia({video:true,audio:false});
  const root=createRoot(document.getElementById('root'));
  window.__unmount=()=>root.unmount();
- root.render(<React.StrictMode>{p.get('kind')==='settings'?<Preferences/>:p.get('kind')==='group'?<Room id="test"/>:<Call id="test"/>}</React.StrictMode>);
+ window.__contrast=(el,media=false)=>{const rgb=value=>(value.match(/[0-9.]+/g)||[]).map(Number),luminance=c=>{const n=c.map(v=>{v/=255;return v<=.04045?v/12.92:((v+.055)/1.055)**2.4;});return n[0]*.2126+n[1]*.7152+n[2]*.0722;};let node=el,bg=[255,255,255];while(node){const c=rgb(getComputedStyle(node).backgroundColor);if(media&&c.length===4&&c[3]>0){bg=c.slice(0,3).map(v=>v*c[3]+255*(1-c[3]));break;}if(c.length===3||c[3]===1){bg=c.slice(0,3);break;}node=node.parentElement;}const a=luminance(rgb(getComputedStyle(el).color).slice(0,3)),b=luminance(bg);return (Math.max(a,b)+.05)/(Math.min(a,b)+.05);};
+ root.render(<React.StrictMode><Theme/>{p.get('kind')==='settings'?<Preferences/>:p.get('kind')==='group'?<Room id="test"/>:<Call id="test"/>}</React.StrictMode>);
  `);
  await build({entryPoints:[path.join(dir,'entry.tsx')],outfile:path.join(dir,'app.js'),bundle:true,platform:'browser',jsx:'automatic',alias:{'@':process.cwd()},define:{'process.env.NODE_ENV':'"development"','process.env':'{}'}});
  const styles=compiledStyles();
@@ -83,9 +88,9 @@ app.on('window-all-closed',()=>{}); app.whenReady().then(async()=>{
     const roster=()=>[...participants].map(user=>({user,name:user,joined:memberships.get(user)||1}));
     const info={me:who,room:{mode:'audio',kind:'voice',chat_name:'Test'},participants:roster(),ice:{iceServers:[]}};
     if(p.action==='info')out=info;
-    if(p.action==='join'){if(!participants.has(who)){memberships.set(who,++membershipClock);signals[who]=[];}participants.add(who);out={...info,joined:memberships.get(who)};if(loseRejoinResponse&&who==='a'){loseRejoinResponse=false;res.writeHead(503,{'Content-Type':'application/json'});res.end(JSON.stringify({error:'Réponse de reprise perdue'}));return;}}
+    if(p.action==='join'){if(!participants.has(who)){memberships.set(who,++membershipClock);signals[who]=[];}participants.add(who);out={...info,joined:memberships.get(who)};if(loseRejoinResponse&&who===expiredUser){loseRejoinResponse=false;res.writeHead(503,{'Content-Type':'application/json'});res.end(JSON.stringify({error:'Réponse de reprise perdue'}));return;}}
     if(p.action==='poll'){
-     if(watchExpired&&who==='b'&&!participants.has('a'))otherSawAbsence=true;
+     if(watchExpired&&who!==expiredUser&&!participants.has(expiredUser))otherSawAbsence=true;
      if(p.joined&&participants.has(who)&&p.joined!==memberships.get(who)){res.writeHead(409,{'Content-Type':'application/json'});res.end(JSON.stringify({error:'Session remplacée'}));return;}
      if(p.joined&&!participants.has(who))out={rejoin:true,participants:[],signals:[]};
      else if(p.reliable){signals[who]=signals[who].filter(signal=>!p.acknowledgements?.includes(signal.id));out={participants:roster(),signals:[...signals[who]]};}
@@ -97,13 +102,19 @@ app.on('window-all-closed',()=>{}); app.whenReady().then(async()=>{
    res.setHeader('Content-Type','application/json');res.end(JSON.stringify(out));return;
   }
   if(req.url==='/app.js'){res.setHeader('Content-Type','text/javascript');res.end(readFileSync(path.join(dir,'app.js')));return;}
-  res.setHeader('Content-Type','text/html');res.end('<html data-luma="dark"><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif}button{font:inherit}'+styles+'</style></head><body><div id="root"></div><script src="/app.js"></script></body></html>');
+  res.setHeader('Content-Type','text/html');res.end('<html data-luma="'+testTheme+'"><head><meta name="viewport" content="width=device-width,initial-scale=1"><script>localStorage.setItem("luma-theme",JSON.stringify({mode:"'+testTheme+'"}));</script><style>*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif}button{font:inherit}'+styles+'</style></head><body><div id="root"></div><script src="/app.js"></script></body></html>');
  });
  await new Promise(r=>server.listen(0,'127.0.0.1',r));const base='http://127.0.0.1:'+server.address().port;
  const checks=[];
  for(const kind of ['private','group']){
   const a=await open('a',kind,base),b=await open('b',kind,base);
   await until(()=>run(a,"!!document.querySelector('button:not(:disabled)')"),'loaded');
+  for(const w of [a,b]){
+   await until(()=>run(w,"document.querySelectorAll('.call-preflight label,.room-preflight label').length>0"),kind+' preflight ready');
+   assert.equal(await run(w,"[...document.querySelectorAll('.call-preflight label,.room-preflight label')].every(el=>parseFloat(getComputedStyle(el).fontSize)>=13&&el.getBoundingClientRect().height>=44)"),true,kind+' readable and touch-sized call preferences');
+   assert.equal(await run(w,"[...document.querySelectorAll('.call-preflight label,.room-preflight label')].every(el=>window.__contrast(el)>=4.5)"),true,kind+' call preference contrast in '+testTheme+' theme');
+   assert.equal(await run(w,"[...document.querySelectorAll('.call-room header>p,.room-page>header span')].every(el=>window.__contrast(el)>=4.5)"),true,kind+' call status contrast in '+testTheme+' theme');
+  }
   if(kind==='private'){
    await until(()=>run(a,"!!document.querySelector('.call-start:not(:disabled)')"),'caller ready');
    await run(a,'window.__nativeReject=true');await click(a,'Démarrer');await until(()=>run(a,"document.body.innerText.includes('Service Android refusé')"),'native refusal shown');
@@ -129,9 +140,11 @@ app.on('window-all-closed',()=>{}); app.whenReady().then(async()=>{
   if(kind==='group'){
    await run(a,'window.__beforeRejoinCaptures=window.__captures.length;window.__beforeRejoinMic=window.__peers.flatMap(p=>p.getSenders()).find(s=>s.track?.kind==="audio").track');
    await click(a,'Micro');assert.equal(await run(a,'window.__beforeRejoinMic.enabled'),false,'mute applied before expiry');
+   assert.equal(await run(a,"[...document.querySelectorAll('article')].find(el=>el.querySelector('b')?.textContent==='Vous')?.querySelector('small')?.textContent"),'Micro coupé','local tile clearly identifies mute state');
    await resumeExpiredRoom(a,b,true);
    assert.equal(await run(a,'window.__captures.length===window.__beforeRejoinCaptures&&window.__beforeRejoinMic.enabled===false&&window.__beforeRejoinMic.readyState==="live"'),true,'rejoin preserves the microphone and mute preference without another capture');
    await click(a,'Activer micro');
+   assert.equal(await run(a,"[...document.querySelectorAll('article')].find(el=>el.querySelector('b')?.textContent==='Vous')?.querySelector('small')?.textContent"),'Micro actif','local tile updates when microphone is enabled');
    for(const w of [a,b])await until(()=>run(w,"(async()=>{for(const p of window.__peers){if(p.connectionState!=='connected')continue;for(const s of (await p.getStats()).values())if(s.type==='inbound-rtp'&&s.kind==='audio'&&s.totalAudioEnergy>0)return true;}return false;})()"),'bidirectional audio after membership expiry');
    checks.push('expired room membership retries a lost rejoin response, resets both peers, preserves muted microphone and restores bidirectional audio');
   }
@@ -163,6 +176,7 @@ app.on('window-all-closed',()=>{}); app.whenReady().then(async()=>{
   assert.equal(await run(a,"window.__micTrack.readyState==='live'&&window.__micTrack.enabled"),true,kind+' camera flip keeps microphone active');
   await run(a,'window.__singleCamera=false');checks.push(kind+' single-camera switch releases video only');
   assert.equal(await run(a,'document.documentElement.scrollWidth<=innerWidth'),true,kind+' mobile horizontal overflow');
+  assert.equal(await run(a,"[...document.querySelectorAll('.call-controls button,.room-page>footer button')].every(button=>{const r=button.getBoundingClientRect(),text=button.querySelector('span')||button;return r.height>=44&&parseFloat(getComputedStyle(text).fontSize)>=11&&button.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2));})"),true,kind+' readable call controls remain reachable');
   assert.equal(await run(a,"[...document.querySelectorAll('.call-expand')].every(button=>{const r=button.getBoundingClientRect();return r.width>=44&&r.height>=44&&button.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2));})"),true,kind+' expansion controls reachable without overlap');
   writeFileSync(path.join(dir,kind+'-mobile.png'),(await a.webContents.capturePage()).toPNG());
   await run(a,'window.__cameraBeforeShare=window.__lastCapture.getVideoTracks()[0]');
@@ -175,7 +189,9 @@ app.on('window-all-closed',()=>{}); app.whenReady().then(async()=>{
    assert.equal(await run(a,"(()=>{const self=[...document.querySelectorAll('article')].find(el=>el.querySelector('b')?.textContent==='Votre écran');return self?.querySelector('video')?.srcObject?.getVideoTracks()[0]===window.__sharedTrack;})()"),true,'rejoined local preview remains the shared screen');
    assert.equal(await run(a,"window.__captures.length===window.__shareCaptures&&window.__sharedTrack.readyState==='live'&&window.__cameraBeforeShare.readyState==='live'&&window.__peers.filter(p=>p.connectionState==='connected').every(p=>p.getSenders().some(s=>s.track===window.__sharedTrack))"),true,'reconnection sends the same live screen without recapturing it or stopping the camera');
    for(const w of [a,b])assert.equal(await run(w,"!!document.querySelector('.is-expanded')"),true,'expanded sharing survives reconnection');
+   await resumeExpiredRoom(a,b,false,'b',async()=>{assert.equal(await run(b,"document.querySelector('.is-expanded b')?.textContent==='a'"),true,'receiver keeps the expanded remote tile visible while rebuilding its connections');assert.equal(await run(b,"document.querySelector('.is-expanded small')?.textContent==='Connexion en cours…'"),true,'expanded receiver shows reconnection state until media returns');assert.equal(await run(b,"[...document.querySelectorAll('.is-expanded>b,.is-expanded>small')].every(el=>parseFloat(getComputedStyle(el).fontSize)>=12&&window.__contrast(el,true)>=4.5)"),true,'expanded call labels remain readable even over bright video');writeFileSync(path.join(dir,'group-sharing-reconnecting.png'),(await b.webContents.capturePage()).toPNG());});
    await until(()=>run(b,"[...document.querySelectorAll('article')].find(el=>el.querySelector('b')?.textContent==='a')?.querySelector('video')?.videoWidth>0"),'remote shared video after reconnection');
+   await until(()=>run(b,"(async()=>{for(const peer of window.__peers){if(peer.connectionState!=='connected')continue;for(const stat of (await peer.getStats()).values())if(stat.type==='inbound-rtp'&&stat.kind==='video'&&stat.framesDecoded>0)return true;}return false;})()"),'shared frames decoded after receiver reconnects');
    writeFileSync(path.join(dir,'group-sharing-reconnected.png'),(await b.webContents.capturePage()).toPNG());
    for(const w of [a,b])await run(w,"window.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}))");
    checks.push('sharing reconnects with its original screen track, matching preview and expanded view on both sides');

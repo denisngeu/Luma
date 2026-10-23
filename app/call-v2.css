@@ -46,6 +46,48 @@
 .call-videos>div.is-expanded,.room-stage article.is-expanded{position:fixed!important;inset:0!important;width:100vw!important;height:100dvh!important;max-width:none!important;max-height:none!important;min-height:0!important;border:0!important;border-radius:0!important;z-index:1000!important;background:#05070d!important;padding:max(8px,env(safe-area-inset-top,0px)) 8px max(8px,env(safe-area-inset-bottom,0px))!important}
 .call-videos>div.is-expanded video,.room-stage article.is-expanded video{width:100%!important;height:100%!important;max-height:none!important;object-fit:contain!important;transform:none!important}
 .room-stage article.is-expanded .room-avatar{position:absolute}
+/* Call text must remain readable independently of the miniature mobile mockups. */
+html[data-luma] :is(.call-room,.room-page){background:var(--t-canvas)!important;color:var(--t-ink)!important}
+html[data-luma] :is(.call-preflight,.room-preflight,.soundboard,.call-controls,.room-page>header,.room-page>footer){background:var(--t-surface)!important;color:var(--t-ink)!important;border-color:var(--t-line)!important}
+html[data-luma] :is(.call-preflight,.room-preflight) label{color:var(--t-ink)!important}
+html[data-luma] :is(.call-controls button,.room-page>footer button,.soundboard-grid button){background:var(--t-raised)!important;color:var(--t-ink)!important;border-color:var(--t-line)!important}
+html[data-luma] :is(.call-controls button,.room-page>footer button)[aria-pressed=true]{background:color-mix(in srgb,var(--luma-accent) 18%,var(--t-surface))!important;border-color:var(--luma-accent)!important}
+html[data-luma] :is(.call-controls .call-hangup,.room-page>footer .hangup,.room-page>footer .off){background:#be123c!important;color:#fff!important;border-color:#be123c!important}
+html[data-luma] :is(.call-room header>span,.call-room header>p,.room-page>header span,.call-footnote,.call-limitation,.room-lobby p,.room-capability){color:var(--t-muted)!important}
+html[data-luma] :is(.room-stage article>b,.voice-speakers article>small,.call-videos>div>span){background:#090c15d9!important;color:#fff!important}
+html[data-luma] .room-stage .room-avatar{color:#fff}
+html[data-luma=light] :is(.call-error,.room-error){background:#fff1f2;color:#9f1239;border:1px solid #fecdd3}
+@media(max-width:760px){
+ html[data-luma] .call-room header h1{font-size:24px!important;overflow-wrap:anywhere}
+ html[data-luma] .call-room header>span,html[data-luma] .call-footnote{font-size:12px!important;line-height:1.5}
+ html[data-luma] .call-room header>p,html[data-luma] :is(.call-error,.room-error,.call-limitation,.room-capability){font-size:14px!important;line-height:1.5}
+ html[data-luma] :is(.call-preflight,.room-preflight){font-size:14px!important;gap:8px!important}
+ html[data-luma] :is(.call-preflight,.room-preflight) label{min-height:44px!important;font-size:14px!important;line-height:1.4}
+ html[data-luma] .call-preflight a{font-size:13px!important;min-height:44px;display:flex;align-items:center}
+ html[data-luma] :is(.call-start,.room-lobby>button){min-height:44px!important;font-size:14px!important;line-height:1.4}
+ html[data-luma] .room-lobby p{font-size:14px!important;line-height:1.5!important}
+ html[data-luma] .room-page>header a,html[data-luma] .room-page>header strong{font-size:14px!important}
+ html[data-luma] .room-page>header span{font-size:12px!important}
+ html[data-luma] .room-page>header>div{min-width:0;flex:1}
+ html[data-luma] .room-page>header strong{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+ html[data-luma] .voice-topic :is(span,small,b){font-size:11px!important}
+ html[data-luma] .voice-topic strong{font-size:14px!important}
+ html[data-luma] .voice-speakers h2{font-size:16px!important}
+ html[data-luma] .voice-speakers>header :is(span,small){font-size:12px!important}
+ html[data-luma] .room-stage article>b{font-size:13px!important;line-height:1.3;max-width:calc(100% - 16px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;z-index:2}
+ html[data-luma] .voice-speakers article>small{font-size:11px!important;line-height:1.3;bottom:36px!important;max-width:calc(100% - 16px);padding:2px 6px;border-radius:6px;background:#090c15d9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ html[data-luma] .voice-speakers article:not(.is-expanded)>.room-avatar{transform:translateY(-12px)}
+ html[data-luma] .room-stage article.is-expanded>b{left:16px!important;bottom:max(16px,var(--native-safe-bottom,0px),env(safe-area-inset-bottom,0px))!important;font-size:14px!important;max-width:calc(100% - 32px)}
+ html[data-luma] .room-stage article.is-expanded>small{left:16px!important;bottom:calc(max(16px,var(--native-safe-bottom,0px),env(safe-area-inset-bottom,0px)) + 36px)!important;font-size:13px!important;max-width:calc(100% - 32px)}
+ html[data-luma] .call-videos>div.is-expanded>span{font-size:14px!important}
+ html[data-luma] .call-controls{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+ html[data-luma] .call-controls button{font-size:11px!important;line-height:1.35;min-height:56px!important}
+ html[data-luma] .call-controls .call-hangup{grid-column:auto!important;min-width:0!important}
+ html[data-luma] .room-page>footer button{min-height:56px!important}
+ html[data-luma] .room-page>footer button span{font-size:11px!important;line-height:1.35}
+ html[data-luma] .soundboard summary{font-size:14px!important;min-height:44px!important}
+ html[data-luma] .soundboard-grid button{font-size:12px!important;min-height:52px!important}
+}
 .room-stage article.is-expanded .call-expand,.call-videos>div.is-expanded .call-expand{top:max(14px,env(safe-area-inset-top,0px));right:14px}
 .call-controls .call-hangup{margin:0;min-width:0}
 @media(max-width:650px){.call-videos>div:first-child{height:clamp(210px,36dvh,320px);min-height:210px}.call-videos>div:first-child video{height:100%}.call-controls .call-hangup{grid-column:1/-1;flex-direction:row}}
