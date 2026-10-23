@@ -100,7 +100,8 @@ app.whenReady().then(async()=>{try{
   for(const width of [320,1280])for(const mode of ['light','dark']){
    win=new BrowserWindow({width,height:844});await win.loadURL(base+'/apparence?theme='+mode);
    for(const size of [20,14]){
-    await win.page.goto(base+'/apparence?theme='+mode);const select=win.page.getByLabel('Taille des messages',{exact:true});await select.selectOption(String(size));
+    await win.page.goto(base+'/apparence?theme='+mode);await win.page.locator('.appearance').hover();await win.page.mouse.wheel(0,900);await until(()=>win.page.locator('.appearance').evaluate(el=>el.scrollTop>0),'appearance scrolls with a wheel gesture');
+    const select=win.page.getByLabel('Taille des messages',{exact:true});await select.selectOption(String(size));
     await win.page.reload();await until(async()=>await select.inputValue()===String(size),'message size survives reload');
     assert.equal(await win.page.locator('.preview-bubble').first().evaluate(el=>parseFloat(getComputedStyle(el).fontSize)),size,'preview matches saved size');
     for(const route of ['fil','messages','communities']){
@@ -114,6 +115,9 @@ app.whenReady().then(async()=>{try{
      if(size===20)writeFileSync('outputs/ui-message-size-'+route+'-'+width+'-'+mode+'.png',await win.page.screenshot());
     }
    }
+   await win.page.goto(base+'/apparence?theme='+mode);await win.page.locator('.appearance').hover();await win.page.mouse.wheel(0,10000);await until(()=>win.page.locator('.appearance').evaluate(el=>el.scrollTop>0),'appearance reaches bottom');
+   const reset=await win.page.getByRole('button',{name:'Rétablir le thème Luma',exact:true}).evaluate(el=>({bottom:el.getBoundingClientRect().bottom,limit:Math.min(innerHeight,document.querySelector('.appearance').getBoundingClientRect().bottom)}));assert.ok(reset.bottom<=reset.limit,'last appearance control is reachable');
+   writeFileSync('outputs/ui-appearance-scroll-'+width+'-'+mode+'.png',await win.page.screenshot());
    win.destroy();win=null;
   }
   console.log('PASS saved message sizes 14/20 across feed, private chats and communities, mobile/desktop and both themes.');
