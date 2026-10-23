@@ -27,6 +27,13 @@ async function open(who,kind,base){
  const win=new BrowserWindow({show:false,width:390,height:844,webPreferences:{session:ses,contextIsolation:true,nodeIntegration:false,backgroundThrottling:false}});
  windows.push(win);await win.loadURL(base+'/?who='+who+'&kind='+kind);return win;
 }
+async function resumeExpiredRoom(a,b,loseResponse=false){
+ for(const w of [a,b])await run(w,'window.__beforeRejoinPeers=[...window.__peers]');
+ watchExpired=true;otherSawAbsence=false;loseRejoinResponse=loseResponse;participants.delete('a');await run(a,"window.dispatchEvent(new Event('luma-native-active'))");
+ await until(()=>participants.has('a'),'expired membership explicitly rejoins');
+ assert.equal(otherSawAbsence,false,'the other peer has not observed the temporary absence');watchExpired=false;
+ await until(async()=>{for(const w of [a,b])await run(w,"window.dispatchEvent(new Event('luma-native-active'))");return (await Promise.all([a,b].map(w=>run(w,"window.__beforeRejoinPeers.every(p=>p.connectionState==='closed')&&window.__peers.some(p=>p.connectionState==='connected')")))).every(Boolean);},'changed membership rebuilds both peer connections');
+}
 app.on('window-all-closed',()=>{}); app.whenReady().then(async()=>{
  try{
  writeFileSync(path.join(dir,'entry.tsx'),`
@@ -120,13 +127,9 @@ app.on('window-all-closed',()=>{}); app.whenReady().then(async()=>{
   }
   checks.push(kind+' bidirectional audio energy');
   if(kind==='group'){
-   for(const w of [a,b])await run(w,'window.__beforeRejoinPeers=[...window.__peers]');
    await run(a,'window.__beforeRejoinCaptures=window.__captures.length;window.__beforeRejoinMic=window.__peers.flatMap(p=>p.getSenders()).find(s=>s.track?.kind==="audio").track');
    await click(a,'Micro');assert.equal(await run(a,'window.__beforeRejoinMic.enabled'),false,'mute applied before expiry');
-   watchExpired=true;loseRejoinResponse=true;participants.delete('a');await run(a,"window.dispatchEvent(new Event('luma-native-active'))");
-   await until(()=>participants.has('a'),'expired membership explicitly rejoins');
-   assert.equal(otherSawAbsence,false,'the other peer has not observed the temporary absence');watchExpired=false;
-   await until(async()=>{for(const w of [a,b])await run(w,"window.dispatchEvent(new Event('luma-native-active'))");return (await Promise.all([a,b].map(w=>run(w,"window.__beforeRejoinPeers.every(p=>p.connectionState==='closed')&&window.__peers.some(p=>p.connectionState==='connected')")))).every(Boolean);},'changed membership rebuilds both peer connections');
+   await resumeExpiredRoom(a,b,true);
    assert.equal(await run(a,'window.__captures.length===window.__beforeRejoinCaptures&&window.__beforeRejoinMic.enabled===false&&window.__beforeRejoinMic.readyState==="live"'),true,'rejoin preserves the microphone and mute preference without another capture');
    await click(a,'Activer micro');
    for(const w of [a,b])await until(()=>run(w,"(async()=>{for(const p of window.__peers){if(p.connectionState!=='connected')continue;for(const s of (await p.getStats()).values())if(s.type==='inbound-rtp'&&s.kind==='audio'&&s.totalAudioEnergy>0)return true;}return false;})()"),'bidirectional audio after membership expiry');
@@ -162,9 +165,22 @@ app.on('window-all-closed',()=>{}); app.whenReady().then(async()=>{
   assert.equal(await run(a,'document.documentElement.scrollWidth<=innerWidth'),true,kind+' mobile horizontal overflow');
   assert.equal(await run(a,"[...document.querySelectorAll('.call-expand')].every(button=>{const r=button.getBoundingClientRect();return r.width>=44&&r.height>=44&&button.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2));})"),true,kind+' expansion controls reachable without overlap');
   writeFileSync(path.join(dir,kind+'-mobile.png'),(await a.webContents.capturePage()).toPNG());
+  await run(a,'window.__cameraBeforeShare=window.__lastCapture.getVideoTracks()[0]');
   await click(a,kind==='private'?'Partager l’écran':'Écran');
   await until(()=>run(a,"[...document.querySelectorAll('button')].some(b=>!b.disabled&&(b.textContent==='Arrêter le partage'||b.textContent==='Arrêter'))"),kind+' sharing');
-  await run(b,"document.querySelector('.call-expand').click()");
+  if(kind==='group'){
+   await run(a,"window.__sharedTrack=window.__lastCapture.getVideoTracks()[0];window.__shareCaptures=window.__captures.length;[...document.querySelectorAll('article')].find(el=>el.querySelector('b')?.textContent==='Votre écran').querySelector('.call-expand').click()");
+   await run(b,"[...document.querySelectorAll('article')].find(el=>el.querySelector('b')?.textContent==='a').querySelector('.call-expand').click()");
+   await resumeExpiredRoom(a,b);
+   assert.equal(await run(a,"(()=>{const self=[...document.querySelectorAll('article')].find(el=>el.querySelector('b')?.textContent==='Votre écran');return self?.querySelector('video')?.srcObject?.getVideoTracks()[0]===window.__sharedTrack;})()"),true,'rejoined local preview remains the shared screen');
+   assert.equal(await run(a,"window.__captures.length===window.__shareCaptures&&window.__sharedTrack.readyState==='live'&&window.__cameraBeforeShare.readyState==='live'&&window.__peers.filter(p=>p.connectionState==='connected').every(p=>p.getSenders().some(s=>s.track===window.__sharedTrack))"),true,'reconnection sends the same live screen without recapturing it or stopping the camera');
+   for(const w of [a,b])assert.equal(await run(w,"!!document.querySelector('.is-expanded')"),true,'expanded sharing survives reconnection');
+   await until(()=>run(b,"[...document.querySelectorAll('article')].find(el=>el.querySelector('b')?.textContent==='a')?.querySelector('video')?.videoWidth>0"),'remote shared video after reconnection');
+   writeFileSync(path.join(dir,'group-sharing-reconnected.png'),(await b.webContents.capturePage()).toPNG());
+   for(const w of [a,b])await run(w,"window.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}))");
+   checks.push('sharing reconnects with its original screen track, matching preview and expanded view on both sides');
+  }
+  await run(b,kind==='group'?"[...document.querySelectorAll('article')].find(el=>el.querySelector('b')?.textContent==='a').querySelector('.call-expand').click()":"document.querySelector('.call-expand').click()");
   await until(()=>run(b,"!!document.querySelector('.is-expanded')"),kind+' shared video expands');
   const fullscreen=await run(b,"(()=>{const r=document.querySelector('.is-expanded').getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height,viewportWidth:innerWidth,viewportHeight:innerHeight};})()");
   assert.equal(fullscreen.x,0);assert.equal(fullscreen.y,0);assert.equal(fullscreen.width,fullscreen.viewportWidth);assert.equal(fullscreen.height,fullscreen.viewportHeight,kind+' expanded video fills mobile viewport');
@@ -175,6 +191,7 @@ app.on('window-all-closed',()=>{}); app.whenReady().then(async()=>{
   checks.push(kind+' reachable 44px expansion controls and full viewport sharing');
   await click(a,kind==='private'?'Arrêter le partage':'Arrêter');
   await until(()=>run(a,"[...document.querySelectorAll('button')].some(b=>b.textContent.includes('Caméra')&&!b.disabled)"),kind+' camera restored');
+  if(kind==='group')assert.equal(await run(a,"(()=>{const self=[...document.querySelectorAll('article')].find(el=>el.querySelector('b')?.textContent==='Vous');return window.__sharedTrack.readyState==='ended'&&self?.querySelector('video')?.srcObject?.getVideoTracks()[0]===window.__cameraBeforeShare;})()"),true,'stopping a reconnected share restores the original camera preview');
   checks.push(kind+' share/restore');
   // Refusing camera access must not trigger a second permission/capture request.
   await run(a,"window.__capture=navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);window.__cameraRequests=0;navigator.mediaDevices.getUserMedia=()=>{window.__cameraRequests++;return Promise.reject(new DOMException('Permission denied','NotAllowedError'));}");

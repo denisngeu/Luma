@@ -92,9 +92,9 @@ export default function Room({id}:{id:string}){
    const reconnect=async()=>{
     const renewed=await request('join',{id});
     if(epoch.current!==generation){await request('leave',{id,joined:renewed.joined}).catch(()=>{});return;}
-    // Keep capture and mute state; only the expired peer connections change.
+    // Keep capture, sharing and the expanded view; only expired peers change.
     pcs.current.forEach(pc=>{pc.onconnectionstatechange=null;pc.close();});pcs.current.clear();videoSenders.current.clear();peerMemberships.current.clear();acknowledged.clear();
-    membership.current=Number(renewed.joined)||0;ice=renewed.ice;rejoining=false;setInfo(renewed);setStreams({[d.me]:local.current!});setPeople([{user:d.me,name:'Vous',joined:renewed.joined}]);setExpanded(null);setError('Reconnexion au salon…');networkError='Reconnexion au salon…';
+    membership.current=Number(renewed.joined)||0;ice=renewed.ice;rejoining=false;setInfo(renewed);setStreams({[d.me]:screen.current||local.current!});setPeople([{user:d.me,name:'Vous',joined:renewed.joined}]);setError('Reconnexion au salon…');networkError='Reconnexion au salon…';
    };
    const poll=async()=>{
     if(polling||!active.current)return;polling=true;
