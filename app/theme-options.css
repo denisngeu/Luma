@@ -1,5 +1,7 @@
 html[data-contrast=high]{--t-muted:color-mix(in srgb,var(--t-ink) 78%,transparent);--t-line:color-mix(in srgb,var(--t-ink) 35%,transparent)}html[data-corners=square] :is(.network-card,.hub-composer,.channel,.privacy-page section,.settings-section,.preview-window,.call-preflight){border-radius:4px!important}html[data-corners=round] :is(.network-card,.privacy-page section,.settings-section,.preview-window){border-radius:25px!important}html[data-corners=round] :is(.hub-composer,.channel,.call-preflight){border-radius:16px!important}html[data-motion=reduced] *{scroll-behavior:auto!important;transition:none!important;animation:none!important}
 .appearance{height:100%;min-height:0;overflow-y:auto;overscroll-behavior:contain}
+/* Apply the same saved backdrop to the preview and every conversation canvas. */
+html[data-luma] :is(.message-area,.messenger-message-list,.hub-messages,.preview-canvas){background-color:var(--t-canvas)!important;background-image:var(--t-bg,none)!important;background-size:auto!important;background-repeat:no-repeat!important}
 html[data-luma] .stitch-messenger-root .messenger-message-bubble{background:var(--t-raised)!important;color:var(--t-ink)!important}
 html[data-luma] .stitch-messenger-root .messenger-message-bubble[data-direction=outgoing]{background:color-mix(in srgb,var(--luma-accent) 18%,var(--t-surface))!important}
 html[data-luma] .stitch-messenger-root .messenger-message-bubble button{color:var(--t-ink)!important}

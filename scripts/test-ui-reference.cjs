@@ -154,6 +154,29 @@ app.whenReady().then(async()=>{try{
   for(const check of preferenceChecks)for(const route of ['fil','messages','communities']){const normal=check.phases.normal[route],compact=check.phases['compact-high'][route],restored=check.phases.restored[route];assert.ok(compact.contrast>normal.contrast,route+' high contrast visibly strengthens secondary text at '+check.width+' '+check.mode);assert.ok(compact.contrast>=4.5,route+' high contrast text remains legible');assert.ok(compact.spacing<normal.spacing,route+' compact mode reduces actual message spacing');assert.equal(compact.font,normal.font,'density preserves chosen message size');assert.equal(compact.overflow,false,'compact content fits');if(compact.touchHeight!==undefined){assert.ok(compact.touchHeight>=44,'compact targets remain touch-sized');assert.ok(compact.touchHeight<=normal.touchHeight,'compact targets do not grow');}for(const phase of [normal,compact,restored]){assert.ok(phase.bodyContrasts.every(ratio=>ratio>=4.5),'message text stays readable in '+route+' '+check.width+' '+check.mode);assert.ok(phase.iconContrasts.every(ratio=>ratio>=4.5),'copy action stays visible');if(route==='messages'){assert.equal(phase.bodyContrasts.length,2,'sent and received message colors are checked');assert.equal(phase.sentTimeContrasts.length,1,'sent message timestamp is checked');assert.ok(phase.sentTimeContrasts.every(ratio=>ratio>=4.5),'sent timestamp remains readable');assert.equal(phase.deliveryContrasts.length,1,'sent status is checked');assert.ok(phase.deliveryContrasts.every(ratio=>ratio>=3),'sent status remains visible');}}assert.equal(restored.spacing,normal.spacing,'comfortable spacing is restored');assert.ok(Math.abs(restored.contrast-normal.contrast)<.01,'normal contrast is restored');}
   console.log('PASS persisted density/contrast preferences across feed, private chats and communities, both widths and themes, with touch targets and restoration.');
  }
+ if(process.env.LUMA_UI_BACKGROUNDS==='1'){
+  const base='http://127.0.0.1:'+server.address().port,checks=[];
+  for(const width of [320,1280])for(const mode of ['light','dark']){
+   win=new BrowserWindow({width,height:844});await win.loadURL(base+'/apparence?theme='+mode);const phases=[];
+   for(const background of ['plain','aurora','dusk','plain']){
+    await win.page.goto(base+'/apparence?theme='+mode);await win.page.getByLabel('Fond des conversations',{exact:true}).selectOption(background);await win.page.reload();
+    await until(async()=>await win.page.getByLabel('Fond des conversations',{exact:true}).inputValue()===background,'conversation background survives reload');
+    const preview=await win.page.locator('.preview-canvas').evaluate(el=>({image:getComputedStyle(el).backgroundImage,color:getComputedStyle(el).backgroundColor,size:getComputedStyle(el).backgroundSize})),views={};
+    for(const route of ['messages','communities']){
+     await win.page.goto(base+'/'+route+'?theme='+mode);
+     if(route==='messages')await win.page.getByRole('button',{name:'Ouvrir la discussion avec Contact de test',exact:true}).click();else await win.page.locator('.channel:not(.voice-channel)').first().click();
+     const pane=win.page.locator(route==='messages'?'.messenger-message-list':'.hub-messages');await pane.waitFor({state:'visible'});
+     views[route]=await pane.evaluate(el=>({image:getComputedStyle(el).backgroundImage,color:getComputedStyle(el).backgroundColor,size:getComputedStyle(el).backgroundSize,overflow:el.scrollWidth>el.clientWidth}));
+     if(background==='aurora')writeFileSync('outputs/ui-background-'+route+'-'+width+'-'+mode+'.png',await win.page.screenshot());
+    }
+    phases.push({background,preview,views});
+   }
+   checks.push({width,mode,phases});win.destroy();win=null;
+  }
+  writeFileSync('outputs/ui-background-'+(process.env.LUMA_UI_CAPTURE||'current')+'-metrics.json',JSON.stringify(checks,null,2));
+  for(const check of checks){const images=check.phases.slice(0,3).map(p=>p.preview.image);assert.equal(images[0],'none','plain background has no decoration');assert.equal(new Set(images).size,3,'three distinct background choices');for(const phase of check.phases)for(const [route,view] of Object.entries(phase.views)){assert.equal(view.image,phase.preview.image,route+' background matches the chosen preview at '+check.width+' '+check.mode+' '+phase.background);assert.equal(view.color,phase.preview.color,'background retains theme canvas color');assert.equal(view.size,'auto','gradient is not tiled');assert.equal(view.overflow,false,'background does not overflow');}assert.deepEqual(check.phases[3].views,check.phases[0].views,'plain background is restored');}
+  console.log('PASS saved backgrounds match preview in private and community conversations, both themes and widths, with restoration.');
+ }
  writeFileSync('outputs/ui-'+(process.env.LUMA_UI_CAPTURE||'current')+'-metrics.json',JSON.stringify(measurements,null,2));console.log('PASS '+measurements.length+' responsive/theme views and relevant page interactions.');
  }catch(e){console.error(e);process.exitCode=1;}finally{win?.destroy();server?.closeAllConnections();server?.close();await app.exit(process.exitCode||0);}});
 setTimeout(()=>app.exit(1),180000);
