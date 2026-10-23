@@ -53,6 +53,8 @@ Le déploiement utilise `Dockerfile` et `docker-compose.yaml`. Coolify doit cons
 
 Le volume `luma-data` conserve uniquement les pièces jointes. PostgreSQL conserve les comptes, sessions, messages, communautés, relations sociales, appels et journaux d’administration. `scripts/postgres-start.mjs` vérifie et applique les migrations de `postgres/` avant de lancer Next.js.
 
+Ce même processus reprend les fichiers placés dans `erasure_files` lors de la fermeture d’un compte. Il traite uniquement les comptes fermés, au démarrage puis toutes les 30 secondes, par lots de 50. Une suppression échouée reste en base et sera réessayée, y compris après redémarrage. Le dossier utilisé est `LUMA_UPLOAD_DIRECTORY` (par défaut `/app/.wrangler/state/uploads`). Conservez le démarrage via `scripts/postgres-start.mjs` pour assurer cette reprise ; elle ne nécessite pas de session utilisateur active.
+
 Le port TURN `3478` est exposé en TCP et UDP; les ports UDP `49160-49200` transportent les médias relayés. Le pare-feu du serveur doit autoriser ces ports.
 
 ## Applications natives
