@@ -21,7 +21,7 @@ type Feed={messages:Message[];reactions:Reaction[];polls:Poll[];votes:Vote[];pin
 type Result=Feed&{spaces:Space[];space:Space;channels:Channel[];chats:Channel[];members:Member[];bots:SpaceBot[];role:string;user:{id:string;name:string};id:string;error?:string;invite:string};
 const empty:Feed={messages:[],reactions:[],polls:[],votes:[],pinned:[],more:false};const emojis=['👍','❤️','🔥','🎉','😂','👀'];
 function CommunityPicker({compact=false,onCreate,onJoin}:{compact?:boolean;onCreate:()=>void;onJoin:()=>void}){
- return <DropdownMenu><DropdownMenuTrigger className="community-picker-trigger" aria-label="Ajouter une communauté"><Plus size={18}/>{!compact&&<span className="community-picker-label">Ajouter</span>}</DropdownMenuTrigger><DropdownMenuContent><DropdownMenuItem onSelect={onCreate}>Créer une communauté</DropdownMenuItem><DropdownMenuItem onSelect={onJoin}>Rejoindre une communauté</DropdownMenuItem></DropdownMenuContent></DropdownMenu>;
+ return <DropdownMenu><DropdownMenuTrigger className="community-picker-trigger" aria-label="Ajouter une communauté"><Plus size={18}/>{!compact&&<span className="community-picker-label">Ajouter</span>}</DropdownMenuTrigger><DropdownMenuContent className="community-picker-menu" align="start" collisionPadding={12}><DropdownMenuItem onSelect={onCreate}>Créer une communauté</DropdownMenuItem><DropdownMenuItem onSelect={onJoin}>Rejoindre une communauté</DropdownMenuItem></DropdownMenuContent></DropdownMenu>;
 }
 export default function Community(){
  const router=useRouter();

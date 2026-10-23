@@ -53,3 +53,7 @@ html[data-luma] .microphone-test button{color:var(--t-ink)!important}
 .community-switcher button>.community-picker-label{width:auto;height:auto;flex:initial;background:none;font-size:12px}
 
 .community-switcher>.community-picker-trigger{position:sticky;left:0;z-index:1;flex-shrink:0;background:var(--t-surface)}
+/* Portalled menus must sit above the navigation and inherit the active theme. */
+[data-slot=dropdown-menu-content]{z-index:1000;background:var(--t-surface);color:var(--t-ink);border:1px solid var(--t-line);border-radius:12px;padding:6px;box-shadow:0 12px 32px #0003;max-width:calc(100vw - 24px)}
+[data-slot=dropdown-menu-content] [role=menuitem]{min-height:44px;padding:10px 12px;font-family:"Plus Jakarta Sans","Segoe UI",Arial,sans-serif;font-size:13px;cursor:pointer;border-radius:8px}
+[data-slot=dropdown-menu-content] [role=menuitem][data-highlighted]{background:var(--t-raised);outline:none}
