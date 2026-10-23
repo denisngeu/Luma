@@ -16,6 +16,7 @@ app.commandLine.appendSwitch('autoplay-policy','no-user-gesture-required');
 app.setPath('userData',path.join(dir,'profile-'+Date.now()));
 let server;const windows=[];let call={caller:'a',callee:'b',callerName:'Alice',calleeName:'Bob',mode:'audio',state:'preparing',offer:null,answer:null};
 const participants=new Set(),signals={a:[],b:[]};
+const memberships=new Map();let membershipClock=Date.now(),watchExpired=false,otherSawAbsence=false,loseRejoinResponse=false;
 const callGets={a:0,b:0};
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 async function until(fn,label){for(let i=0;i<100;i++){if(await fn())return;await wait(200);}throw Error('Timeout '+label);}
@@ -72,12 +73,16 @@ app.on('window-all-closed',()=>{}); app.whenReady().then(async()=>{
     if(p.action==='answer'){call.answer=p.sdp;call.state='active';}
     if(p.action==='end')call.state='ended';
    }else{
-    const info={me:who,room:{mode:'audio',kind:'voice',chat_name:'Test'},participants:[...participants].map(user=>({user,name:user})),ice:{iceServers:[]}};
+    const roster=()=>[...participants].map(user=>({user,name:user,joined:memberships.get(user)||1}));
+    const info={me:who,room:{mode:'audio',kind:'voice',chat_name:'Test'},participants:roster(),ice:{iceServers:[]}};
     if(p.action==='info')out=info;
-    if(p.action==='join'){participants.add(who);out=info;}
+    if(p.action==='join'){if(!participants.has(who)){memberships.set(who,++membershipClock);signals[who]=[];}participants.add(who);out={...info,joined:memberships.get(who)};if(loseRejoinResponse&&who==='a'){loseRejoinResponse=false;res.writeHead(503,{'Content-Type':'application/json'});res.end(JSON.stringify({error:'Réponse de reprise perdue'}));return;}}
     if(p.action==='poll'){
-     if(p.reliable){signals[who]=signals[who].filter(signal=>!p.acknowledgements?.includes(signal.id));out={participants:[...participants].map(user=>({user,name:user})),signals:[...signals[who]]};}
-     else out={participants:[...participants].map(user=>({user,name:user})),signals:signals[who]?.splice(0)||[]};
+     if(watchExpired&&who==='b'&&!participants.has('a'))otherSawAbsence=true;
+     if(p.joined&&participants.has(who)&&p.joined!==memberships.get(who)){res.writeHead(409,{'Content-Type':'application/json'});res.end(JSON.stringify({error:'Session remplacée'}));return;}
+     if(p.joined&&!participants.has(who))out={rejoin:true,participants:[],signals:[]};
+     else if(p.reliable){signals[who]=signals[who].filter(signal=>!p.acknowledgements?.includes(signal.id));out={participants:roster(),signals:[...signals[who]]};}
+     else out={participants:roster(),signals:signals[who]?.splice(0)||[]};
     }
     if(p.action==='signal')signals[p.recipient]?.push({id:require('node:crypto').randomUUID(),sender:who,type:p.type,payload:p.payload});
     if(p.action==='leave')participants.delete(who);
@@ -114,6 +119,19 @@ app.on('window-all-closed',()=>{}); app.whenReady().then(async()=>{
    await until(()=>run(w,"(async()=>{for(const p of window.__peers){if(p.connectionState!=='connected')continue;for(const s of (await p.getStats()).values())if(s.type==='inbound-rtp'&&s.kind==='audio'&&s.bytesReceived>0&&s.totalAudioEnergy>0)return true;}return false;})()"),kind+' audio decoded');
   }
   checks.push(kind+' bidirectional audio energy');
+  if(kind==='group'){
+   for(const w of [a,b])await run(w,'window.__beforeRejoinPeers=[...window.__peers]');
+   await run(a,'window.__beforeRejoinCaptures=window.__captures.length;window.__beforeRejoinMic=window.__peers.flatMap(p=>p.getSenders()).find(s=>s.track?.kind==="audio").track');
+   await click(a,'Micro');assert.equal(await run(a,'window.__beforeRejoinMic.enabled'),false,'mute applied before expiry');
+   watchExpired=true;loseRejoinResponse=true;participants.delete('a');await run(a,"window.dispatchEvent(new Event('luma-native-active'))");
+   await until(()=>participants.has('a'),'expired membership explicitly rejoins');
+   assert.equal(otherSawAbsence,false,'the other peer has not observed the temporary absence');watchExpired=false;
+   await until(async()=>{for(const w of [a,b])await run(w,"window.dispatchEvent(new Event('luma-native-active'))");return (await Promise.all([a,b].map(w=>run(w,"window.__beforeRejoinPeers.every(p=>p.connectionState==='closed')&&window.__peers.some(p=>p.connectionState==='connected')")))).every(Boolean);},'changed membership rebuilds both peer connections');
+   assert.equal(await run(a,'window.__captures.length===window.__beforeRejoinCaptures&&window.__beforeRejoinMic.enabled===false&&window.__beforeRejoinMic.readyState==="live"'),true,'rejoin preserves the microphone and mute preference without another capture');
+   await click(a,'Activer micro');
+   for(const w of [a,b])await until(()=>run(w,"(async()=>{for(const p of window.__peers){if(p.connectionState!=='connected')continue;for(const s of (await p.getStats()).values())if(s.type==='inbound-rtp'&&s.kind==='audio'&&s.totalAudioEnergy>0)return true;}return false;})()"),'bidirectional audio after membership expiry');
+   checks.push('expired room membership retries a lost rejoin response, resets both peers, preserves muted microphone and restores bidirectional audio');
+  }
   await run(a,"window.dispatchEvent(new CustomEvent('luma-native-call-ended',{detail:{token:'another-call'}}))");
   assert.equal(await run(a,"window.__peers.some(peer=>peer.connectionState==='connected')"),true,'another native session cannot end this call');
   // A stalled poll must time out, retain the media connection, and recover
