@@ -3,6 +3,7 @@ import {acknowledgeRead,cursorForMessages,messageVisibleAt,unreadCondition,type 
 export async function POST(request:Request){try{
  sameOrigin(request);const u=await user();if(Number(request.headers.get('content-length')||0)>30000)throw new ApiError('Requête trop volumineuse',413);const raw=await request.json();if(!raw||typeof raw!=='object'||Array.isArray(raw))throw new ApiError('Requête invalide');const p=raw as Record<string,unknown>;
  if(p.action==='list'){
+  const include=p.include===undefined?'':str(p.include,100);
   const now=Date.now();
   const rows=await db().prepare(`SELECT c.id,c.kind,c.space,c.mode,c.topic,c.owner,c.invite,c.created,
    CASE WHEN c.kind='direct' AND c.id LIKE 'friend-%' THEN COALESCE((SELECT u.name FROM members other JOIN users u ON u.id=other.user WHERE other.chat=c.id AND other.user!=? LIMIT 1),c.name) ELSE c.name END name,
@@ -11,10 +12,33 @@ export async function POST(request:Request){try{
    COALESCE((SELECT MAX(${messageVisibleAt('recent')}) FROM messages recent WHERE recent.chat=c.id AND recent.hidden=0 AND recent.scheduled<=?),c.created) last_activity
    FROM chats c JOIN members m ON m.chat=c.id WHERE m.user=? AND c.locked=0 AND c.space IS NULL ORDER BY last_activity DESC,c.created DESC LIMIT 100`)
    .bind(u.id,now,u.id,u.id,now,now,u.id).all();
+  if(include&&!rows.results.some(chat=>chat.id===include)){
+   const selected=await db().prepare(`SELECT c.id,c.kind,c.owner,c.invite,c.created,
+    CASE WHEN c.kind='direct' AND c.id LIKE 'friend-%' THEN COALESCE((SELECT peer.name FROM members other JOIN users peer ON peer.id=other.user WHERE other.chat=c.id AND other.user!=? LIMIT 1),c.name) ELSE c.name END name,
+    (SELECT substr(CASE WHEN m.body!='' THEN m.body ELSE 'Pièce jointe' END,1,120) FROM messages m WHERE m.chat=c.id AND m.hidden=0 AND m.scheduled<=? ORDER BY ${messageVisibleAt('m')} DESC,m.delivery_seq DESC LIMIT 1) preview
+    FROM chats c JOIN members membership ON membership.chat=c.id AND membership.user=? WHERE c.id=? AND c.locked=0 AND c.space IS NULL`).bind(u.id,now,u.id,include).first();
+   if(selected)rows.results.push(selected);
+  }
   return Response.json({user:u,chats:rows.results},{headers:{'Cache-Control':'no-store'}});
  }
  if(p.action==='create'){const name=str(p.name,80),kind=p.kind==='direct'?'direct':'group';const count=await db().prepare('SELECT count(*) AS n FROM chats WHERE owner=?').bind(u.id).first<{n:number}>();if((count?.n||0)>=100)throw new ApiError('Limite de 100 discussions atteinte.');const id=crypto.randomUUID(),invite=crypto.randomUUID();await db().batch([db().prepare('INSERT INTO chats (id,name,kind,owner,invite,created) VALUES (?,?,?,?,?,?)').bind(id,name,kind,u.id,invite,Date.now()),db().prepare('INSERT INTO members (chat,user) VALUES (?,?)').bind(id,u.id)]);return Response.json({id});}
  if(p.action==='join'){const code=str(p.code,100);const c=await db().prepare('SELECT * FROM chats WHERE invite=? AND locked=0').bind(code).first<{id:string;kind:string}>();if(!c)throw new ApiError('Code invalide',404);if(c.id.startsWith('friend-'))throw new ApiError('Ajoutez ce contact depuis Amis pour discuter.',403);const result=await db().prepare(`INSERT OR IGNORE INTO members(chat,user) SELECT ?,? WHERE (SELECT count(*) FROM members WHERE chat=?) < ?`).bind(c.id,u.id,c.id,c.kind==='direct'?2:256).run();if(!result.meta.changes)await member(u.id,c.id);return Response.json({id:c.id});}
+ if(p.action==='saved'){
+  const after=p.after;
+  if(after!==undefined&&after!==null&&(typeof after!=='object'||Array.isArray(after)||!Number.isSafeInteger((after as {created?:unknown}).created)||Number((after as {created?:unknown}).created)<0||typeof (after as {id?:unknown}).id!=='string'||!(after as {id:string}).id||((after as {id:string}).id.length>100)))throw new ApiError('Curseur de favoris invalide.');
+  const cursor=after as {created:number;id:string}|null|undefined,now=Date.now();
+  const rows=await db().prepare(`SELECT m.id,m.chat,m.body,m.author,u.name,m.created,m.scheduled,m.file,m.filename,c.kind chat_kind,
+   CASE WHEN m.scheduled>? THEN 1 ELSE 0 END scheduled_pending,
+   CASE WHEN c.kind='direct' AND c.id LIKE 'friend-%' THEN COALESCE((SELECT peer.name FROM members other JOIN users peer ON peer.id=other.user WHERE other.chat=c.id AND other.user!=? LIMIT 1),c.name) ELSE c.name END chat_name
+   FROM stars s JOIN messages m ON m.id=s.message JOIN chats c ON c.id=m.chat JOIN users u ON u.id=m.author
+   JOIN members membership ON membership.chat=c.id AND membership.user=?
+   WHERE s.user=? AND c.space IS NULL AND c.locked=0 AND m.hidden=0 AND (m.scheduled<=? OR m.author=?)
+   ${cursor?'AND (m.created<? OR (m.created=? AND m.id<?))':''}
+   ORDER BY m.created DESC,m.id DESC LIMIT 51`)
+   .bind(now,u.id,u.id,u.id,now,u.id,...(cursor?[cursor.created,cursor.created,cursor.id]:[])).all<{id:string;created:number}>();
+  const messages=rows.results.slice(0,50),last=messages.at(-1);
+  return Response.json({messages,next:rows.results.length>50&&last?{created:last.created,id:last.id}:null},{headers:{'Cache-Control':'private, no-store'}});
+ }
  if(p.action==='messages'){
   const chat=str(p.chat,100),now=Date.now();await member(u.id,chat);
   // Cursor and displayed rows share one PostgreSQL snapshot. Index lookups
@@ -41,7 +65,18 @@ export async function POST(request:Request){try{
   const existing=await db().prepare('SELECT id,chat,body,scheduled,reply FROM messages WHERE author=? AND client_id=?').bind(u.id,clientId).first<{id:string;chat:string;body:string;scheduled:number;reply:string|null}>();
   if(!existing||existing.chat!==chat||existing.body!==body||existing.scheduled!==scheduled||existing.reply!==reply)throw new ApiError('Cet identifiant d’envoi a déjà été utilisé pour un autre message.',409);
   return Response.json({id:existing.id});}
- if(p.action==='star'){const id=str(p.message,100);const msg=await db().prepare('SELECT chat,scheduled,author FROM messages WHERE id=?').bind(id).first<{chat:string;scheduled:number;author:string}>();if(!msg||msg.scheduled>Date.now()&&msg.author!==u.id)throw new ApiError('Message introuvable',404);await member(u.id,msg.chat);const star=await db().prepare('SELECT 1 FROM stars WHERE message=? AND user=?').bind(id,u.id).first();if(star)await db().prepare('DELETE FROM stars WHERE message=? AND user=?').bind(id,u.id).run();else await db().prepare('INSERT OR IGNORE INTO stars(message,user) VALUES (?,?)').bind(id,u.id).run();return Response.json({ok:true});}
+ if(p.action==='star'){
+  const id=str(p.message,100);
+  if(p.starred!==undefined&&typeof p.starred!=='boolean')throw new ApiError('État du favori invalide.');
+  const msg=await db().prepare('SELECT chat,scheduled,author FROM messages WHERE id=? AND hidden=0').bind(id).first<{chat:string;scheduled:number;author:string}>();
+  if(!msg||msg.scheduled>Date.now()&&msg.author!==u.id)throw new ApiError('Message introuvable',404);
+  await member(u.id,msg.chat);
+  const current=await db().prepare('SELECT 1 FROM stars WHERE message=? AND user=?').bind(id,u.id).first();
+  const starred=typeof p.starred==='boolean'?p.starred:!current;
+  if(starred)await db().prepare('INSERT OR IGNORE INTO stars(message,user) VALUES (?,?)').bind(id,u.id).run();
+  else await db().prepare('DELETE FROM stars WHERE message=? AND user=?').bind(id,u.id).run();
+  return Response.json({ok:true,starred});
+ }
  throw new ApiError('Action inconnue');
  }catch(e){return fail(e);}}
 

@@ -39,6 +39,7 @@ app.whenReady().then(async()=>{
     }
     if(req.url==='/api/chat'){
      if(p.action==='list')res.end(JSON.stringify({user:{id:'me',name:'Moi'},chats:[{id:'bob',name:'Bob',kind:'direct',preview:'Bonjour'},{id:'alice',name:'Alice',kind:'direct',preview:'Salut'}]}));
+     else if(p.action==='saved')res.end(JSON.stringify({messages:[],next:null}));
      else res.end(JSON.stringify({messages:[{id:'msg',body:'Bonjour',author:'bob',name:'Bob',created:1700000000000,scheduled:0}]}));return;
     }
     res.end('{}');return;
@@ -77,9 +78,11 @@ app.whenReady().then(async()=>{
   const box=await search.boundingBox();assert.ok(box&&box.width>0,'mobile search visible');
   await win.page.getByRole('button',{name:'Ouvrir la discussion avec Bob',exact:true}).press('Enter');
   await win.page.locator('.messenger-mobile-menu summary').click();
-  assert.equal(await win.page.locator('.messenger-menu-action:visible').count(),3,'all mobile menu actions are reachable');
+  assert.equal(await win.page.locator('.messenger-menu-action:visible').count(),4,'all mobile menu actions are reachable');
   await win.page.locator('.messenger-menu-action').filter({hasText:'Messages favoris'}).click();
   await until(()=>run(win,"!!document.querySelector('.stitch-saved-empty')"),'mobile favorites view opens');
+  await win.page.getByRole('button',{name:'Revenir aux discussions',exact:true}).click();
+  await win.page.getByRole('button',{name:'Ouvrir la discussion avec Bob',exact:true}).press('Enter');
   await win.page.locator('.messenger-mobile-menu summary').click();
   await win.page.getByRole('button',{name:'Informations de la discussion',exact:true}).click();
   await until(()=>run(win,"!!document.querySelector('.messenger-details')"),'mobile details opens outside hidden sidebar');

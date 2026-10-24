@@ -9,6 +9,7 @@ import {useActiveRooms} from '@/hooks/use-active-rooms';
 import {createCallLauncher} from '@/lib/call-launcher';
 import type {ReadCursor} from '@/lib/chat-reads';
 import {ArrowDown} from 'lucide-react';
+import SavedMessages from './saved-messages';
 import { Dialog, DialogClose, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -43,7 +44,8 @@ const emptyDraft:Draft={text:'',reply:null,schedule:''};
 export default function Messenger() {
   const router = useRouter();
   const query=useSearchParams(),requestedChat=query.get('chat')||'';
-  const appliedChatLink=useRef<string|null>(null);
+  const appliedChatLink=useRef<string|null>(requestedChat?null:''),initialChatLink=useRef(requestedChat);
+  const [linkLoading,setLinkLoading]=useState(false);
   const [chats, setChats] = useState<Chat[]>([]);
   const [active, setActive] = useState<string>('');
   const [msgs, setMsgs] = useState<Msg[]>([]);
@@ -73,6 +75,7 @@ export default function Messenger() {
   const [atLatest,setAtLatest]=useState(true);
   const listEpoch=useRef(0);
   const composeLock=useRef(false),activeRef=useRef(active),mounted=useRef(true);
+  const starLocks=useRef(new Set<string>());
   const sendAttempts=useRef(new Map<string,{fingerprint:string;id:string}>());
   const callLauncher=useRef<ReturnType<typeof createCallLauncher>|null>(null);
   if(callLauncher.current===null)callLauncher.current=createCallLauncher();
@@ -94,6 +97,7 @@ export default function Messenger() {
   const focusDiscussions = useCallback(() => {
     setMobile(false);
     setFilter('all');
+    setView('chat');
     if(searchFrame.current!==null)cancelAnimationFrame(searchFrame.current);
     searchFrame.current=requestAnimationFrame(()=>{searchFrame.current=null;searchInput.current?.focus();searchInput.current?.select();});
   },[]);
@@ -125,7 +129,7 @@ export default function Messenger() {
     const refresh=async()=>{
       if(!live||pending||!isAppVisible())return;pending=true;const epoch=listEpoch.current;
       try{
-        const result=await api('list',{},controller.signal);
+        const result=await api('list',{include:activeRef.current||requestedChat||undefined},controller.signal);
         if(live&&epoch===listEpoch.current&&Array.isArray(result.chats)){
           const rows=result.chats;setChats(current=>JSON.stringify(current)===JSON.stringify(rows)?current:rows);
           setActive(current=>!current||rows.some(chat=>chat.id===current)?current:'');
@@ -136,7 +140,7 @@ export default function Messenger() {
     const update=()=>{void refresh();};const timer=setInterval(update,4000);
     window.addEventListener('luma-chat-list-refresh',update);const unwatch=watchAppVisibility(update);
     return()=>{live=false;controller.abort();clearInterval(timer);window.removeEventListener('luma-chat-list-refresh',update);unwatch();};
-  },[api]);
+  },[api,requestedChat]);
 
   async function startCall(mode: 'audio' | 'video') {
     if (busy || !activeChat || callLauncher.current!.isPending()) return;
@@ -156,7 +160,7 @@ export default function Messenger() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const d = await api('list');
+      const d = await api('list',{include:activeRef.current||initialChatLink.current||undefined});
       const loadedChats = d.chats || [];
       setChats(loadedChats);
       if (d.user) {
@@ -185,23 +189,35 @@ export default function Messenger() {
 
   useEffect(()=>{
     if(loading||!me||appliedChatLink.current===requestedChat)return;
-    let live=true;
+    let live=true;const controller=new AbortController();
     queueMicrotask(()=>{
       if(!live)return;
-      appliedChatLink.current=requestedChat;
-      if(!requestedChat){setActive('');setMobile(false);setError('');return;}
-      if(chats.some(chat=>chat.id===requestedChat)){
-        setActive(requestedChat);setMobile(true);setView('chat');setDetail(false);setModal('');setError('');
-      }else{setActive('');setMobile(false);setError('Cette discussion est introuvable ou vous n’y avez plus accès.');}
+      const show=(chat:Chat)=>{appliedChatLink.current=requestedChat;setActive(chat.id);setMobile(true);setView('chat');setDetail(false);setModal('');setError('');setLinkLoading(false);};
+      if(!requestedChat){appliedChatLink.current='';setActive('');setMobile(false);setError('');setLinkLoading(false);return;}
+      const known=chats.find(chat=>chat.id===requestedChat);
+      if(known){show(known);return;}
+      setActive('');setMobile(false);setError('');setLinkLoading(true);
+      void (async()=>{
+        try{
+          const result=await api('list',{include:requestedChat},controller.signal);
+          if(!live||appliedChatLink.current===requestedChat)return;
+          const selected=result.chats?.find(chat=>chat.id===requestedChat);
+          if(selected){setChats(current=>current.some(chat=>chat.id===selected.id)?current:[...current,selected]);show(selected);}
+          else{appliedChatLink.current=requestedChat;setError('Cette discussion est introuvable ou vous n’y avez plus accès.');}
+        }catch(error){if(live&&!controller.signal.aborted&&appliedChatLink.current!==requestedChat)setError(error instanceof Error?error.message:'Impossible d’ouvrir cette discussion.');}
+        finally{if(live)setLinkLoading(false);}
+      })();
     });
-    return()=>{live=false;};
-  },[requestedChat,chats,loading,me]);
+    return()=>{live=false;controller.abort();};
+  },[requestedChat,chats,loading,me,api]);
+
+  function chooseChat(id:string){appliedChatLink.current=requestedChat;setActive(id);setView('chat');setMobile(true);setDetail(false);setError('');setLinkLoading(false);}
 
   useEffect(() => {
     let live=true,pending=false,initial=true,queued=false;const controller=new AbortController();
     followLatest.current=true;firstHistory.current=true;
     queueMicrotask(()=>{if(live){setMsgs([]);setReadSnapshot('');setAtLatest(true);if(!active)setMessagesLoading(false);}});
-    if(!active)return()=>{live=false;controller.abort();};
+    if(!active||view==='saved')return()=>{live=false;controller.abort();};
     const update=async()=>{
       if(!live||pending||!isAppVisible())return;pending=true;if(initial)setMessagesLoading(true);
       try{
@@ -217,7 +233,7 @@ export default function Messenger() {
     const written=(event:Event)=>{if((event as CustomEvent<string>).detail!==active)return;if(pending)queued=true;else void update();};
     window.addEventListener('luma-chat-messages-refresh',written);
     return()=>{live=false;controller.abort();clearInterval(timer);unwatch();window.removeEventListener('luma-chat-messages-refresh',written);};
-  },[active,api]);
+  },[active,api,view]);
 
   const lastMessage=msgs[msgs.length-1]?.id||'';
   useEffect(()=>{
@@ -266,8 +282,7 @@ export default function Messenger() {
     try {
       const d = await api(join ? 'join' : 'create', join ? { code } : { name, kind });
       await load();
-      setActive(d.id);
-      setMobile(true);
+      chooseChat(d.id);
       setModal('');
       setName('');
       setCode('');
@@ -304,12 +319,13 @@ export default function Messenger() {
 
   async function star(m: Msg) {
     const chat=active;
+    if(starLocks.current.has(m.id))return;starLocks.current.add(m.id);
     try {
-      await api('star', { message: m.id });
-      if(mounted.current)refreshAfterWrite(chat);
+      await api('star', { message: m.id,starred:!m.starred });
+      if(mounted.current){if(activeRef.current===chat)setMsgs(current=>current.map(message=>message.id===m.id?{...message,starred:m.starred?0:1}:message));refreshAfterWrite(chat);}
     } catch (e) {
       if(mounted.current&&activeRef.current===chat)setError((e as Error).message);
-    }
+    } finally {starLocks.current.delete(m.id);}
   }
 
   const copy = (s: string) =>
@@ -331,7 +347,7 @@ export default function Messenger() {
     if (filter === 'unread') return matchesSearch && (c.unread || 0) > 0;
     return matchesSearch;
   });
-  const shownMessages = view === 'saved' ? msgs.filter((message) => Boolean(message.starred)) : msgs;
+  const shownMessages = msgs;
 
   function attachment(message: Msg) {
     if (!message.file) return null;
@@ -413,9 +429,7 @@ export default function Messenger() {
                     type="button"
                     key={chat.id}
                     onClick={() => {
-                      setActive(chat.id);
-                      setDetail(false);
-                      setMobile(true);
+                      chooseChat(chat.id);
                     }}
                   >
                     <i>{chat.kind === 'group' ? <span className="material-symbols-outlined">groups</span> : initials(chat.name)}{activeRooms[chat.id]&&<b className="stitch-live-dot"/>}</i>
@@ -430,7 +444,7 @@ export default function Messenger() {
           <div className="px-space-lg pt-space-sm pb-space-xs flex items-center gap-space-xs">
             <button
               className={`px-space-md py-1 rounded-lg font-label-md text-label-md transition-all cursor-pointer ${
-                filter === 'all'
+                view === 'chat' && filter === 'all'
                   ? 'bg-surface-container-high text-primary shadow-sm font-bold'
                   : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container'
               }`}
@@ -440,7 +454,7 @@ export default function Messenger() {
             </button>
             <button
               className={`px-space-md py-1 rounded-lg font-label-md text-label-md transition-all cursor-pointer ${
-                filter === 'unread'
+                view === 'chat' && filter === 'unread'
                   ? 'bg-surface-container-high text-primary shadow-sm font-bold'
                   : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container'
               }`}
@@ -450,7 +464,7 @@ export default function Messenger() {
             </button>
             <button
               className={`px-space-md py-1 rounded-lg font-label-md text-label-md transition-all cursor-pointer ${
-                filter === 'groups'
+                view === 'chat' && filter === 'groups'
                   ? 'bg-surface-container-high text-primary shadow-sm font-bold'
                   : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container'
               }`}
@@ -464,7 +478,8 @@ export default function Messenger() {
                   ? 'bg-surface-container-high text-primary shadow-sm font-bold'
                   : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container'
               }`}
-              onClick={() => setView(view === 'saved' ? 'chat' : 'saved')}
+              aria-pressed={view==='saved'}
+              onClick={() => {appliedChatLink.current=requestedChat;setLinkLoading(false);setView('saved');setMobile(true);setDetail(false);setModal('');}}
             >
               Favoris
             </button>
@@ -479,6 +494,7 @@ export default function Messenger() {
           {/* Conversations List */}
           <div className="flex-1 overflow-y-auto px-space-sm space-y-1 py-space-xs">
             {loading&&<p className="p-space-md text-body-sm text-outline">Chargement de vos discussions…</p>}
+            {linkLoading&&<p className="p-space-md text-body-sm text-outline" role="status">Ouverture de la discussion…</p>}
             {!loading&&error&&<p className="p-space-md text-body-sm text-error" role="alert">{error}</p>}
             {!loading&&!error&&!shownChats.length&&<p className="p-space-md text-body-sm text-outline">{search?'Aucune discussion ne correspond à votre recherche.':filter==='unread'?'Aucune discussion non lue.':filter==='groups'?'Aucun groupe dans vos discussions.':'Aucune discussion. Utilisez le bouton + pour en créer une ou rejoindre un groupe.'}</p>}
             {shownChats.map((c, i) => {
@@ -508,9 +524,7 @@ export default function Messenger() {
                       : 'hover:bg-surface-container/70 text-on-surface-variant hover:text-on-surface'
                   }`}
                   onClick={() => {
-                    setActive(c.id);
-                    setDetail(false);
-                    setMobile(true);
+                    chooseChat(c.id);
                   }}
                 >
                   {/* Left Active indicator bar */}
@@ -566,7 +580,7 @@ export default function Messenger() {
             Right Main Stage (Active Conversation Pane)
             ========================================================================= */}
         <main className="col-span-12 md:col-span-7 lg:col-span-8 xl:col-span-9 flex flex-col h-full bg-surface relative overflow-hidden">
-          {!activeChat?<section className="messenger-empty-choice"><span className="material-symbols-outlined" aria-hidden="true">forum</span><h2>Sélectionnez une discussion</h2><p>Retrouvez vos messages en choisissant un contact ou un groupe.</p><button type="button" onClick={focusDiscussions}>Choisir une discussion</button><button type="button" onClick={()=>setModal('new')}>Nouvelle discussion</button></section>:<>
+          {view==='saved'?<SavedMessages onBack={()=>{setView('chat');setMobile(false);}} onOpen={chat=>{setChats(current=>current.some(item=>item.id===chat.id)?current:[...current,chat]);chooseChat(chat.id);setFilter('all');setSearch('');}}/>:!activeChat?<section className="messenger-empty-choice"><span className="material-symbols-outlined" aria-hidden="true">forum</span><h2>Sélectionnez une discussion</h2><p>Retrouvez vos messages en choisissant un contact ou un groupe.</p><button type="button" onClick={focusDiscussions}>Choisir une discussion</button><button type="button" onClick={()=>setModal('new')}>Nouvelle discussion</button></section>:<>
           {/* Top Subtle Gradient Glow */}
           <div className="absolute top-0 right-1/4 w-96 h-48 bg-secondary-container/15 rounded-full blur-[100px] pointer-events-none" />
 
@@ -619,12 +633,11 @@ export default function Messenger() {
                 <span className="material-symbols-outlined text-[18px]">videocam</span>
               </button>
               <button
-                className={`w-9 h-9 rounded-xl bg-surface-container hover:bg-surface-container-high hover:text-primary flex items-center justify-center transition-all cursor-pointer ${view === 'saved' ? 'text-primary ring-1 ring-primary' : ''}`}
+                className="w-9 h-9 rounded-xl bg-surface-container hover:bg-surface-container-high hover:text-primary flex items-center justify-center transition-all cursor-pointer"
                 title="Messages favoris"
                 aria-label="Messages favoris"
                 type="button"
-                aria-pressed={view === 'saved'}
-                onClick={() => setView(view === 'saved' ? 'chat' : 'saved')}
+                onClick={() => setView('saved')}
               >
                 <span className="material-symbols-outlined text-[18px]">push_pin</span>
               </button>
@@ -652,7 +665,7 @@ export default function Messenger() {
                 <summary aria-label="Options de la discussion"><span className="material-symbols-outlined" aria-hidden="true">more_vert</span></summary>
                 <div>
                   <button type="button" className="messenger-menu-action" onClick={event=>{event.currentTarget.closest('details')?.removeAttribute('open');focusDiscussions();}}>Rechercher une discussion</button>
-                  <button type="button" className="messenger-menu-action" aria-pressed={view==='saved'} onClick={event=>{event.currentTarget.closest('details')?.removeAttribute('open');setView(view==='saved'?'chat':'saved');}}>Messages favoris</button>
+                  <button type="button" className="messenger-menu-action" onClick={event=>{event.currentTarget.closest('details')?.removeAttribute('open');setView('saved');}}>Messages favoris</button>
                   <button type="button" className="messenger-menu-action" disabled={!activeChat} onClick={event=>{event.currentTarget.closest('details')?.removeAttribute('open');setDetail(true);}}>Informations de la discussion</button>
                   <button type="button" className="messenger-menu-action" disabled={!activeChat} onClick={event=>{event.currentTarget.closest('details')?.removeAttribute('open');setSchedule('');setModal('schedule');}}>Planifier un message</button>
                 </div>
@@ -671,13 +684,6 @@ export default function Messenger() {
             </div>
 
             {/* Message Stream */}
-            {view === 'saved' && !shownMessages.length && !messagesLoading && (
-              <div className="stitch-saved-empty">
-                <span className="material-symbols-outlined">bookmark</span>
-                <strong>Aucun message favori</strong>
-                <small>Utilisez l’étoile sous un message pour le retrouver ici.</small>
-              </div>
-            )}
             {shownMessages.map((m,index) => {
               const isMine = m.author === me;
               const day=new Date(m.activity_at??m.created).toLocaleDateString('fr-FR',{dateStyle:'long'});
