@@ -6,6 +6,7 @@ import {
   safeRelativeReturnPath,
 } from "@/app/chatgpt-auth";
 import { sameRequestOrigin } from "@/lib/request-origin";
+import {normalizeProfileName,PROFILE_NAME_ERROR} from '@/lib/profile-name';
 
 
 const SESSION_DURATION = 60 * 60 * 24 * 30;
@@ -94,9 +95,8 @@ function validatePassword(value: unknown) {
 }
 
 function validateName(value: unknown) {
-  if (typeof value !== "string") throw new RequestError("Saisissez votre nom.");
-  const name = value.trim().replace(/\s+/g, " ");
-  if (name.length < 2 || name.length > 60) throw new RequestError("Le nom doit contenir entre 2 et 60 caractères.");
+  const name=normalizeProfileName(value);
+  if(!name)throw new RequestError(PROFILE_NAME_ERROR);
   return name;
 }
 

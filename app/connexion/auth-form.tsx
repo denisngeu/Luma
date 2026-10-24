@@ -3,6 +3,7 @@
 import { ArrowRight } from "lucide-react";
 import { useActionState, useState } from "react";
 import { loginOrRegisterAction } from "./actions";
+import {PROFILE_NAME_MIN,PROFILE_NAME_MAX} from '@/lib/profile-name';
 
 export default function AuthForm({ returnTo }: { returnTo: string }) {
   const [mode, setMode] = useState<"login" | "register">("login");
@@ -16,7 +17,7 @@ export default function AuthForm({ returnTo }: { returnTo: string }) {
     <form className="auth-form" action={formAction}>
       <input type="hidden" name="action" value={mode} />
       <input type="hidden" name="returnTo" value={returnTo} />
-      {mode === "register" && <label>Nom affiché<input name="name" autoComplete="name" minLength={2} maxLength={60} required placeholder="Votre nom" /></label>}
+      {mode === "register" && <label>Nom affiché<input name="name" autoComplete="name" minLength={PROFILE_NAME_MIN} maxLength={PROFILE_NAME_MAX} required placeholder="Votre nom" /></label>}
       <label>Adresse e-mail<input name="email" type="email" autoComplete="email" maxLength={254} required placeholder="vous@exemple.fr" /></label>
       <label>Mot de passe<input name="password" type="password" autoComplete={mode === "login" ? "current-password" : "new-password"} minLength={10} maxLength={128} required placeholder="10 caractères minimum" /></label>
       {state?.error && <p className="auth-error" role="alert">{state.error}</p>}

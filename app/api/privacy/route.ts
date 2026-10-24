@@ -1,5 +1,6 @@
 import {getChatGPTUser,nativeAuthEnabled} from '@/app/chatgpt-auth';
 import {ApiError,bucket,db,fail,sameOrigin,str,user} from '@/lib/chat-server';
+import {normalizeProfileName,PROFILE_NAME_ERROR} from '@/lib/profile-name';
 
 const json=(data:unknown,status=200)=>Response.json(data,{status,headers:{'Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff'}});
 async function identity(){const u=await getChatGPTUser();if(!u)throw new ApiError('Connectez-vous pour gérer vos données.',401);return u;}
@@ -30,7 +31,7 @@ export async function POST(request:Request){try{
  if(!request.headers.get('content-type')?.startsWith('application/json'))throw new ApiError('Format refusé',415);
  const raw=await request.text();if(raw.length>2048)throw new ApiError('Requête trop volumineuse',413);
  const p=JSON.parse(raw);const u=await identity();
- if(p.action==='rename'){await user();const name=str(p.name,80);await db().prepare('UPDATE users SET name=? WHERE id=? AND closed=0').bind(name,u.userId).run();return json({ok:true});}
+ if(p.action==='rename'){await user();const name=normalizeProfileName(p.name);if(!name)throw new ApiError(PROFILE_NAME_ERROR);await db().prepare('UPDATE users SET name=? WHERE id=? AND closed=0').bind(name,u.userId).run();return json({ok:true});}
  if(p.action==='close'){
   if(p.confirmation!=='SUPPRIMER')throw new ApiError('Saisissez SUPPRIMER pour confirmer.');
   const administrator=await db().prepare("SELECT 1 FROM users WHERE id=? AND role='admin'").bind(u.userId).first();

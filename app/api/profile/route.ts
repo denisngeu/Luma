@@ -1,4 +1,5 @@
-import {ApiError,bucket,db,fail,sameOrigin,str,user} from '@/lib/chat-server';
+import {ApiError,bucket,db,fail,sameOrigin,user} from '@/lib/chat-server';
+import {normalizeProfileName,PROFILE_NAME_ERROR} from '@/lib/profile-name';
 
 const avatarTypes=new Set(['image/jpeg','image/png','image/webp','image/avif']);
 
@@ -6,7 +7,7 @@ export async function POST(request:Request){let uploaded:string|undefined;try{
  sameOrigin(request);const u=await user();const type=request.headers.get('content-type')||'';
  if(type.startsWith('multipart/form-data')){
   if(Number(request.headers.get('content-length')||0)>6*1024*1024)throw new ApiError('Photo trop volumineuse (5 Mo maximum).',413);
-  const form=await request.formData(),name=str(form.get('name'),60),bio=typeof form.get('bio')==='string'?String(form.get('bio')).trim():'';if(bio.length>280)throw new ApiError('La bio est limitée à 280 caractères.');
+  const form=await request.formData(),name=normalizeProfileName(form.get('name')),bio=typeof form.get('bio')==='string'?String(form.get('bio')).trim():'';if(!name)throw new ApiError(PROFILE_NAME_ERROR);if(bio.length>280)throw new ApiError('La bio est limitée à 280 caractères.');
   const image=form.get('avatar'),old=await db().prepare('SELECT avatar FROM social_profiles WHERE user=?').bind(u.id).first<{avatar:string|null}>();let key=old?.avatar||null,mime:string|null=null;
   if(image instanceof File&&image.size){if(image.size>5*1024*1024||!avatarTypes.has(image.type))throw new ApiError('Choisissez une image JPG, PNG, WebP ou AVIF de 5 Mo maximum.',415);uploaded=crypto.randomUUID();await bucket().put(uploaded,image.stream(),{httpMetadata:{contentType:image.type}});key=uploaded;mime=image.type;}
   await db().batch([db().prepare('UPDATE users SET name=? WHERE id=? AND closed=0').bind(name,u.id),db().prepare('INSERT INTO social_profiles(user,bio,avatar,avatar_mime) VALUES (?,?,?,?) ON CONFLICT(user) DO UPDATE SET bio=excluded.bio,avatar=COALESCE(excluded.avatar,social_profiles.avatar),avatar_mime=COALESCE(excluded.avatar_mime,social_profiles.avatar_mime)').bind(u.id,bio,key,mime)]);
